@@ -22,7 +22,11 @@ router.get('/site/:id', (req, res) => {
 })
 
 router.get('/site/:id/create-availability', (req, res) => {
-  res.render('site/create-availability')
+  res.render('site/create-availability/create-availability')
+})
+
+router.get('/site/:id/create-availability/type-of-session', (req, res) => {
+  res.render('site/create-availability/type-of-session')
 })
 
 //end

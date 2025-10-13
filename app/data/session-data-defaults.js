@@ -153,6 +153,20 @@ module.exports = {
       break_start: '13:00',
       break_end: '14:00',
       appointments_per_slot: 1
+    },
+    2: {
+      site_id: 1,
+      type: 'Weekly repeating',
+      services: ['RSV:ADULT'],
+      start_days_ago: 7, //so we don't have to keep updating dates
+      end_days_ahead: 28, //likewise. This availability is from 7 days ago to 28 days in the future
+      days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+      slot_duration_minutes: 10,
+      start_time: '09:00',
+      end_time: '17:00',
+      break_start: '13:00',
+      break_end: '14:00',
+      appointments_per_slot: 1
     }
   }
 }
