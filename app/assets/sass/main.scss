@@ -1,0 +1,9 @@
+// Import NHS.UK frontend library
+@import "nhsuk-frontend/dist/nhsuk";
+
+// Add your custom CSS/Sass styles below.
+.nhsuk-feedback-banner {
+  background-color: nhsuk-colour("white");
+  @include nhsuk-responsive-padding(3, "top");
+  @include nhsuk-responsive-padding(3, "bottom");
+}

@@ -1,0 +1,35 @@
+{% extends 'layouts/layout.html' %}
+{% set pageName = "Set features for this prototype" %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <h1 class="nhsuk-heading-l">Set features for this prototype</h1>
+      <form action="" method="post">
+        
+        {% for key, value in features %}
+        <div class="nhsuk-form-group">
+          <fieldset class="nhsuk-fieldset">
+            <legend class="nhsuk-fieldset__legend">Enable {{ key | title }}?</legend>
+            <div class="nhsuk-radios nhsuk-radios--inline" data-module="nhsuk-radios">
+              <div class="nhsuk-radios__item">
+                <input class="nhsuk-radios__input" id="{{ key}}-yes" name="features[{{ key }}]" type="radio" value="true" {% if value == true %}checked{% endif %}>
+                <label class="nhsuk-label nhsuk-radios__label" for="{{ key}}-yes">Yes</label>
+              </div>
+              <div class="nhsuk-radios__item">
+                <input class="nhsuk-radios__input" id="{{ key}}-no" name="features[{{ key }}]" type="radio" value="false" {% if value == false %}checked{% endif %}>
+                <label class="nhsuk-label nhsuk-radios__label" for="{{ key}}-no">No</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+        {% endfor %}
+
+      {{ button({
+        text: "Set features"
+      }) }}
+
+      </form>
+    </div>
+  </div>
+{% endblock %}

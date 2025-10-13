@@ -1,0 +1,21 @@
+{% extends 'layouts/layout.html' %}
+{% set pageName = "Manage Your Appointments Prototype Homepage" %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+
+      <h1 class="nhsuk-heading-xl">{{ serviceName }}</h1>
+
+      <p>Feature flags</p>
+      <ul class="nhsuk-list nhsuk-list--bullet">
+        {% for key, value in features %}
+          <li>{{ key }}: {{ value }}</li>
+        {% endfor %}
+      </ul>
+
+      <a href="/login" class="nhsuk-button">Start</a>
+
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'layouts/layout.html' %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+
+      <h1 class="nhsuk-heading-l">{{ serviceName }}</h1>
+
+      <p>You are currently not signed in. You must sign in to access this service.</p>
+      <a class="nhsuk-button" href="/sites">Sign in to service with NHS Mail</a>
+      <p><a href="#">Sign in to service with Other Email</a></p>
+    </div>
+  </div>
+{% endblock %}
