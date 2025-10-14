@@ -1,0 +1,102 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = "Set time and capacity for your session" %}
+
+{% set backUrl = '/site/' + site_id + '/create-availability/days' %}
+{% if data.newSession.type == "Single date" %}{% set backUrl = '/site/' + site_id + '/create-availability/dates' %}{% endif %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: backUrl
+}) }}
+{% endblock %}
+
+{% block content %}
+
+
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Create availability</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <form action="/site/{{ site_id }}/create-availability/services" method="post">
+        {{ dateInput({
+            id: "start-time",
+            namePrefix: "newSession[startTime]",
+            fieldset: {
+              legend: {
+                text: "Start time",
+                classes: "nhsuk-label--m"
+              }
+            },
+            hint: {
+              text: "For example, 10:00"
+            },
+            items: [
+              {
+                name: "hour",
+                classes: "nhsuk-input--width-2"
+              },
+              {
+                name: "minute",
+                classes: "nhsuk-input--width-2"
+              }
+            ]
+          }) }}
+
+          {{ dateInput({
+            id: "end-tme",
+            namePrefix: "newSession[endTime]",
+            fieldset: {
+              legend: {
+                text: "End time",
+                classes: "nhsuk-label--m"
+              }
+            },
+            hint: {
+              text: "For example, 17:00"
+            },
+            items: [
+              {
+                name: "hour",
+                classes: "nhsuk-input--width-2"
+              },
+              {
+                name: "minute",
+                classes: "nhsuk-input--width-2"
+              }
+            ]
+          }) }}
+
+          {{ input({
+            label: {
+              text: "How many vaccinators or vaccination spaces do you have?",
+              classes: "nhsuk-label--m"
+            },
+            id: "capacity",
+            name: "newSession[capacity]",
+            classes: "nhsuk-input--width-2"
+          }) }}
+
+          {{ input({
+            label: {
+              text: "How long are your appointments?",
+              classes: "nhsuk-label--m"
+            },
+            hint: {
+              text: "Appointment length must be a maximum of 60 minutes"
+            },
+            id: "duration",
+            name: "newSession[duration]",
+            classes: "nhsuk-input--width-2",
+            suffix: "minutes"
+          }) }}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

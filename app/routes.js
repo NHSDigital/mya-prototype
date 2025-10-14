@@ -29,5 +29,25 @@ router.get('/site/:id/create-availability/type-of-session', (req, res) => {
   res.render('site/create-availability/type-of-session')
 })
 
+router.all('/site/:id/create-availability/dates', (req, res) => {
+  res.render('site/create-availability/dates')
+})
+
+router.all('/site/:id/create-availability/days', (req, res) => {
+  res.render('site/create-availability/days')
+})
+
+router.all('/site/:id/create-availability/time-and-capacity', (req, res) => {
+  res.render('site/create-availability/time-and-capacity')
+})
+
+router.all('/site/:id/create-availability/services', (req, res) => {
+  res.render('site/create-availability/services')
+})
+
+router.all('/site/:id/create-availability/check-answers', (req, res) => {
+  res.render('site/create-availability/check-answers')
+})
+
 //end
 module.exports = router

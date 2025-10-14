@@ -1,0 +1,50 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = "Add services to your session" %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/create-availability/time-and-capacity'
+}) }}
+{% endblock %}
+
+{% block content %}
+
+
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Create availability</span>
+
+      <form action="/site/{{ site_id }}/create-availability/check-answers" method="post">
+        <div class="nhsuk-form-group">
+
+          <fieldset class="nhsuk-fieldset" aria-describedby="symptoms-hint">
+            <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--l">
+              <h1 class="nhsuk-fieldset__heading">{{ pageName }}</h1>
+            </legend>
+            <div class="nhsuk-checkboxes" data-module="nhsuk-checkboxes">
+
+              {% for id, service in data.services %}
+              <div class="nhsuk-checkboxes__item">
+                <input class="nhsuk-checkboxes__input" id="service-{{ id }}" name="newSession[services]" type="checkbox" value="{{ id }}" data-checkbox-exclusive-group="services-list">
+                <label class="nhsuk-label nhsuk-checkboxes__label" for="service-{{ id }}">{{ service.name }}</label>
+              </div>
+              {% endfor %}
+
+              <div class="nhsuk-checkboxes__divider">or</div>
+              <div class="nhsuk-checkboxes__item">
+                <input class="nhsuk-checkboxes__input" id="service-all" name="newSession[services]" type="checkbox" value="All" data-checkbox-exclusive data-checkbox-exclusive-group="services-list">
+                <label class="nhsuk-label nhsuk-checkboxes__label" for="service-all">All services</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

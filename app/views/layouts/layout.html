@@ -49,6 +49,10 @@
   {% block scripts %}
     <!-- Custom JavaScript files can be added to this file -->
     {% include "includes/scripts.html" %}
+    <script>
+      const data = {{ data | dump | safe }}
+      console.log("session data:", data);
+    </script>
     <!-- For adding page specific JavaScript -->
     {% block pageScripts %}{% endblock %}
   {% endblock %}

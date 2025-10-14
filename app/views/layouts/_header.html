@@ -60,6 +60,11 @@
           <a class="nhsuk-header__navigation-link" href="{{ itemHref }}">{{ item.text }}</a>
         </li>
         {% endfor %}
+        <li class="nhsuk-header__menu" hidden>
+          <button class="nhsuk-header__menu-toggle nhsuk-header__navigation-link" id="toggle-menu" aria-expanded="false">
+            <span class="nhsuk-u-visually-hidden">Browse </span>More
+          </button>
+        </li>
       </ul>
     </div>
   </nav>

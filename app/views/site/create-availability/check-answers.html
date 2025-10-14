@@ -1,0 +1,195 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = "Check your answers" %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/create-availability/time-and-capacity'
+}) }}
+{% endblock %}
+
+{% block content %}
+
+
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Create availability</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+
+      <form action="/site/{{ site_id }}/create-availability/process-new-session" method="post">
+        
+        {# Multi-week values #}
+        {% set dateTitle = "Dates" %}
+        {% set startDate -%}
+          {{ data.newSession.startDate.year }}-{{ data.newSession.startDate.month }}-{{ data.newSession.startDate.day }}
+        {%- endset %}
+        {% set endDate -%}
+          {{ data.newSession.endDate.year }}-{{ data.newSession.endDate.month }}-{{ data.newSession.endDate.day }}
+        {%- endset %}
+        {% set displayDate -%}
+          {{ startDate | formatDate }} to {{ endDate | formatDate }}
+        {%- endset %}
+
+        {% set allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] %}
+        {% if "All" in (data.newSession.days or []) %}
+          {% set displayDays = allDays or [] | join(", ") %}
+        {% else %}
+          {% set displayDays = data.newSession.days or [] | join(", ") %}
+        {% endif %}
+
+        {% set startTime -%}
+          {{ data.newSession.startTime.hour }}:{{ data.newSession.startTime.minute | default("00") }}
+        {%- endset %}
+        {% set endTime -%}
+          {{ data.newSession.endTime.hour }}:{{ data.newSession.endTime.minute | default("00") }}
+        {%- endset %}
+        {% set displayTime = startTime + " to " + endTime %}
+
+        {% set servicesAvailable = [] %}
+        {% if "All" in (data.newSession.services or []) %}
+          {% for id, service in data.services %}
+            {% set servicesAvailable = servicesAvailable.concat(service.name) %}
+          {% endfor %}
+        {% else %}
+          {% for id in (data.newSession.services or []) %}
+            {% set service = data.services[id] %}
+            {% set servicesAvailable = servicesAvailable.concat(service.name) %}
+          {% endfor %}
+        {% endif %}
+
+        {# Single values #}
+        {% if data.newSession.type == "Single date" %}
+          {% set dateTitle = "Date" %}
+          {% set singleDate -%}
+            {{ data.newSession.singleDate.year }}-{{ data.newSession.singleDate.month }}-{{ data.singleDate.endDate.day }}
+          {%- endset %}
+          {% set displayDate = singleDate | formatDate %}
+        {% endif %}
+
+        {{ summaryList({
+          rows: [
+            {
+              key: {
+                text: 'Session type'
+              },
+              value: {
+                text: data.newSession.type
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/create-availability/type-of-session",
+                    text: "Change",
+                    visuallyHiddenText: " type of session"
+                  }
+                ]
+              }
+            }, {
+              key: {
+                text: dateTitle
+              },
+              value: {
+                text: displayDate
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/create-availability/dates",
+                    text: "Change",
+                    visuallyHiddenText: " " + datesTitle | lower
+                  }
+                ]
+              }
+            }, {
+              key: {
+                text: "Days"
+              },
+              value: {
+                text: displayDays
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/create-availability/days",
+                    text: "Change",
+                    visuallyHiddenText: " days"
+                  }
+                ]
+              }
+            } if data.newSession.type != "Single date", {
+              key: {
+                text: "Time"
+              },
+              value: {
+                text: displayTime
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/create-availability/time-and-capacity",
+                    text: "Change",
+                    visuallyHiddenText: " time"
+                  }
+                ]
+              }
+            }, {
+              key: {
+                text: "Vaccinators or vaccination spaces available"
+              },
+              value: {
+                text: data.newSession.capacity
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/create-availability/time-and-capacity",
+                    text: "Change",
+                    visuallyHiddenText: " vaccinators or vaccination spaces available"
+                  }
+                ]
+              }
+            }, {
+              key: {
+                text: "Appointment length"
+              },
+              value: {
+                text: data.newSession.duration
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/create-availability/time-and-capacity",
+                    text: "Change",
+                    visuallyHiddenText: " appointment length"
+                  }
+                ]
+              }
+            }, {
+              key: {
+                text: "Services available"
+              },
+              value: {
+                text: servicesAvailable or [] | join(", ")
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/create-availability/services",
+                    text: "Change",
+                    visuallyHiddenText: " services available"
+                  }
+                ]
+              }
+            }
+          ]
+        }) }}
+        
+        {{ button({
+          text: "Make session available to book"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

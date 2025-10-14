@@ -1,0 +1,126 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = "Add start and end dates" %}
+{% if data.newSession.type == "Single date" %}{% set pageName = "Add a date for your session" %}{% endif %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/create-availability/type-of-session'
+}) }}
+{% endblock %}
+
+{% block content %}
+
+
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Create availability</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      {% set next = "/site/"+ site_id +"/create-availability/days" %}
+      {% if data.newSession.type == "Single date" %}{% set next = "/site/"+ site_id +"/create-availability/time-and-capacity" %}{% endif %}
+
+      <form action="{{ next }}" method="post">
+
+        {% if data.newSession.type == "Single date" %}
+          {{ dateInput({
+            id: "single-date",
+            namePrefix: "newSession[singleDate]",
+            fieldset: {
+              legend: {
+                text: "Session date",
+                classes: "nhsuk-label--m"
+              }
+            },
+            hint: {
+              text: "For example, 15 3 " + 'now' | formatDate('yyyy')
+            },
+            items: [
+              {
+                name: "day",
+                classes: "nhsuk-input--width-2",
+                value: data.newSession.singleDate.day
+              },
+              {
+                name: "month",
+                classes: "nhsuk-input--width-2",
+                value: data.newSession.singleDate.month
+              },
+              {
+                name: "year",
+                classes: "nhsuk-input--width-4",
+                value: data.newSession.singleDate.year
+              }
+            ]
+          }) }}
+        {% else %}
+          {{ dateInput({
+            id: "start-date",
+            namePrefix: "newSession[startDate]",
+            fieldset: {
+              legend: {
+                text: "Start date",
+                classes: "nhsuk-label--m"
+              }
+            },
+            hint: {
+              text: "For example, 15 3 " + 'now' | formatDate('yyyy')
+            },
+            items: [
+              {
+                name: "day",
+                classes: "nhsuk-input--width-2",
+                value: data.newSession.startDate.day
+              },
+              {
+                name: "month",
+                classes: "nhsuk-input--width-2",
+                value: data.newSession.startDate.month
+              },
+              {
+                name: "year",
+                classes: "nhsuk-input--width-4",
+                value: data.newSession.startDate.year
+              }
+            ]
+          }) }}
+          {{ dateInput({
+            id: "end-date",
+            namePrefix: "newSession[endDate]",
+            fieldset: {
+              legend: {
+                text: "End date",
+                classes: "nhsuk-label--m"
+              }
+            },
+            hint: {
+              text: "For example, 15 3 " + 'now' | formatDate('yyyy')
+            },
+            items: [
+              {
+                name: "day",
+                classes: "nhsuk-input--width-2",
+                value: data.newSession.endDate.day
+              },
+              {
+                name: "month",
+                classes: "nhsuk-input--width-2",
+                value: data.newSession.endDate.month
+              },
+              {
+                name: "year",
+                classes: "nhsuk-input--width-4",
+                value: data.newSession.endDate.year
+              }
+            ]
+          }) }}
+        {% endif %}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

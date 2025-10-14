@@ -1,3 +1,4 @@
+const { filter } = require("lodash");
 const { DateTime } = require("luxon");
 
 const DEFAULT_TZ = "Europe/London";
@@ -49,6 +50,9 @@ module.exports = function registerDateTimeFilters(filters = {}) {
   // Generic formatter (defaults to NHS style "DD MMMM YYYY")
   // Luxon tokens: https://moment.github.io/luxon/#/formatting?id=table-of-tokens
   filters.formatDate = (input, fmt = DEFAULT_FORMAT, tz = DEFAULT_TZ) =>
+    toDateTime(input, tz).toFormat(fmt);
+
+  filters.formatTime = (input, fmt = "h:mm a", tz = DEFAULT_TZ) =>
     toDateTime(input, tz).toFormat(fmt);
 
   // Explicit NHS format alias
