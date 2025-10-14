@@ -35,11 +35,13 @@
             items: [
               {
                 name: "hour",
-                classes: "nhsuk-input--width-2"
+                classes: "nhsuk-input--width-2",
+                value: data.newSession.startTime.hour
               },
               {
                 name: "minute",
-                classes: "nhsuk-input--width-2"
+                classes: "nhsuk-input--width-2",
+                value: data.newSession.startTime.minute
               }
             ]
           }) }}
@@ -59,11 +61,13 @@
             items: [
               {
                 name: "hour",
-                classes: "nhsuk-input--width-2"
+                classes: "nhsuk-input--width-2",
+                value: data.newSession.endTime.hour
               },
               {
                 name: "minute",
-                classes: "nhsuk-input--width-2"
+                classes: "nhsuk-input--width-2",
+                value: data.newSession.endTime.minute
               }
             ]
           }) }}
@@ -75,7 +79,8 @@
             },
             id: "capacity",
             name: "newSession[capacity]",
-            classes: "nhsuk-input--width-2"
+            classes: "nhsuk-input--width-2",
+            value: data.newSession.capacity
           }) }}
 
           {{ input({
@@ -89,7 +94,8 @@
             id: "duration",
             name: "newSession[duration]",
             classes: "nhsuk-input--width-2",
-            suffix: "minutes"
+            suffix: "minutes",
+            value: data.newSession.duration
           }) }}
 
         {{ button({

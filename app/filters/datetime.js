@@ -7,6 +7,14 @@ const DEFAULT_FORMAT = "d LLLL yyyy"; // e.g. 05 October 2025 (NHS style)
 function toDateTime(input, tz = DEFAULT_TZ) {
   if (!input) return DateTime.now().setZone(tz);
 
+  // accept Luxon DateTime (and keep timezone consistent)
+  if (DateTime.isDateTime(input)) return input.setZone(tz);
+
+  // accept objects that can turn into a JS Date (e.g. other libs)
+  if (input && typeof input.toJSDate === "function") {
+    return DateTime.fromJSDate(input.toJSDate(), { zone: tz });
+  }
+
   if (input instanceof Date) return DateTime.fromJSDate(input, { zone: tz });
 
   if (typeof input === "number") return DateTime.fromMillis(input, { zone: tz });

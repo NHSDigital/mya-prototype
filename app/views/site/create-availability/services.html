@@ -26,14 +26,14 @@
 
               {% for id, service in data.services %}
               <div class="nhsuk-checkboxes__item">
-                <input class="nhsuk-checkboxes__input" id="service-{{ id }}" name="newSession[services]" type="checkbox" value="{{ id }}" data-checkbox-exclusive-group="services-list">
+                <input class="nhsuk-checkboxes__input" id="service-{{ id }}" name="newSession[services]" type="checkbox" value="{{ id }}" data-checkbox-exclusive-group="services-list" {% if id in (data.newSession.services or []) %}checked{% endif %}>
                 <label class="nhsuk-label nhsuk-checkboxes__label" for="service-{{ id }}">{{ service.name }}</label>
               </div>
               {% endfor %}
 
               <div class="nhsuk-checkboxes__divider">or</div>
               <div class="nhsuk-checkboxes__item">
-                <input class="nhsuk-checkboxes__input" id="service-all" name="newSession[services]" type="checkbox" value="All" data-checkbox-exclusive data-checkbox-exclusive-group="services-list">
+                <input class="nhsuk-checkboxes__input" id="service-all" name="newSession[services]" type="checkbox" value="All" data-checkbox-exclusive data-checkbox-exclusive-group="services-list"  {% if 'All' in (data.newSession.services or []) %}checked{% endif %}>
                 <label class="nhsuk-label nhsuk-checkboxes__label" for="service-all">All services</label>
               </div>
             </div>

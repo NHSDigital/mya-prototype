@@ -1,0 +1,89 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = "View availability for " ~ (currentYear ~ "-" ~ currentMonth ~ "-01") | formatDate("LLLL yyyy") %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id
+}) }}
+{% endblock %}
+
+{# --- Compute prev/next month/year in the view --- #}
+{% if currentMonth == 1 %}
+  {% set prevMonth = 12 %}
+  {% set prevYear = currentYear - 1 %}
+{% else %}
+  {% set prevMonth = currentMonth - 1 %}
+  {% set prevYear = currentYear %}
+{% endif %}
+
+{% if currentMonth == 12 %}
+  {% set nextMonth = 1 %}
+  {% set nextYear = currentYear + 1 %}
+{% else %}
+  {% set nextMonth = currentMonth + 1 %}
+  {% set nextYear = currentYear %}
+{% endif %}
+
+{# --- Labels using your formatDate filter --- #}
+{% set prevLabel = (prevYear ~ "-" ~ prevMonth ~ "-01") | formatDate("LLLL yyyy") %}
+{% set nextLabel = (nextYear ~ "-" ~ nextMonth ~ "-01") | formatDate("LLLL yyyy") %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+
+      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}{{ firstOfTheMonth }}</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      {{ pagination({
+        previousUrl: "/site/" ~ site_id ~ "/view-availability?month=" ~ prevMonth ~ "&year=" ~ prevYear,
+        previousPage: prevLabel,
+        nextUrl: "/site/" ~ site_id ~ "/view-availability?month=" ~ nextMonth ~ "&year=" ~ nextYear,
+        nextPage: nextLabel
+      }) }}
+      
+      <ul class="nhsuk-grid-row nhsuk-card-group">
+      {% for week in monthModel.weeks %}
+        <li class="nhsuk-grid-column-full nhsuk-card-group__item">
+          <div class="nhsuk-card">
+            <div class="nhsuk-card__content">
+              <h2 class="nhsuk-card__heading nhsuk-heading-m">{{ week.weekStart | formatDate }} to {{ week.weekEnd | formatDate }}</h2>
+
+              {% if week.stats.bookingsPerService and (week.stats.bookingsPerService | length) %}
+              <table class="nhsuk-table">
+
+                <thead class="nhsuk-table__head">
+                  <tr>
+                    <th scope="col" class="nhsuk-table__header">Service</th>
+                    <th scope="col" class="nhsuk-table__header">Booked appointments</th>
+                  </tr>
+                </thead>
+
+                <tbody class="nhsuk-table__body">
+                  {% for serviceId, count in week.stats.bookingsPerService %}
+                  <tr class="nhsuk-table__row">
+                    <td class="nhsuk-table__cell">{{ data.services[serviceId].name or serviceId }}</td>
+                    <td class="nhsuk-table__cell">{{ count }}</td>
+                  </tr>
+                  {% endfor %}
+                  <tr class="nhsuk-table__row">
+                    <th scope="row" class="nhsuk-table__header">Totals</th>
+                    <td  class="nhsuk-table__cell">{{ week.stats.totalBooked }} booked<br>{{ week.stats.totalUnbooked }} unbooked<br>{{ week.stats.totalPossibleSlots }} possible appointments</td>
+                  </tr>
+                </tbody>
+
+              </table>
+              {% else %}
+              <p>No availability</p>
+              {% endif %}
+
+            </div>
+          </div>
+        </li>
+      {% endfor %}
+      </ul>
+
+    </div>  
+  </div>
+{% endblock %}

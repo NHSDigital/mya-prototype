@@ -39,7 +39,7 @@ module.exports = {
       {
         text: 'View availability',
         description: 'View availability and manage appointments for your site',
-        href: '#'
+        hrefTemplate: '/site/:id/view-availability'
       },
       {
         text: 'Create availability',
@@ -139,34 +139,47 @@ module.exports = {
       name: 'RSV Adult'
     }
   },
-  availability: {
-    1: {
+  availability: [
+    {
       site_id: 1,
       type: 'Weekly repeating',
-      services: ['COVID:5-11', 'COVID:12-17', 'COVID:18+', 'FLU:2-3', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+', 'RSV:ADULT'],
-      start_days_ago: 7, //so we don't have to keep updating dates
-      end_days_ahead: 28, //likewise. This availability is from 7 days ago to 28 days in the future
+      services: ['COVID:5-11', 'COVID:12-17', 'COVID:18+', 'FLU:2-3', 'FLU:18-64', 'FLU:65+'],
       days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-      slot_duration_minutes: 10,
-      start_time: '09:00',
-      end_time: '17:00',
-      break_start: '13:00',
-      break_end: '14:00',
-      appointments_per_slot: 1
-    },
-    2: {
-      site_id: 1,
-      type: 'Weekly repeating',
-      services: ['RSV:ADULT'],
-      start_days_ago: 7, //so we don't have to keep updating dates
-      end_days_ahead: 28, //likewise. This availability is from 7 days ago to 28 days in the future
-      days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-      slot_duration_minutes: 10,
-      start_time: '09:00',
-      end_time: '17:00',
-      break_start: '13:00',
-      break_end: '14:00',
-      appointments_per_slot: 1
+      duration: 10,
+      startTime: '09:00',
+      endTime: '17:00',
+      capacity: 1,
+      startDate: '2025-10-01',
+      endDate: '2025-12-31'
     }
-  }
+  ],
+  bookings: [
+    {
+      site_id: 1,
+      service: 'COVID:18+',
+      datetime: '2025-10-20T09:10',
+      name: 'Maureen Collingworth',
+      nhsNumber: '9000000076',
+      dob: '1986-04-19',
+      contact: {
+        phone: '07890 717189',
+        email: 'collingworthy@hotmail.com',
+        landline: '01903 987521'
+      },
+      status: 'scheduled'
+    }, {
+      site_id: 1,
+      service: 'COVID:5-11',
+      datetime: '2025-10-21T09:10',
+      name: 'Jol Kirby',
+      nhsNumber: '898729039',
+      dob: '2019-10-01',
+      contact: {
+        phone: '07890 717189',
+        email: 'collingworthy@hotmail.com',
+        landline: '01903 987521'
+      },
+      status: 'scheduled'
+    }
+  ]
 }

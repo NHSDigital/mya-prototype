@@ -26,7 +26,7 @@
           </tr>
         </thead>
         <tbody class="nhsuk-table__body">
-          {% for id, session in data.availability %}
+          {% for session in data.availability %}
           {% if session.site_id == site_id %}
 
           {% set shortDayNames = [] %}
@@ -42,8 +42,18 @@
             {% set niceServiceNames = niceServiceNames.concat(data.services[serviceId].name) %}
           {% endfor %}
 
+          {% set displayDate -%}
+            {% if session.singleDate %}
+              {{ session.singleDate | daysAhead | formatDate('d LLL yyyy') }}
+            {% elif session.startDate and session.endDate %}
+               {{ session.startDate | formatDate('d LLL yyyy') }} to {{ session.endDate | formatDate('d LLL yyyy') }}
+            {% else %}
+              {{ session.startDaysAgo | daysAgo | formatDate('d LLL yyyy') }} to {{ session.endDaysAhead | daysAhead | formatDate('d LLL yyyy') }}
+            {% endif %}
+          {%- endset %}
+
           <tr class="nhsuk-table__row">
-            <td class="nhsuk-table__cell">{{ session.start_days_ago | daysAgo | formatDate('d LLL yyyy') }} - {{ session.end_days_ahead | daysAhead | formatDate('d LLL yyyy') }}</td>
+            <td class="nhsuk-table__cell">{{ displayDate }}</td>
             <td class="nhsuk-table__cell">{{ niceDayName }}</td>
             <td class="nhsuk-table__cell">{{ niceServiceNames | list }}</td>
             <td class="nhsuk-table__cell">{{ session.type }}</td>
