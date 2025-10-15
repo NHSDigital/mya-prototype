@@ -120,6 +120,9 @@ function dayView({ availability = [], bookings = [] }, dayInput, { siteId = null
 
 /* ---------- week and month ---------- */
 
+//this function return this object:
+// { weekStart: DateTime, days: [ { date: DateTime, count: number, bookings: [booking] } ] }
+
 function weekView({ availability = [], bookings = [] }, weekStartInput, { siteId = null } = {}) {
   const weekStart = dt(weekStartInput)?.startOf("week"); // Monday
   if (!weekStart?.isValid) throw new Error("Invalid weekStart for weekView");
@@ -160,6 +163,16 @@ function monthView({ availability = [], bookings = [] }, year, month, { siteId =
 }
 
 /* ---------- weekly stats (simple) ---------- */
+
+//This is a simple function to get some stats for a week, given availability and bookings
+// It counts total possible slots, total booked, total unbooked, total cancelled
+// It also counts bookings per service (for services that had availability advertised in the week)
+// It can filter by siteId, and optionally include "orphan" bookings that didn't match any slot
+
+// Returns:
+// { weekStart: DateTime, weekEnd: DateTime,
+//   bookingsPerService: { [serviceId]: number },
+//   totalPossibleSlots: number, totalBooked: number, totalUnbooked: number, totalCancelled: number }
 
 function weekStats({ availability = [], bookings = [] }, weekStartInput, { siteId = null, includeOrphans = false } = {}) {
   const weekStart = dt(weekStartInput)?.startOf("week");

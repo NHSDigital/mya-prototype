@@ -6,6 +6,7 @@ const { flagsMiddleware } = require('./flags/flags-library')
 const { siteLevelMiddleware } = require('./middleware/site-level')
 const weeksInMonth = require("./helpers/weeksInMonth")
 const { monthView, weekView, weekStats } = require("./helpers/availabilityViews")
+const { getSlotsForDate } = require("./helpers/slots")
 
 router.use(flagsMiddleware())
 router.use(siteLevelMiddleware())
@@ -141,6 +142,34 @@ router.get('/site/:id/view-availability', (req, res) => {
   })
 })
 
+router.get('/site/:id/view-availability/day', (req, res) => {
+  const date = req.query.date ? Date.parse(req.query.date) : Date.now();
+  const { availability, bookings } = getAvailabilityAndBookings(req);
+  const siteId = req.site_id != null ? Number(req.site_id) : null;
+
+  const slots = getSlotsForDate(availability, bookings, date, siteId);
+
+  res.render('site/view-availability/day', {
+    date: date,
+    slots
+  });
+});
+
+router.get('/site/:id/view-availability/week', (req, res) => {
+  const dateInAnyWeek = req.query.date ? Date.parse(req.query.date) : Date.now();
+  const { availability, bookings } = getAvailabilityAndBookings(req);
+  const siteId = req.site_id != null ? Number(req.site_id) : null;
+
+  const weekModel = weekView({ availability, bookings }, dateInAnyWeek, { siteId });
+  const stats = weekStats({ availability, bookings }, weekModel.weekStart, { siteId, includeOrphans: true });
+
+  res.render('site/view-availability/week', {
+    weekModel,
+    stats
+  })
+});
+
 
 //end
 module.exports = router
+

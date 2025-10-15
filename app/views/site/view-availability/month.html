@@ -31,15 +31,6 @@
 
 {% block content %}
 
-{# try out just doing simple in the view #}
-
-  {% for week in weeks %}
-    <p>{{ week.start | formatDate }} to {{ week.end | formatDate }}</p>
-    {% for availability in data.availability %}
-  
-    {% endfor %}
-  {% endfor %}
-
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
 
@@ -88,8 +79,10 @@
               <p>No availability</p>
               {% endif %}
 
+              <p><a href="/site/{{ site_id }}/view-availability/week?date={{ week.weekStart | formatDate('yyyy-MM-dd') }}">View week</a></p>
             </div>
           </div>
+
         </li>
       {% endfor %}
       </ul>

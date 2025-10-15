@@ -1,0 +1,33 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = date | formatDate('EEEE, dd LLLL yyyy') %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id,
+  text: 'Back to dashboard'
+}) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+
+      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}{{ firstOfTheMonth }}</span>
+    
+
+      <table class="app-day-view">
+        <caption><h1 class="nhsuk-heading-l">{{ pageName }}</h1></caption>
+        <thead>
+          <tr>
+
+          </tr>
+        </thead>
+      </table>
+
+      {{ slots | prettyDump | safe }}
+
+    </div>  
+  </div>
+{% endblock %}

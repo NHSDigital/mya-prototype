@@ -151,6 +151,16 @@ module.exports = {
       capacity: 1,
       startDate: '2025-10-01',
       endDate: '2025-12-31'
+    },{
+      site_id: 1,
+      type: 'Single date',
+      services: ['FLU:65+'],
+      duration: 10,
+      startTime: '09:00',
+      endTime: '17:00',
+      capacity: 1,
+      startDate: '2025-10-01',
+      endDate: '2025-10-01'
     }
   ],
   bookings: [
