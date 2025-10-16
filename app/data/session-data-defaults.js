@@ -163,13 +163,13 @@ module.exports = {
       endDate: '2025-10-01'
     }
   ],
-  bookings: [
-    {
+  bookings: {
+    1: {
       site_id: 1,
       service: 'COVID:18+',
       datetime: '2025-10-20T09:10',
       name: 'Maureen Collingworth',
-      nhsNumber: '9000000076',
+      nhsNumber: '49000000076',
       dob: '1986-04-19',
       contact: {
         phone: '07890 717189',
@@ -177,12 +177,13 @@ module.exports = {
         landline: '01903 987521'
       },
       status: 'scheduled'
-    }, {
+    }, 
+    2: {
       site_id: 1,
       service: 'COVID:5-11',
-      datetime: '2025-10-21T09:10',
+      datetime: '2025-10-20T09:20',
       name: 'Jol Kirby',
-      nhsNumber: '898729039',
+      nhsNumber: '89872903945',
       dob: '2019-10-01',
       contact: {
         phone: '07890 717189',
@@ -190,6 +191,18 @@ module.exports = {
         landline: '01903 987521'
       },
       status: 'scheduled'
+    }, 
+    3: {
+      site_id: 1,
+      service: 'FLU:65+',
+      datetime: '2025-10-20T10:20',
+      name: 'Gazza Huges',
+      nhsNumber: '82937485038',
+      dob: '1958-03-20',
+      contact: {
+        phone: '07890 8378476'
+      },
+      status: 'cancelled'
     }
-  ]
+  }
 }

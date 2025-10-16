@@ -110,8 +110,8 @@ router.post('/site/:id/create-availability/process-new-session', (req, res) => {
 // Helper so we never crash if session data is missing
 function getAvailabilityAndBookings(req) {
   const data = (req.session && req.session.data) || {};
-  const availability = Array.isArray(data.availability) ? data.availability : [];
-  const bookings = Array.isArray(data.bookings) ? data.bookings : [];
+  const availability = data.availability;
+  const bookings = data.bookings;
   console.log('availability', availability);
   return { availability, bookings };
 }
@@ -151,7 +151,7 @@ router.get('/site/:id/view-availability/day', (req, res) => {
 
   res.render('site/view-availability/day', {
     date: date,
-    slots
+    allAppointments: slots
   });
 });
 

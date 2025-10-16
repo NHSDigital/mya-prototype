@@ -14,25 +14,23 @@ function parseDatetime(input) {
   return d.isValid ? d : DateTime.invalid("bad-input");
 }
 
-function isSlotBooked(slotStart, slotEnd, bookings, services, site_id = 1) {
+function isSlotBooked(slotStart, services, bookings, site_id = 1) {
+  
+  //return booking object if any booking has the same start time, site_id and at least one matching service
+  for (let id in bookings) {
+    
+    if (bookings[id].site_id !== site_id) continue;
+    if (!services.includes(bookings[id].service)) continue;
 
-  //calculate if a slot is booked based on existing bookings
-  return bookings.some(booking => {
-    if (booking.site_id !== site_id) return false; //different site
-
-    const bookingStart = DateTime.fromISO(booking.datetime);
-    console.log('bookingStart', bookingStart, 'slotStart', slotStart, 'match?', bookingStart.equals(slotStart));
-
-    //check if booking is for the same service
-    if (!services.includes(booking.service)) return false;
-
-    //check if booking overlaps with slot
-    return bookingStart.equals(slotStart)
-  });
-
+    const bookingStart = parseDatetime(bookings[id].datetime);
+    if (slotStart.diff(bookingStart).milliseconds !== 0) continue;
+    return Number(id);
+  }
+  return false;
 }
 
 function getSlotsForDate(availability, bookings, date, site_id = 1) {
+  console.log('bookings', bookings);
   date = parseDatetime(date);
 
   //filter availability for this site
@@ -40,8 +38,13 @@ function getSlotsForDate(availability, bookings, date, site_id = 1) {
 
   //build slots for this date
   const slots = [];
+  let scheduledCount = 0;
+  let cancelledCount = 0;
+  let orphanedCount = 0;
+
   siteAvailability.forEach(availability => {
     //check if this availability applies to this date
+    
     const startDate = DateTime.fromISO(availability.startDate);
     const endDate = DateTime.fromISO(availability.endDate);
     if (date < startDate || date > endDate) return; //not in range
@@ -65,8 +68,10 @@ function getSlotsForDate(availability, bookings, date, site_id = 1) {
       const slotStart = startDateTime.plus({ minutes: i * step });
       const slotEnd = slotStart.plus({ minutes: step });
 
-      const bookingInfo = false;
-      const isBooked = isSlotBooked(slotStart, slotEnd, bookings, availability.services, site_id);
+      const appointment_id = isSlotBooked(slotStart, availability.services, bookings, site_id);
+      if (appointment_id !== false && bookings[appointment_id].status === 'scheduled') scheduledCount++;
+      if (appointment_id !== false && bookings[appointment_id].status === 'cancelled') cancelledCount++;
+      if (appointment_id !== false && bookings[appointment_id].status === 'orphaned') orphanedCount++;
 
       slots.push({
         start: slotStart,
@@ -74,13 +79,22 @@ function getSlotsForDate(availability, bookings, date, site_id = 1) {
         onTheHour: slotStart.minute === 0,
         services: availability.services,
         capacity: availability.capacity,
-        booked: isSlotBooked(slotStart, slotEnd, bookings, availability.services, site_id)
+        appointment_id: appointment_id
       });
     }
 
   });
 
-  return slots;
+  const slotObject = {
+    scheduled: scheduledCount,
+    cancelled: cancelledCount,
+    orphaned: orphanedCount,
+    total: slots.length,
+    available: slots.length - scheduledCount,
+    slots: slots
+  }
+
+  return slotObject;
 }
 
 module.exports = { getSlotsForDate };

@@ -15,18 +15,97 @@
     <div class="nhsuk-grid-column-full">
 
       <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}{{ firstOfTheMonth }}</span>
-    
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
-      <table class="app-day-view">
-        <caption><h1 class="nhsuk-heading-l">{{ pageName }}</h1></caption>
-        <thead>
-          <tr>
+      {% macro appointments(opts) %}
+        <h2 class="nhsuk-heading-m">{{ opts.title }}</h2>
+        {% if allAppointments[opts.status] > 0 %}
+        {{ insetText({
+            text: '2 booked appointments are affected due to an edit to your availability. These bookings are still scheduled until you click "Cancel".'
+          }) if opts.showOrphanNote }}
+        <table class="nhsuk-table-responsive" role="table">
+          <thead class="nhsuk-table__head" role="rowgroup">
+            <tr>
+              <th scope="col" class="nhsuk-table__header">Time</th>
+              <th scope="col" class="nhsuk-table__header">Name and NHS number</th>
+              <th scope="col" class="nhsuk-table__header">Date of birth</th>
+              <th scope="col" class="nhsuk-table__header">Contact details</th>
+              <th scope="col" class="nhsuk-table__header">Services</th>
+              {% if opts.canCancel %}
+              <th scope="col" class="nhsuk-table__header">Action</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody class="nhsuk-table__body">
+            {% for slot in opts.allAppointments.slots %}
+            {% if data.bookings[slot.appointment_id].status == opts.status %}
+            <tr class="nhsuk-table__row" role="row">
+              <td class="nhsuk-table__cell">{{ data.bookings[slot.appointment_id].datetime | formatDate('h:mm a') | lower }}</td>
+              <td class="nhsuk-table__cell">{{ data.bookings[slot.appointment_id].name }}<br>{{ data.bookings[slot.appointment_id].nhsNumber | nhsNumber | safe }}</td>
+              <td class="nhsuk-table__cell">{{ data.bookings[slot.appointment_id].dob | formatDate }}</td>
+              <td class="nhsuk-table__cell nhsuk-u-text-break-word">
+                {% for key, value in data.bookings[slot.appointment_id].contact %}
+                  {% if key !== 'phone' -%}
+                    <p class="nhsuk-body-s nhsuk-u-margin-bottom-0">{{ value }}</p>
+                  {% else %}
+                    <p class="nhsuk-body nhsuk-u-margin-bottom-0">{{ value }}</p>
+                  {% endif %}
+                {% endfor %}
+              </td>
+              <td class="nhsuk-table__cell">{{ data.services[data.bookings[slot.appointment_id].service].name }}</td>
+              {% if opts.canCancel %}
+              <td class="nhsuk-table__cell"><a href="/sites/{{ site_id }}/cancel-appointment/{{ slot.appointment_id }}">Cancel</a></td>
+              {% endif %}
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p>No {{ opts.title | lower }}</p>
+        {% endif %}
+      {% endmacro %}
 
-          </tr>
-        </thead>
-      </table>
-
-      {{ slots | prettyDump | safe }}
+      {{ tabs({ 
+        items: [ 
+        { 
+          label: "Scheduled", 
+          id: "scheduled", 
+          panel: { 
+            html: appointments({
+              allAppointments: allAppointments,
+              status: 'scheduled', 
+              title: 'Scheduled appointments',
+              canCancel: true
+            }) 
+          } 
+        }, 
+        { 
+          label: "Cancelled", 
+          id: "cancelled", 
+            panel: { 
+              html: appointments({
+                allAppointments: allAppointments, 
+                status: 'cancelled', 
+                title: 'Cancelled appointments'
+              }) 
+            } 
+          }, 
+          { 
+            label: "Manual Cancellations", 
+            id: "manual-cancellations", 
+            panel: { 
+              html: appointments({
+                allAppointments: allAppointments, 
+                status: 'orphaned', 
+                title: 'Appointments you must manually cancel',
+                showOrphanNote: true,
+                canCancel: true
+              }) 
+            } 
+          }
+        ] 
+      }) }}
 
     </div>  
   </div>
