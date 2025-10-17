@@ -20,8 +20,11 @@
       {% macro appointments(opts) %}
         <h2 class="nhsuk-heading-m">{{ opts.title }}</h2>
         {% if allAppointments[opts.status] > 0 %}
+        {% set isAre = 'is' if opts.allAppointments.orphaned == 1 else 'are' %}
+        {% set appointmentAppointments = 'appointment' if opts.allAppointments.orphaned == 1 else 'appointments' %}
+        {% set itThem = 'it' if opts.allAppointments.orphaned == 1 else 'them' %}
         {{ insetText({
-            text: '2 booked appointments are affected due to an edit to your availability. These bookings are still scheduled until you click "Cancel".'
+            text: opts.allAppointments.orphaned ~ ' booked '~ appointmentAppointments ~' '~ isAre ~' still scheduled until you cancel '~ itThem ~'.'
           }) if opts.showOrphanNote }}
         <table class="nhsuk-table-responsive" role="table">
           <thead class="nhsuk-table__head" role="rowgroup">

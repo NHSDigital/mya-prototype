@@ -7,6 +7,8 @@ const { siteLevelMiddleware } = require('./middleware/site-level')
 const weeksInMonth = require("./helpers/weeksInMonth")
 const { monthView, weekView, weekStats } = require("./helpers/availabilityViews")
 const { getSlotsForDate } = require("./helpers/slots")
+const { slotsForDay } = require("./helpers/day")
+const { DateTime } = require('luxon');
 
 router.use(flagsMiddleware())
 router.use(siteLevelMiddleware())
@@ -112,7 +114,6 @@ function getAvailabilityAndBookings(req) {
   const data = (req.session && req.session.data) || {};
   const availability = data.availability;
   const bookings = data.bookings;
-  console.log('availability', availability);
   return { availability, bookings };
 }
 
@@ -142,18 +143,33 @@ router.get('/site/:id/view-availability', (req, res) => {
   })
 })
 
+// router.get('/site/:id/view-availability/day', (req, res) => {
+//   const date = req.query.date ? Date.parse(req.query.date) : Date.now();
+//   const { availability, bookings } = getAvailabilityAndBookings(req);
+//   const siteId = req.site_id != null ? Number(req.site_id) : null;
+
+//   const slots = getSlotsForDate(availability, bookings, date, siteId);
+
+//   res.render('site/view-availability/day', {
+//     date: date,
+//     allAppointments: slots
+//   });
+// });
+
 router.get('/site/:id/view-availability/day', (req, res) => {
-  const date = req.query.date ? Date.parse(req.query.date) : Date.now();
-  const { availability, bookings } = getAvailabilityAndBookings(req);
-  const siteId = req.site_id != null ? Number(req.site_id) : null;
+  
+  //get datetime `yyyy-mm-dd` from url or today
+  const date = req.query.date ? req.query.date : DateTime.now().toFormat("yyyy-MM-dd");
+  const site_id = req.site_id != null ? Number(req.site_id) : null;
+  const daily_availability = req.session.data.daily_availability;
+  const bookings = req.session.data.bookings;
 
-  const slots = getSlotsForDate(availability, bookings, date, siteId);
+  const single_day_availability = daily_availability[date]
+  console.log(date)
 
-  res.render('site/view-availability/day', {
-    date: date,
-    allAppointments: slots
-  });
+  res.json(slotsForDay(single_day_availability, bookings, site_id));
 });
+
 
 router.get('/site/:id/view-availability/week', (req, res) => {
   const dateInAnyWeek = req.query.date ? Date.parse(req.query.date) : Date.now();

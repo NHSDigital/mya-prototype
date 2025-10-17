@@ -139,6 +139,28 @@ module.exports = {
       name: 'RSV Adult'
     }
   },
+  daily_availability: {
+    '2025-10-20': {
+      date: '2025-10-20',
+      site_id: 1,
+      sessions: [
+        {
+          from: '11:00',
+          until: '16:00',
+          services: ['COVID:18+', 'FLU:2-3', 'FLU:18-64', 'FLU:65+'],
+          slotLength: 10,
+          capacity: 1
+        }, 
+        {
+          from: '12:00',
+          until: '14:00',
+          services: ['RSV:Adult'],
+          slotLength: 20,
+          capacity: 1
+        }
+      ]
+    }
+  },
   availability: [
     {
       site_id: 1,
@@ -168,26 +190,26 @@ module.exports = {
       site_id: 1,
       service: 'COVID:18+',
       datetime: '2025-10-20T09:10',
-      name: 'Maureen Collingworth',
+      name: 'Kenny Carpets',
       nhsNumber: '49000000076',
       dob: '1986-04-19',
       contact: {
         phone: '07890 717189',
-        email: 'collingworthy@hotmail.com',
+        email: 'carpets@hotmail.com',
         landline: '01903 987521'
       },
       status: 'scheduled'
     }, 
     2: {
-      site_id: 1,
+      site_id: 2,
       service: 'COVID:5-11',
       datetime: '2025-10-20T09:20',
-      name: 'Jol Kirby',
+      name: 'Ken Tussle',
       nhsNumber: '89872903945',
       dob: '2019-10-01',
       contact: {
         phone: '07890 717189',
-        email: 'collingworthy@hotmail.com',
+        email: 'tusslewithkenny19@gmail.com',
         landline: '01903 987521'
       },
       status: 'scheduled'
@@ -196,13 +218,37 @@ module.exports = {
       site_id: 1,
       service: 'FLU:65+',
       datetime: '2025-10-20T10:20',
-      name: 'Gazza Huges',
+      name: 'Ken Lump',
       nhsNumber: '82937485038',
       dob: '1958-03-20',
       contact: {
         phone: '07890 8378476'
       },
       status: 'cancelled'
+    },
+    4: {
+      site_id: 1,
+      service: 'FLU:18-64',
+      datetime: '2025-10-20T11:30',
+      name: 'Mary Downbyyourside',
+      nhsNumber: '9273048279',
+      dob: '1993-04-11',
+      contact: {
+        email: 'mazza1993@gcloud.net'
+      },
+      status: 'orphaned'
+    },
+    5: {
+      site_id: 1,
+      service: 'FLU:18-64',
+      datetime: '2025-10-20T11:40',
+      name: 'Ron Paving',
+      nhsNumber: '8263997304',
+      dob: '1996-09-24',
+      contact: {
+        phone: '07838 9478923'
+      },
+      status: 'orphaned'
     }
   }
 }
