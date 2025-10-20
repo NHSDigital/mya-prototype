@@ -69,16 +69,6 @@
               text: "Sunday",
               exclusiveGroup: "individual-days",
               checked: true if "Sunday" in (data.newSession.days or [])
-            },
-            {
-              divider: "or"
-            },
-            {
-              value: "All",
-              text: "All days in the week",
-              exclusive: true,
-              exclusiveGroup: "individual-days",
-              checked: true if "All" in (data.newSession.days or [])
             }
           ]
         }) }}

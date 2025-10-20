@@ -1,4 +1,3 @@
-// weeksInMonth.js
 const { DateTime } = require("luxon");
 
 /**
@@ -9,7 +8,7 @@ const { DateTime } = require("luxon");
  * @param {number} weekStart - Weekday number (1=Monday, 7=Sunday)
  * @returns {Array<{ start: DateTime, end: DateTime, days: Array }>}
  */
-module.exports = function weeksInMonth(month, year, weekStart = 1) {
+const weeksInMonth = (month, year, weekStart = 1) => {
   const start = DateTime.local(year, month, 1);
   const end = start.endOf("month");
 
@@ -21,7 +20,6 @@ module.exports = function weeksInMonth(month, year, weekStart = 1) {
   }
 
   const weeks = [];
-
 
   // step week-by-week until we've passed the end of the month
   while (cursor <= end) {
@@ -43,3 +41,25 @@ module.exports = function weeksInMonth(month, year, weekStart = 1) {
 
   return weeks;
 }
+
+/**
+ * Return all days in the week containing the given date.
+ *
+ * @param {string} date - ISO date string
+ * @param {number} weekStart - Weekday number (1=Monday, 7=Sunday), default 1 (Monday)
+ * @returns {Array<DateTime>}
+ */
+const daysInWeek = (date) => {
+  const dt = DateTime.fromISO(date);
+  const weekStart = dt.startOf("week").set({ weekday: 1 }); // Monday
+  const days = [];
+  for (let d = weekStart; d < weekStart.plus({ days: 7 }); d = d.plus({ days: 1 })) {
+    days.push(d.toISODate());
+  }
+  return days;
+}
+
+module.exports = {
+  weeksInMonth,
+  daysInWeek
+};

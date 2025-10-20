@@ -145,7 +145,7 @@ module.exports = {
       site_id: 1,
       sessions: [
         {
-          from: '11:00',
+          from: '09:00',
           until: '16:00',
           services: ['COVID:18+', 'FLU:2-3', 'FLU:18-64', 'FLU:65+'],
           slotLength: 10,

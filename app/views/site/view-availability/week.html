@@ -1,6 +1,6 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = "View availability for week" %}
+{% set pageName = monday | formatDate('EEEE, d LLLL') ~ ' - ' ~ sunday | formatDate('EEEE, d LLLL') %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -16,24 +16,62 @@
       <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}{{ firstOfTheMonth }}</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
-      <h2>Week model</h2>
-      {{ weekModel | prettyDump | safe }}
-      <h2>Stats</h2>
-      {{ stats | prettyDump | safe }}
-
       <ul class="nhsuk-grid-row nhsuk-card-group">
-      {% for day in weekModel.days %}
+      {% for day in weekDays %}
         <li class="nhsuk-grid-column-full nhsuk-card-group__item">
           <div class="nhsuk-card">
             <div class="nhsuk-card__content">
               <h2 class="nhsuk-card__heading nhsuk-heading-m">{{ day.date | formatDate('EEEE, d LLLL') }}</h2>
+              {% if day.sessions %}
 
+              {# calculate sessions #}
+              
+
+                <table class="nhsuk-table-responsive" role="table">
+                  <thead class="nhsuk-table__head" role="rowgroup">
+                    <tr>
+                      <th scope="col" class="nhsuk-table__header">Time</th>
+                      <th scope="col" class="nhsuk-table__header">Services</th>
+                      <th scope="col" class="nhsuk-table__header">Booked</th>
+                      <th scope="col" class="nhsuk-table__header">Unbooked</th>
+                    </tr>
+                  </thead>
+                  <tbody class="nhsuk-table__body">
+                    {% for availability_date, availability in data.daily_availability %}
+                    {% if availability_date == day.date | formatDate('yyyy-MM-dd') %}
+                    {% for session in availability.sessions %}
+                      {% set hideTime = false %}
+                      {% for i in range(0, session.services | length) %}
+                        <tr class="nhsuk-table__row" role="row">
+                          <td class="nhsuk-table__cell">
+                            {% if hideTime %}<span class="nhsuk-u-visually-hidden">{{ session.from | formatDate('h:mm a') | lower }} to {{ session.until | formatDate('h:mm a') | lower }}</span>
+                            {% else %}{{ session.from | formatDate('h:mm a') | lower }} to {{ session.until | formatDate('h:mm a') | lower }}{% endif %}
+                          </td>
+                          <td class="nhsuk-table__cell">{{ session.services[i] }}</td>
+                          <td class="nhsuk-table__cell">0</td>
+                          <td class="nhsuk-table__cell">0</td>
+                        </tr>
+                        {% set hideTime = true %}
+                      {% endfor %}
+                    {% endfor %}
+                    {% endif %}
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+              <p>No sessions.</p>
+              {% endif %}
+
+              <p><a href="/site/{{ site_id }}/view-availability/day?date={{ day.date }}">View daily appointments</a></p>
 
             </div>
           </div>
         </li>
       {% endfor %}
       </ul>
+
+      <h2>Week model</h2>
+      {{ weekDays | prettyDump | safe }}
 
     </div>
   </div>
