@@ -134,28 +134,84 @@ module.exports = {
       id: 'COVID_FLU:65+',
       name: 'COVID & Flu 65+'
     },
-    'RSV:ADULT': {
-      id: 'RSV:ADULT',
+    'RSV:Adult': {
+      id: 'RSV:Adult',
       name: 'RSV Adult'
     }
   },
   daily_availability: {
-    '2025-10-20': {
-      date: '2025-10-20',
+    '2025-10-13': {
+      date: '2025-10-13',
       site_id: 1,
       sessions: [
         {
-          from: '09:00',
-          until: '16:00',
-          services: ['COVID:18+', 'FLU:2-3', 'FLU:18-64', 'FLU:65+'],
+          from: '09:30',
+          until: '13:00',
+          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
           slotLength: 10,
           capacity: 1
-        }, 
+        }, {
+          from: '14:00',
+          until: '17:00',
+          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
+          slotLength: 10,
+          capacity: 1
+        }
+      ]
+    },
+    '2025-10-14': {
+      date: '2025-10-14',
+      site_id: 1,
+      sessions: [
         {
-          from: '12:00',
-          until: '14:00',
-          services: ['RSV:Adult'],
-          slotLength: 20,
+          from: '09:30',
+          until: '13:00',
+          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
+          slotLength: 10,
+          capacity: 1
+        }, {
+          from: '14:00',
+          until: '17:00',
+          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
+          slotLength: 10,
+          capacity: 1
+        }
+      ]
+    },
+    '2025-10-15': {
+      date: '2025-10-15',
+      site_id: 1,
+      sessions: [
+        {
+          from: '09:30',
+          until: '13:00',
+          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
+          slotLength: 10,
+          capacity: 1
+        }, {
+          from: '14:00',
+          until: '17:00',
+          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
+          slotLength: 10,
+          capacity: 1
+        }
+      ]
+    },
+    '2025-10-16': {
+      date: '2025-10-16',
+      site_id: 1,
+      sessions: [
+        {
+          from: '09:30',
+          until: '13:00',
+          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
+          slotLength: 10,
+          capacity: 1
+        }, {
+          from: '14:00',
+          until: '17:00',
+          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
+          slotLength: 10,
           capacity: 1
         }
       ]
@@ -249,6 +305,18 @@ module.exports = {
         phone: '07838 9478923'
       },
       status: 'orphaned'
+    },
+    6: {
+      site_id: 1,
+      service: 'RSV:Adult',
+      datetime: '2025-10-20T12:20',
+      name: 'Angela Ding-Dong',
+      nhsNumber: '9238475623',
+      dob: '1988-12-01',
+      contact: {
+        phone: '07900 123456'
+      },
+      status: 'scheduled'
     }
   }
 }

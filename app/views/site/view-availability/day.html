@@ -17,8 +17,6 @@
       <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
-       {{ sessions | prettyDump | safe }}
-
       {% macro orphanNote(count) -%}
         {% set isAre = 'is' if count == 1 else 'are' %}
         {% set appointmentAppointments = 'appointment' if count == 1 else 'appointments' %}
@@ -28,7 +26,7 @@
 
       {% macro appointmentForToday(opts) %}
         <h2 class="nhsuk-heading-m">{{ opts.title }} {{ opts.status }}</h2>
-        {% if sessions[opts.status] > 0 %}
+        {% if sessions[opts.status~'Count'] > 0 %}
         {{ insetText({
           text: orphanNote(opts.slots.orphanedCount)
         }) if opts.showOrphanNote }}
@@ -118,6 +116,8 @@
           }
         ] 
       }) }}
+
+             {{ sessions | prettyDump | safe }}
 
     </div>  
   </div>

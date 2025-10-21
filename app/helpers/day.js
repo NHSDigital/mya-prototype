@@ -32,7 +32,7 @@ function isSlotBooked(slotStart, services, bookings, site_id = 1) {
   
   //return booking object if any booking has the same start time, site_id and at least one matching service
   for (let id in bookings) {
-    
+
     if (bookings[id].site_id !== site_id) continue;
     if (!services.includes(bookings[id].service)) continue;
 
@@ -65,8 +65,13 @@ function slotsForDay(single_day_availability, bookings, site_id, sortBy = 'datet
   const counts = {
     scheduledCount: 0,
     cancelledCount: 0,
-    orphanedCount: 0
+    orphanedCount: 0,
+    totalSlots: 0,
+    countsPerService: []
   }
+
+  //hold booking IDs already processed
+  const processedBookingIds = [];
 
   //convert each session for today into a slots object
   for(const session of single_day_availability.sessions) {
@@ -84,6 +89,8 @@ function slotsForDay(single_day_availability, bookings, site_id, sortBy = 'datet
     const step = parseInt(session.slotLength, 10) || 10;
     const totalSlots = Math.floor(totalMins / step);
 
+    console.log('total Slots', totalSlots);
+
     //build each slot
     for (let i = 0; i < totalSlots; i++) {
 
@@ -92,20 +99,47 @@ function slotsForDay(single_day_availability, bookings, site_id, sortBy = 'datet
 
       //check if this slot is booked
       const appointment_id = isSlotBooked(slotStart, session.services, bookings, site_id);
-      if (appointment_id !== false && bookings[appointment_id].status === 'scheduled') counts.scheduledCount++;
-      if (appointment_id !== false && bookings[appointment_id].status === 'cancelled') counts.cancelledCount++;
-      if (appointment_id !== false && bookings[appointment_id].status === 'orphaned') counts.orphanedCount++;
+      if (appointment_id !== false && !processedBookingIds.includes(appointment_id)) {
+        processedBookingIds.push(appointment_id);
+        if (appointment_id !== false && bookings[appointment_id].status === 'scheduled') counts.scheduledCount++;
+        if (appointment_id !== false && bookings[appointment_id].status === 'cancelled') counts.cancelledCount++;
+        if (appointment_id !== false && bookings[appointment_id].status === 'orphaned') counts.orphanedCount++;
+      }
+      
 
+      //calculate counts per service
+      for (const service of session.services) {
+        //find or create service count object
+        let serviceCount = counts.countsPerService.find(c => c.service === service);
+        if (!serviceCount) {
+          serviceCount = { service: service, scheduledCount: 0, cancelledCount: 0, orphanedCount: 0, totalServicesSlots: 0 };
+          counts.countsPerService.push(serviceCount);
+        }
+        //update counts
+        if (appointment_id !== false && bookings[appointment_id].service === service && !processedBookingIds.includes(appointment_id)) {
+          if (bookings[appointment_id].status === 'scheduled') serviceCount.scheduledCount++;
+          if (bookings[appointment_id].status === 'cancelled') serviceCount.cancelledCount++;
+          if (bookings[appointment_id].status === 'orphaned') serviceCount.orphanedCount++;
+        }
+        serviceCount.totalServicesSlots++;
+      }
+
+      //add slot to slots array
       slots.push({
         from: slotStart,
         until: slotEnd,
         service: session.services,
         capacity: session.capacity,
-        appointment_id: appointment_id
+        appointment_id: processedBookingIds.includes(appointment_id) ? appointment_id : false
       })
     }
 
+    //update total slots count
+    counts.totalSlots = counts.totalSlots + totalSlots;
+
   }
+
+  
 
   //order slots by date ascending
   if (sortBy === 'datetime') {
