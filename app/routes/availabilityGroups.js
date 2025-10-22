@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
+const { availabilityGroups } = require('../helpers/availabilityGroups');
+
 router.param('id', (req, res, next, id) => {
   req.site_id = id;
   res.locals.site_id = id;
@@ -14,7 +16,9 @@ router.use((req, res, next) => {
 });
 
 router.get('/site/:id/view-availability', (req, res) => {
-  res.render('availabilityGroups/availability')
+  res.render('availabilityGroups/availability', {
+    availabilityGroups: availabilityGroups(req.session.data.daily_availability)
+  });
 });
 
 module.exports = router;

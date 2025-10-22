@@ -46,39 +46,19 @@
           </tr>
         </thead>
         <tbody class="nhsuk-table__body">
+          {% for group in availabilityGroups %}
           <tr class="nhsuk-table__row" role="row">
-            <td class="nhsuk-table__cell" role="cell">6 October to 21 October 2025</td>
-            <td class="nhsuk-table__cell" role="cell">10am to 11:30am</td>
-            <td class="nhsuk-table__cell" role="cell">Mondays, Tuesdays, and Wednesdays</td>
-            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
-            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
+            <td class="nhsuk-table__cell" role="cell">{{ group.dates[0] | formatDate }} to {{ group.dates[-1] | formatDate }}</td>
+            <td class="nhsuk-table__cell" role="cell">{{ group.session.from | formatDate('h:mma') | lower }} to {{ group.session.until | formatDate('h:mma') | lower }}</td>
+            <td class="nhsuk-table__cell" role="cell">{% for day, count in group.weekdaySummary %}{% if count > 0 %}{{ count }}x {{ day }}{% if not loop.last %}<br>{% endif %}{% endif %}{% endfor %}</td>
+            <td class="nhsuk-table__cell" role="cell">{% for service in group.session.services %}{{ data.services[service].name }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+            <td class="nhsuk-table__cell" role="cell">{{ group.session.slotLength }} minute appointments<br>{{ group.session.capacity }} vaccinator{% if group.session.capacity > 1 %}s{% endif %}</td>
             <td class="nhsuk-table__cell" role="cell">
               <a class="nhsuk-link" href="#">Edit</a><br>
               <a class="nhsuk-link" href="#">Delete</a>
             </td>
           </tr>
-          <tr class="nhsuk-table__row" role="row">
-            <td class="nhsuk-table__cell" role="cell">6 October to 21 October 2025</td>
-            <td class="nhsuk-table__cell" role="cell">3pm to 5:30pm</td>
-            <td class="nhsuk-table__cell" role="cell">Mondays and Tuesdays</td>
-            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
-            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
-            <td class="nhsuk-table__cell" role="cell">
-              <a class="nhsuk-link" href="#">Edit</a><br>
-              <a class="nhsuk-link" href="#">Delete</a>
-            </td>
-          </tr>
-          <tr class="nhsuk-table__row" role="row">
-            <td class="nhsuk-table__cell" role="cell">8 October to 31 October 2025</td>
-            <td class="nhsuk-table__cell" role="cell">9:15am to 12pm</td>
-            <td class="nhsuk-table__cell" role="cell">Wednesdays and Fridays</td>
-            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
-            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
-            <td class="nhsuk-table__cell" role="cell">
-              <a class="nhsuk-link" href="#">Edit</a><br>
-              <a class="nhsuk-link" href="#">Delete</a>
-            </td>
-          </tr>
+          {% endfor %}
         </tbody>
       </table>
 
