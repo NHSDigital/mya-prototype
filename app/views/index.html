@@ -1,20 +1,22 @@
-{% extends 'layouts/layout.html' %}
+{% extends 'layouts/hero.html' %}
 {% set pageName = "Manage Your Appointments Prototype Homepage" %}
+
+{% block heroContent %}
+  <h1 class="nhsuk-heading-xl nhsuk-u-margin-bottom-2">Manage Your Appointments</h1>
+  <p class="nhsuk-body-l">Manage Your Appointments (MYA) is a service to help vaccinators create and manage availability which can be booked on the National Booking Service (NBS).</p>
+{% endblock %}
 
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
 
-      <h1 class="nhsuk-heading-xl">{{ serviceName }}</h1>
 
-      <p>Feature flags</p>
-      <ul class="nhsuk-list nhsuk-list--bullet">
-        {% for key, value in features %}
-          <li>{{ key }}: {{ value }}</li>
-        {% endfor %}
-      </ul>
-
-      <a href="/login" class="nhsuk-button">Start</a>
+      <h2 class="nhsuk-heading-l nhsuk-u-margin-top-5">Get started</h2>
+      <p class="nhsuk-body">Start managing appointments by logging in as a vaccinator.</p>
+      {{ actionLink({
+        text: "Log in as vaccinator",
+        href: "/login"
+      }) }}
 
     </div>
   </div>
