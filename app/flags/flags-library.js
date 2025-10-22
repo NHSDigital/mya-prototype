@@ -80,15 +80,6 @@ const flagsMiddleware = () => {
   return (req, res, next) => {
     const flags = buildFlags(req);
 
-    //output to console for debugging
-    console.log(
-      '\x1b[33m%s\x1b[0m',
-      'Prototype feature flags:',
-      '\x1b[32m',
-      JSON.stringify(flags, null, 2),
-      '\x1b[0m'
-    );
-
     //attach flags to req to use in routes
     req.features = flags;
 

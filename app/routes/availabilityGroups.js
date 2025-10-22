@@ -7,6 +7,12 @@ router.param('id', (req, res, next, id) => {
   next();
 });
 
+// skip this router entirely when flag is off
+router.use((req, res, next) => {
+  if (req.features && req.features.availabilityGroups) return next();
+  return next('router'); // fall through to next mounted router
+});
+
 router.get('/site/:id/view-availability', (req, res) => {
   res.render('availabilityGroups/availability')
 });

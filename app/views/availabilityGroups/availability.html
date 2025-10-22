@@ -1,1 +1,152 @@
 {% extends '../layouts/layout.html' %}
+
+{% set pageName = 'All availability - ' ~ data.sites[site_id].name %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id,
+  text: 'Back to dashboard'
+}) }}
+{% endblock %}
+
+{% block content %}
+
+<div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+
+      <nav class="app-sub-navigation" aria-label="Availability navigation">
+        <ul class="app-sub-navigation__list">
+          <li class="app-sub-navigation__item">
+            <a class="app-sub-navigation__link" aria-current="page" href="/site/{{ site_id }}/availability">All <span class="nhsuk-u-visually-hidden">availability</span></a>
+          </li>
+          <li class="app-sub-navigation__item">
+            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/view-availability/day">Today's availability</a>
+          </li>
+          <li class="app-sub-navigation__item">
+            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/view-availability/week">Week <span class="nhsuk-u-visually-hidden">availability</span></a>
+          </li>
+          <li class="app-sub-navigation__item app-sub-navigation__item--primary">
+            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/create-availability/type-of-session">Add availability</a>
+        </ul>
+      </nav>
+
+      <span class="nhsuk-caption-xl">{{ data.sites[site_id].name }}</span>
+      <h1 class="nhsuk-heading-xl">All availability</h1>
+
+      <table class="nhsuk-table-responsive" role="table">
+        <caption class="nhsuk-table__caption nhsuk-table__caption--l">Repeating availability</caption>
+        <thead class="nhsuk-table__head" role="rowgroup">
+          <tr role="row">
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Dates</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Days in this group</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Capacity</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="nhsuk-table__body">
+          <tr class="nhsuk-table__row" role="row">
+            <td class="nhsuk-table__cell" role="cell">6 October to 21 October 2025</td>
+            <td class="nhsuk-table__cell" role="cell">10am to 11:30am</td>
+            <td class="nhsuk-table__cell" role="cell">Mondays, Tuesdays, and Wednesdays</td>
+            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
+            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
+            <td class="nhsuk-table__cell" role="cell">
+              <a class="nhsuk-link" href="#">Edit</a><br>
+              <a class="nhsuk-link" href="#">Delete</a>
+            </td>
+          </tr>
+          <tr class="nhsuk-table__row" role="row">
+            <td class="nhsuk-table__cell" role="cell">6 October to 21 October 2025</td>
+            <td class="nhsuk-table__cell" role="cell">3pm to 5:30pm</td>
+            <td class="nhsuk-table__cell" role="cell">Mondays and Tuesdays</td>
+            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
+            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
+            <td class="nhsuk-table__cell" role="cell">
+              <a class="nhsuk-link" href="#">Edit</a><br>
+              <a class="nhsuk-link" href="#">Delete</a>
+            </td>
+          </tr>
+          <tr class="nhsuk-table__row" role="row">
+            <td class="nhsuk-table__cell" role="cell">8 October to 31 October 2025</td>
+            <td class="nhsuk-table__cell" role="cell">9:15am to 12pm</td>
+            <td class="nhsuk-table__cell" role="cell">Wednesdays and Fridays</td>
+            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
+            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
+            <td class="nhsuk-table__cell" role="cell">
+              <a class="nhsuk-link" href="#">Edit</a><br>
+              <a class="nhsuk-link" href="#">Delete</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="nhsuk-table-responsive" role="table">
+        <caption class="nhsuk-table__caption nhsuk-table__caption--l">Single day availability</caption>
+        <thead class="nhsuk-table__head" role="rowgroup">
+          <tr role="row">
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Day</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Capacity</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="nhsuk-table__body">
+          <tr class="nhsuk-table__row" role="row">
+            <td class="nhsuk-table__cell" role="cell">Wednesday, 1 October 2025</td>
+            <td class="nhsuk-table__cell" role="cell">9:15am to 11:15am</td>
+            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
+            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
+            <td class="nhsuk-table__cell" role="cell">
+              <a class="nhsuk-link" href="#">Edit</a><br>
+              <a class="nhsuk-link" href="#">Delete</a>
+            </td>
+          </tr>
+          <tr class="nhsuk-table__row" role="row">
+            <td class="nhsuk-table__cell" role="cell">Wednesday, 1 October 2025</td>
+            <td class="nhsuk-table__cell" role="cell">4pm to 5:45pm</td>
+            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
+            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
+            <td class="nhsuk-table__cell" role="cell">
+              <a class="nhsuk-link" href="#">Edit</a><br>
+              <a class="nhsuk-link" href="#">Delete</a>
+            </td>
+          </tr>
+          <tr class="nhsuk-table__row" role="row">
+            <td class="nhsuk-table__cell" role="cell">Friday, 3 October 2025</td>
+            <td class="nhsuk-table__cell" role="cell">9:15am to 11:45am</td>
+            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
+            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
+            <td class="nhsuk-table__cell" role="cell">
+              <a class="nhsuk-link" href="#">Edit</a><br>
+              <a class="nhsuk-link" href="#">Delete</a>
+            </td>
+          </tr>
+          <tr class="nhsuk-table__row" role="row">
+            <td class="nhsuk-table__cell" role="cell">Saturday, 4 October 2025</td>
+            <td class="nhsuk-table__cell" role="cell">9am to 1pm</td>
+            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
+            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
+            <td class="nhsuk-table__cell" role="cell">
+              <a class="nhsuk-link" href="#">Edit</a><br>
+              <a class="nhsuk-link" href="#">Delete</a>
+            </td>
+          </tr>
+          <tr class="nhsuk-table__row" role="row">
+            <td class="nhsuk-table__cell" role="cell">Sunday, 5 October 2025</td>
+            <td class="nhsuk-table__cell" role="cell">11am to 12pm</td>
+            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
+            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
+            <td class="nhsuk-table__cell" role="cell">
+              <a class="nhsuk-link" href="#">Edit</a><br>
+              <a class="nhsuk-link" href="#">Delete</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      </div>
+  </div>
+{% endblock %}

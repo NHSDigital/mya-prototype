@@ -65,7 +65,12 @@
       }) }}
 
       <ul class="nhsuk-grid-row nhsuk-card-group">
-        {% for item in data.navigation.site %}
+        {% if features.availabilityGroups %}
+          {% set navigationItems = data.navigation.siteAvailabilityGroups %}
+        {% else %}
+          {% set navigationItems = data.navigation.site %}
+        {% endif %}
+        {% for item in navigationItems %}
         {% set itemHref = item.href %}
         {% if item.hrefTemplate %}{% set itemHref = item.hrefTemplate | replace(':id', site_id) %}{% endif %}
         <li class="nhsuk-grid-column-one-third nhsuk-card-group__item">

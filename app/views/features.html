@@ -5,7 +5,9 @@
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
       <h1 class="nhsuk-heading-l">Set features for this prototype</h1>
-      <form action="" method="post">
+      <form action="/process-features" method="post">
+
+        <input type="hidden" name="next" value="{{ next }}">
         
         {% for key, value in features %}
         <div class="nhsuk-form-group">
@@ -26,7 +28,7 @@
         {% endfor %}
 
       {{ button({
-        text: "Set features"
+        text: "Set features and return to previous page"
       }) }}
 
       </form>

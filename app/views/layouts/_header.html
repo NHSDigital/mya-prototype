@@ -10,7 +10,11 @@
 {% if siteLevel.isOverview %}
   {% set navigationItems = data.navigation.overview %}
 {% elif siteLevel.isSite %}
-  {% set navigationItems = data.navigation.site %}
+  {% if features.availabilityGroups %}
+    {% set navigationItems = data.navigation.siteAvailabilityGroups %}
+  {% else %}
+    {% set navigationItems = data.navigation.site %}
+  {% endif %}
 {% endif %}
 
 <header class="nhsuk-header" role="banner" data-module="nhsuk-header">

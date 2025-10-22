@@ -59,6 +59,28 @@ module.exports = {
         description: 'Download reports',
         href: '#'
       }
+    ],
+    siteAvailabilityGroups: [
+      {
+        text: 'Availability',
+        description: 'View and manage available appointments for your site',
+        hrefTemplate: '/site/:id/view-availability'
+      },
+      {
+        text: 'Change site details',
+        description: 'Change site details and accessibility information',
+        href: '#'
+      },
+      {
+        text: 'Manage users',
+        description: 'Add or remove users for your site',
+        href: '#'
+      },
+      {
+        text: 'Reports',
+        description: 'Download reports',
+        href: '#'
+      }
     ]
   },
   statuses: {
@@ -139,108 +161,7 @@ module.exports = {
       name: 'RSV Adult'
     }
   },
-  daily_availability: {
-    '2025-10-13': {
-      date: '2025-10-13',
-      site_id: 1,
-      sessions: [
-        {
-          from: '09:30',
-          until: '13:00',
-          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
-          slotLength: 10,
-          capacity: 1
-        }, {
-          from: '14:00',
-          until: '17:00',
-          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
-          slotLength: 10,
-          capacity: 1
-        }
-      ]
-    },
-    '2025-10-14': {
-      date: '2025-10-14',
-      site_id: 1,
-      sessions: [
-        {
-          from: '09:30',
-          until: '13:00',
-          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
-          slotLength: 10,
-          capacity: 1
-        }, {
-          from: '14:00',
-          until: '17:00',
-          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
-          slotLength: 10,
-          capacity: 1
-        }
-      ]
-    },
-    '2025-10-15': {
-      date: '2025-10-15',
-      site_id: 1,
-      sessions: [
-        {
-          from: '09:30',
-          until: '13:00',
-          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
-          slotLength: 10,
-          capacity: 1
-        }, {
-          from: '14:00',
-          until: '17:00',
-          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
-          slotLength: 10,
-          capacity: 1
-        }
-      ]
-    },
-    '2025-10-16': {
-      date: '2025-10-16',
-      site_id: 1,
-      sessions: [
-        {
-          from: '09:30',
-          until: '13:00',
-          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
-          slotLength: 10,
-          capacity: 1
-        }, {
-          from: '14:00',
-          until: '17:00',
-          services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'FLU_COVID:18-64', 'FLU_COVID:65+'],
-          slotLength: 10,
-          capacity: 1
-        }
-      ]
-    }
-  },
-  availability: [
-    {
-      site_id: 1,
-      type: 'Weekly repeating',
-      services: ['COVID:5-11', 'COVID:12-17', 'COVID:18+', 'FLU:2-3', 'FLU:18-64', 'FLU:65+'],
-      days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-      duration: 10,
-      startTime: '09:00',
-      endTime: '17:00',
-      capacity: 1,
-      startDate: '2025-10-01',
-      endDate: '2025-12-31'
-    },{
-      site_id: 1,
-      type: 'Single date',
-      services: ['FLU:65+'],
-      duration: 10,
-      startTime: '09:00',
-      endTime: '17:00',
-      capacity: 1,
-      startDate: '2025-10-01',
-      endDate: '2025-10-01'
-    }
-  ],
+  daily_availability: require('./daily_availability'),
   bookings: {
     1: {
       site_id: 1,
