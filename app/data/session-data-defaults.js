@@ -126,39 +126,84 @@ module.exports = {
   services: {
     'COVID:5-11': {
       id: 'COVID:5-11',
-      name: 'COVID 5-11'
+      name: 'COVID 5-11',
+      vaccine: 'COVID-19',
+      cohort: {
+        age: '5-11',
+        type: 'Child'
+      }
     },
     'COVID:12-17': {
       id: 'COVID:12-17',
-      name: 'COVID 12-17'
+      name: 'COVID 12-17',
+      vaccine: 'COVID-19',
+      cohort: {
+        age: '12-17',
+        type: 'Child'
+      }
     },
     'COVID:18+': {
       id: 'COVID:18+',
-      name: 'COVID 18+'
+      name: 'COVID 18+',
+      vaccine: 'COVID-19',
+      cohort: {
+        age: '18+',
+        type: 'Adult'
+      }
     },
     'FLU:2-3': {
       id: 'FLU:2-3',
-      name: 'Flu 2-3'
+      name: 'Flu 2-3',
+      vaccine: 'Flu',
+      cohort: {
+        age: '2-3',
+        type: 'Child'
+      }
     },
     'FLU:18-64': {
       id: 'FLU:18-64',
-      name: 'Flu 18-64'
+      name: 'Flu 18-64',
+      vaccine: 'Flu',
+      cohort: {
+        age: '18-64',
+        type: 'Adult'
+      }
     },
     'FLU:65+': {
       id: 'FLU:65+',
-      name: 'Flu 65+'
+      name: 'Flu 65+',
+      vaccine: 'Flu',
+      cohort: {
+        age: '65+',
+        type: 'Adult'
+      }
     },
     'COVID_FLU:18-64': {
       id: 'COVID_FLU:18-64',
-      name: 'COVID & Flu 18-64'
+      name: 'COVID & Flu 18-64',
+      vaccine: 'COVID-19 & Flu',
+      cohort: {
+        age: '18-64',
+        type: 'Adult'
+      }
     },
     'COVID_FLU:65+': {
       id: 'COVID_FLU:65+',
-      name: 'COVID & Flu 65+'
+      name: 'COVID & Flu 65+',
+      vaccine: 'COVID-19 & Flu',
+      cohort: {
+        age: '65+',
+        type: 'Adult'
+      }
     },
     'RSV:Adult': {
       id: 'RSV:Adult',
-      name: 'RSV Adult'
+      name: 'RSV Adult',
+      vaccine: 'RSV',
+      cohort: {
+        age: '18+',
+        type: 'Adult'
+      }
     }
   },
   daily_availability: require('./daily_availability'),

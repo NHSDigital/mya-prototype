@@ -9,124 +9,120 @@
 }) }}
 {% endblock %}
 
+{% macro services(service_ids) %}
+  {% set servicesCount = service_ids | length %}
+  {% set serviceTypes = [] %}
+  
+  <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+  {% for service_id in service_ids %}
+    {% set vaccineShortcode = data.services[service_id].cohort.type ~ " " ~ data.services[service_id].vaccine %}
+    {% if vaccineShortcode not in serviceTypes %}
+      {% set serviceTypes = serviceTypes.concat([vaccineShortcode]) %}
+      <li>{{ vaccineShortcode }}</li>
+    {% endif %}
+  {% endfor %}
+  </ul>
+{% endmacro %}
+
 {% block content %}
 
 <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
 
-      <nav class="app-sub-navigation" aria-label="Availability navigation">
-        <ul class="app-sub-navigation__list">
-          <li class="app-sub-navigation__item">
-            <a class="app-sub-navigation__link" aria-current="page" href="/site/{{ site_id }}/availability">All <span class="nhsuk-u-visually-hidden">availability</span></a>
-          </li>
-          <li class="app-sub-navigation__item">
-            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/view-availability/day">Today's availability</a>
-          </li>
-          <li class="app-sub-navigation__item">
-            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/view-availability/week">Week <span class="nhsuk-u-visually-hidden">availability</span></a>
-          </li>
-          <li class="app-sub-navigation__item app-sub-navigation__item--primary">
-            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/create-availability/type-of-session">Add availability</a>
-        </ul>
-      </nav>
-
       <span class="nhsuk-caption-xl">{{ data.sites[site_id].name }}</span>
       <h1 class="nhsuk-heading-xl">All availability</h1>
 
+      <nav class="app-sub-navigation nhsuk-u-margin-bottom-9" aria-label="Availability navigation">
+        <ul class="app-sub-navigation__list">
+          <li class="app-sub-navigation__item">
+            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/view-availability/day">Today<span class="nhsuk-u-visually-hidden">'s availability</span></a>
+          </li>
+          <li class="app-sub-navigation__item">
+            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/view-availability/week">Week<span class="nhsuk-u-visually-hidden"> availability</span></a>
+          </li>
+          <li class="app-sub-navigation__item">
+            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/view-availability/month">Month<span class="nhsuk-u-visually-hidden"> availability</span></a>
+          </li>
+          <li class="app-sub-navigation__item">
+            <a class="app-sub-navigation__link" aria-current="page" href="/site/{{ site_id }}/availability">All<span class="nhsuk-u-visually-hidden"> availability</span></a>
+          </li>
+          <li class="app-sub-navigation__item app-sub-navigation__item--primary">
+            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/create-availability/type-of-session">Add availability</a>
+          </li>
+        </ul>
+      </nav>
+
+      {% if availabilityGroups|length == 0 %}
+        <p class="nhsuk-body">There is no availability set up for this site.</p>
+      {% else %}
+
+      {% if availabilityGroups.repeating | length > 0 %}
       <table class="nhsuk-table-responsive" role="table">
-        <caption class="nhsuk-table__caption nhsuk-table__caption--l">Repeating availability</caption>
+        <caption class="nhsuk-table__caption">Repeating</caption>
         <thead class="nhsuk-table__head" role="rowgroup">
           <tr role="row">
-            <th scope="col" class="nhsuk-table__header" role="columnheader">Dates</th>
-            <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
-            <th scope="col" class="nhsuk-table__header" role="columnheader">Days in this group</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Dates and times</th>
             <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
-            <th scope="col" class="nhsuk-table__header" role="columnheader">Capacity</th>
             <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
           </tr>
-        </thead>
+        </thead>    
         <tbody class="nhsuk-table__body">
-          {% for group in availabilityGroups %}
+          {% for group in availabilityGroups.repeating %}
           <tr class="nhsuk-table__row" role="row">
-            <td class="nhsuk-table__cell" role="cell">{{ group.dates[0] | formatDate }} to {{ group.dates[-1] | formatDate }}</td>
-            <td class="nhsuk-table__cell" role="cell">{{ group.session.from | formatDate('h:mma') | lower }} to {{ group.session.until | formatDate('h:mma') | lower }}</td>
-            <td class="nhsuk-table__cell" role="cell">{% for day, count in group.weekdaySummary %}{% if count > 0 %}{{ count }}x {{ day }}{% if not loop.last %}<br>{% endif %}{% endif %}{% endfor %}</td>
-            <td class="nhsuk-table__cell" role="cell">{% for service in group.session.services %}{{ data.services[service].name }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
-            <td class="nhsuk-table__cell" role="cell">{{ group.session.slotLength }} minute appointments<br>{{ group.session.capacity }} vaccinator{% if group.session.capacity > 1 %}s{% endif %}</td>
             <td class="nhsuk-table__cell" role="cell">
-              <a class="nhsuk-link" href="#">Edit</a><br>
-              <a class="nhsuk-link" href="#">Delete</a>
+              <span class="nhsuk-table-responsive__heading" aria-hidden="true">Dates and times </span>
+              {{ group.dates[0] | formatDate('dd MMM') }} to {{ group.dates[group.dates | length - 1] | formatDate('dd MMM yyyy') }}<br>
+              {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}
+            </td>
+            <td class="nhsuk-table__cell" role="cell">
+              <span class="nhsuk-table-responsive__heading" aria-hidden="true">Services </span>
+              {{ services(group.session.services) }}
+            </td>
+            <td class="nhsuk-table__cell" role="cell">
+              <span class="nhsuk-table-responsive__heading" aria-hidden="true">Actions </span>
+              <a class="nhsuk-link" href="/site/{{ site_id }}/view-availability/{{ group.id }}">View</a>
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
+      {% endif %}
 
+      {% if availabilityGroups.single | length > 0 %}
       <table class="nhsuk-table-responsive" role="table">
-        <caption class="nhsuk-table__caption nhsuk-table__caption--l">Single day availability</caption>
+        <caption class="nhsuk-table__caption">Single day</caption>
         <thead class="nhsuk-table__head" role="rowgroup">
           <tr role="row">
-            <th scope="col" class="nhsuk-table__header" role="columnheader">Day</th>
-            <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Date and time</th>
             <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
-            <th scope="col" class="nhsuk-table__header" role="columnheader">Capacity</th>
             <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
           </tr>
         </thead>
         <tbody class="nhsuk-table__body">
+          {% for group in availabilityGroups.single %}
           <tr class="nhsuk-table__row" role="row">
-            <td class="nhsuk-table__cell" role="cell">Wednesday, 1 October 2025</td>
-            <td class="nhsuk-table__cell" role="cell">9:15am to 11:15am</td>
-            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
-            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
             <td class="nhsuk-table__cell" role="cell">
-              <a class="nhsuk-link" href="#">Edit</a><br>
-              <a class="nhsuk-link" href="#">Delete</a>
+              <span class="nhsuk-table-responsive__heading" aria-hidden="true">Date and times </span>
+              {{ group.dates[0] | formatDate('cccc, dd MMM yyyy') }}<br>
+              {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}
+            </td>
+            <td class="nhsuk-table__cell" role="cell">
+              <span class="nhsuk-table-responsive__heading" aria-hidden="true">Services </span>
+              {{ services(group.session.services) }}</td>
+            <td class="nhsuk-table__cell" role="cell">
+              <span class="nhsuk-table-responsive__heading" aria-hidden="true">Actions </span>
+              <a class="nhsuk-link" href="#">View</a>
             </td>
           </tr>
-          <tr class="nhsuk-table__row" role="row">
-            <td class="nhsuk-table__cell" role="cell">Wednesday, 1 October 2025</td>
-            <td class="nhsuk-table__cell" role="cell">4pm to 5:45pm</td>
-            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
-            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
-            <td class="nhsuk-table__cell" role="cell">
-              <a class="nhsuk-link" href="#">Edit</a><br>
-              <a class="nhsuk-link" href="#">Delete</a>
-            </td>
-          </tr>
-          <tr class="nhsuk-table__row" role="row">
-            <td class="nhsuk-table__cell" role="cell">Friday, 3 October 2025</td>
-            <td class="nhsuk-table__cell" role="cell">9:15am to 11:45am</td>
-            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
-            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
-            <td class="nhsuk-table__cell" role="cell">
-              <a class="nhsuk-link" href="#">Edit</a><br>
-              <a class="nhsuk-link" href="#">Delete</a>
-            </td>
-          </tr>
-          <tr class="nhsuk-table__row" role="row">
-            <td class="nhsuk-table__cell" role="cell">Saturday, 4 October 2025</td>
-            <td class="nhsuk-table__cell" role="cell">9am to 1pm</td>
-            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
-            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
-            <td class="nhsuk-table__cell" role="cell">
-              <a class="nhsuk-link" href="#">Edit</a><br>
-              <a class="nhsuk-link" href="#">Delete</a>
-            </td>
-          </tr>
-          <tr class="nhsuk-table__row" role="row">
-            <td class="nhsuk-table__cell" role="cell">Sunday, 5 October 2025</td>
-            <td class="nhsuk-table__cell" role="cell">11am to 12pm</td>
-            <td class="nhsuk-table__cell" role="cell">COVID 18+, Flu 18-64, Flu 65+</td>
-            <td class="nhsuk-table__cell" role="cell">5 minute appointments, 1 vaccinator</td>
-            <td class="nhsuk-table__cell" role="cell">
-              <a class="nhsuk-link" href="#">Edit</a><br>
-              <a class="nhsuk-link" href="#">Delete</a>
-            </td>
-          </tr>
+          {% endfor %}
         </tbody>
       </table>
+      {% endif %}
+
+      {% endif %}
 
       </div>
   </div>
+
+   {{ availabilityGroups | prettyDump | safe }}
 {% endblock %}

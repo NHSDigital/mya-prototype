@@ -17,7 +17,21 @@ router.use((req, res, next) => {
 
 router.get('/site/:id/view-availability', (req, res) => {
   res.render('availabilityGroups/availability', {
-    availabilityGroups: availabilityGroups(req.session.data.daily_availability)
+    availabilityGroups: availabilityGroups(req.session.data.daily_availability, Number(req.site_id)),
+  });
+});
+
+router.get('/site/:id/view-availability/:groupId', (req, res) => {
+  const allGroups = availabilityGroups(req.session.data.daily_availability, Number(req.site_id));
+  const allGroupsArray = [...allGroups.repeating, ...allGroups.single]
+  const group = allGroupsArray.find(g => g.id === req.params.groupId);
+
+  if (!group) {
+    return res.status(404).send('Availability group not found');
+  }
+
+  res.render('availabilityGroups/availability-details', {
+    group,
   });
 });
 

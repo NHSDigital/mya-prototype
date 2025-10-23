@@ -1,3 +1,9 @@
+const { DateTime } = require('luxon');
+const crypto = require('crypto');
+
+const weekdayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+// Helper: compare two sessions for equality
 function sessionsEqual(a, b) {
   return (
     a.from === b.from &&
@@ -8,6 +14,60 @@ function sessionsEqual(a, b) {
   );
 }
 
+// Helper: to parse time strings
+function parseTime(timeStr) {
+  return DateTime.fromFormat(timeStr, 'HH:mm');
+}
+
+// Helper: add slot counts to a session
+function addSlotInfo(session) {
+  const from = parseTime(session.from);
+  const until = parseTime(session.until);
+
+  const durationMins = (until - from) / (1000 * 60); // minutes
+  const slotsPerSession = (durationMins / session.slotLength) * session.capacity;
+  const slotsPerHour = (60 / session.slotLength) * session.capacity;
+
+  return {
+    ...session,
+    slots: {
+      perHour: Math.round(slotsPerHour),
+      perSession: Math.round(slotsPerSession),
+    },
+  };
+}
+
+// Helper: filter data by site_id
+function filterBySiteId(data, siteId) {
+  const filtered = {};
+
+  // Loop over each date key in the data object
+  for (const dateKey in data) {
+    const day = data[dateKey];
+
+    // Only keep days that match the target site_id
+    if (day.site_id === siteId) {
+      filtered[dateKey] = day;
+    }
+  }
+
+  return filtered;
+}
+
+//Helper: generate a stable group ID for a session
+function generateGroupId(session) {
+  const key = JSON.stringify({
+    from: session.from,
+    until: session.until,
+    slotLength: session.slotLength,
+    capacity: session.capacity,
+    services: [...session.services].sort(),
+  });
+  // Generate a short, stable hash
+  return crypto.createHash('md5').update(key).digest('hex').slice(0, 10);
+}
+
+// Step 1: group identical sessions across all days
 function groupSessions(data) {
   const sessionGroups = [];
 
@@ -18,7 +78,11 @@ function groupSessions(data) {
       if (existingGroup) {
         existingGroup.dates.push(day.date);
       } else {
-        sessionGroups.push({ session, dates: [day.date] });
+        sessionGroups.push({ 
+          id: generateGroupId(session),
+          session: addSlotInfo(session), 
+          dates: [day.date] 
+        });
       }
     }
   }
@@ -26,29 +90,46 @@ function groupSessions(data) {
   return sessionGroups;
 }
 
+// Step 2: build weekday summary for each group
 function summariseWeekdays(group) {
-  const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  
-  // Initialise all weekdays with 0
   const summary = {};
   weekdayNames.forEach(day => (summary[day] = 0));
 
-  // Count occurrences
   group.dates.forEach(date => {
     const dayOfWeek = new Date(date).getDay();
     const name = weekdayNames[dayOfWeek];
     summary[name] += 1;
   });
 
-  return {
-    ...group,
-    weekdaySummary: summary,
-  };
+  return { ...group, weekdaySummary: summary };
 }
 
-function availabilityGroups(data) {
-  const grouped = groupSessions(data);
-  return grouped.map(summariseWeekdays);
+// Step 3: separate single-day vs multi-day, and aggregate weekday totals
+function availabilityGroups(data, site_id) {
+  const totals = {};
+  weekdayNames.forEach(day => (totals[day] = 0));
+
+  const filteredData = site_id ? filterBySiteId(data, site_id) : data;
+  const grouped = groupSessions(filteredData).map(summariseWeekdays);
+
+  const repeating = [];
+  const single = [];
+
+  grouped.forEach(g => {
+    // add to totals
+    for (const day in g.weekdaySummary) {
+      totals[day] += g.weekdaySummary[day];
+    }
+
+    // classify into single vs repeating
+    if (g.dates.length > 1) {
+      repeating.push(g);
+    } else {
+      single.push(g);
+    }
+  });
+
+  return { repeating, single, counts: totals };
 }
 
 module.exports = { availabilityGroups };

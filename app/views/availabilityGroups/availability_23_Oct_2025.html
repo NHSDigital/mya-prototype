@@ -1,0 +1,106 @@
+{% extends '../layouts/layout.html' %}
+
+{% set pageName = 'All availability - ' ~ data.sites[site_id].name %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id,
+  text: 'Back to dashboard'
+}) }}
+{% endblock %}
+
+{% block content %}
+
+<div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+
+      <nav class="app-sub-navigation" aria-label="Availability navigation">
+        <ul class="app-sub-navigation__list">
+          <li class="app-sub-navigation__item">
+            <a class="app-sub-navigation__link" aria-current="page" href="/site/{{ site_id }}/availability">All <span class="nhsuk-u-visually-hidden">availability</span></a>
+          </li>
+          <li class="app-sub-navigation__item">
+            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/view-availability/day">Today's availability</a>
+          </li>
+          <li class="app-sub-navigation__item">
+            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/view-availability/week">Week <span class="nhsuk-u-visually-hidden">availability</span></a>
+          </li>
+          <li class="app-sub-navigation__item app-sub-navigation__item--primary">
+            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/create-availability/type-of-session">Add availability</a>
+        </ul>
+      </nav>
+
+      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
+      <h1 class="nhsuk-heading-l">All availability</h1>
+
+      {# {{ availabilityGroups | prettyDump | safe }} #}
+
+      {% if availabilityGroups|length == 0 %}
+        <p class="nhsuk-body">There is no availability set up for this site.</p>
+      {% else %}
+
+      {% if availabilityGroups.repeating | length > 0 %}
+      <table class="nhsuk-table-responsive" role="table">
+        <caption class="nhsuk-table__caption">Repeating availability</caption>
+        <thead class="nhsuk-table__head" role="rowgroup">
+          <tr role="row">
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Dates</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Days in this group</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Capacity</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
+          </tr>
+        </thead>    
+        <tbody class="nhsuk-table__body">
+          {% for group in availabilityGroups.repeating %}
+          <tr class="nhsuk-table__row" role="row">
+            <td class="nhsuk-table__cell" role="cell">{{ group.dates[0] | formatDate('dd MMM') }} to {{ group.dates[group.dates | length - 1] | formatDate('dd MMM yyyy') }}</td>
+            <td class="nhsuk-table__cell" role="cell">{{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}</td>
+            <td class="nhsuk-table__cell" role="cell">{% for day, count in group.weekdaySummary %}{% if count > 0 %}{{ count }}x {{ day }}{% if not loop.last %}<br>{% endif %}{% endif %}{% endfor %}</td>
+            <td class="nhsuk-table__cell" role="cell">{% for service in group.session.services %}{{ data.services[service].name }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+            <td class="nhsuk-table__cell" role="cell">{{ group.session.slotLength }} minute appointments<br>{{ group.session.capacity }} vaccinator{% if group.session.capacity > 1 %}s{% endif %}</td>
+            <td class="nhsuk-table__cell" role="cell">
+              <a class="nhsuk-link" href="#">Edit</a><br>
+              <a class="nhsuk-link" href="#">Delete</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      {% if availabilityGroups.single | length > 0 %}
+      <table class="nhsuk-table-responsive" role="table">
+        <caption class="nhsuk-table__caption">Single day availability</caption>
+        <thead class="nhsuk-table__head" role="rowgroup">
+          <tr role="row">
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Day</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Capacity</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="nhsuk-table__body">
+          {% for group in availabilityGroups.single %}
+          <tr class="nhsuk-table__row" role="row">
+            <td class="nhsuk-table__cell" role="cell">{{ group.dates[0] | formatDate('cccc, dd MMM yyyy') }}</td>
+            <td class="nhsuk-table__cell" role="cell">{{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}</td>
+            <td class="nhsuk-table__cell" role="cell">{% for service in group.session.services %}{{ data.services[service].name }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+            <td class="nhsuk-table__cell" role="cell">{{ group.session.slotLength }} minute appointments<br>{{ group.session.capacity }} vaccinator{% if group.session.capacity > 1 %}s{% endif %}</td>
+            <td class="nhsuk-table__cell" role="cell">
+              <a class="nhsuk-link" href="#">Edit</a><br>
+              <a class="nhsuk-link" href="#">Delete</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      {% endif %}
+
+      </div>
+  </div>
+{% endblock %}

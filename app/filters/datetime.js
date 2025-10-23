@@ -76,5 +76,29 @@ module.exports = function registerDateTimeFilters(filters = {}) {
   filters.monthName = (input, tz = DEFAULT_TZ) =>
     toDateTime(input, tz).toFormat("LLLL"); // October
 
+  filters.nhsTime = (input, options = {}) => {
+    if (!input) return '';
+
+    const dt = DateTime.fromFormat(input.trim(), 'HH:mm');
+    if (!dt.isValid) return input;
+
+    const hour = dt.hour;
+    const minute = dt.minute;
+    const useSpecialCases = options.specialCases === true;
+
+    // Optional special cases
+    if (useSpecialCases) {
+      if (hour === 0 && minute === 0) return 'midnight';
+      if (hour === 12 && minute === 0) return 'midday';
+    }
+
+    // Convert to 12-hour format
+    const displayHour = dt.toFormat('h'); // removes leading zero
+    const displayMinutes = minute === 0 ? '' : `:${dt.toFormat('mm')}`;
+    const period = hour < 12 ? 'am' : 'pm';
+
+    return `${displayHour}${displayMinutes}${period}`;
+  }
+
   return filters;
 };

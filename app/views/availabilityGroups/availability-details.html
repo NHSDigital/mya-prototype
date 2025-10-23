@@ -1,0 +1,35 @@
+{% extends '../layouts/layout.html' %}
+
+{% set pageName = 'All availability - ' ~ data.sites[site_id].name %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' ~ site_id ~ '/view-availability',
+  text: 'Back'
+}) }}
+{% endblock %}
+
+{% block content %}
+
+<div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+
+      <span class="nhsuk-caption-xl">{{ data.sites[site_id].name }}</span>
+      <h1 class="nhsuk-heading-xl">Availability details</h1>
+
+      <table class="nhsuk-table-responsive" role="table">
+        <thead class="nhsuk-table__head">
+          <tr class="nhsuk-table__row">
+            <th class="nhsuk-table__header" scope="col">Date and time</th>
+            <th class="nhsuk-table__header" scope="col">Services</th>
+            <th class="nhsuk-table__header" scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="nhsuk-table__body">
+          
+        </tbody>
+      </table>
+      
+    </div>
+</div>
+{% endblock %}
