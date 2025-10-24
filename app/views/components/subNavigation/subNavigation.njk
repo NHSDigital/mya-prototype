@@ -1,0 +1,11 @@
+{% macro subNavigation(params) %}
+<nav class="app-sub-navigation nhsuk-u-margin-bottom-9" aria-label="Availability navigation">
+  <ul class="app-sub-navigation__list">
+    {% for item in params.items %}
+    <li class="app-sub-navigation__item{% if item.isCurrent %} app-sub-navigation__item--current{% endif %}{% if item.isPrimary %} app-sub-navigation__item--primary{% endif %}">
+      <a class="app-sub-navigation__link"{% if item.isCurrent %} aria-current="page"{% endif %} href="{{ item.href }}">{{ item.text }}{% if item.visuallyHiddenText %} <span class="nhsuk-u-visually-hidden">{{ item.visuallyHiddenText }}</span>{% endif %}</a>
+    </li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endmacro %}

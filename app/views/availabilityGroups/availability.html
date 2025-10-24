@@ -1,4 +1,5 @@
 {% extends '../layouts/layout.html' %}
+{% from '../components/subNavigation/subNavigation.njk' import subNavigation %}
 
 {% set pageName = 'All availability - ' ~ data.sites[site_id].name %}
 
@@ -32,25 +33,38 @@
       <span class="nhsuk-caption-xl">{{ data.sites[site_id].name }}</span>
       <h1 class="nhsuk-heading-xl">All availability</h1>
 
-      <nav class="app-sub-navigation nhsuk-u-margin-bottom-9" aria-label="Availability navigation">
-        <ul class="app-sub-navigation__list">
-          <li class="app-sub-navigation__item">
-            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/view-availability/day">Today<span class="nhsuk-u-visually-hidden">'s availability</span></a>
-          </li>
-          <li class="app-sub-navigation__item">
-            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/view-availability/week">Week<span class="nhsuk-u-visually-hidden"> availability</span></a>
-          </li>
-          <li class="app-sub-navigation__item">
-            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/view-availability/month">Month<span class="nhsuk-u-visually-hidden"> availability</span></a>
-          </li>
-          <li class="app-sub-navigation__item">
-            <a class="app-sub-navigation__link" aria-current="page" href="/site/{{ site_id }}/availability">All<span class="nhsuk-u-visually-hidden"> availability</span></a>
-          </li>
-          <li class="app-sub-navigation__item app-sub-navigation__item--primary">
-            <a class="app-sub-navigation__link" href="/site/{{ site_id }}/create-availability/type-of-session">Add availability</a>
-          </li>
-        </ul>
-      </nav>
+      {{
+        subNavigation({
+          items: [
+            {
+              text: 'Today',
+              href: '/site/' ~ site_id ~ '/view-availability/day',
+              visuallyHiddenText: "’s availability"
+            },
+            {
+              text: 'Week',
+              href: '/site/' ~ site_id ~ '/view-availability/week',
+              visuallyHiddenText: ' availability'
+            },
+            {
+              text: 'Month',
+              href: '/site/' ~ site_id ~ '/view-availability/month',
+              visuallyHiddenText: ' availability'
+            },
+            {
+              text: 'All',
+              href: '/site/' ~ site_id ~ '/availability',
+              isCurrent: true,
+              visuallyHiddenText: ' availability'
+            },
+            {
+              text: 'Add availability',
+              href: '/site/' ~ site_id ~ '/create-availability/type-of-session',
+              isPrimary: true
+            }
+          ]
+        })
+      }}
 
       {% if availabilityGroups|length == 0 %}
         <p class="nhsuk-body">There is no availability set up for this site.</p>
