@@ -55,4 +55,39 @@
   &-hero {
     border-top: 1px solid rgba(255, 255, 255, 0.2);
   }
+
+  &-calendar {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: nhsuk-spacing(5);
+
+    caption {
+      text-align: left;
+      font-weight: nhsuk-font-weight("bold");
+      font-size: nhsuk-font-size("m");
+      margin-bottom: nhsuk-spacing(3);
+    }
+
+    th, td {
+      border: 1px solid $nhsuk-border-colour;
+      vertical-align: top;
+      padding: nhsuk-spacing(2);
+    }
+
+    &-day {
+      width: 14.28%;
+      height: 80px;
+      color: $nhsuk-secondary-text-colour;
+
+      &--blank {
+      background-color: nhsuk-colour("grey-5");
+      }
+      &--available {
+        background-color: nhsuk-colour("white");
+        color: $nhsuk-text-colour;
+        font-weight: bold;
+      }
+    }
+
+  }
 }

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { availabilityGroups } = require('../helpers/availabilityGroups');
+const { calendar } = require('../helpers/calendar');
 
 router.param('id', (req, res, next, id) => {
   req.site_id = id;
@@ -32,6 +33,7 @@ router.get('/site/:id/view-availability/:groupId', (req, res) => {
 
   res.render('availabilityGroups/availability-details', {
     group,
+    calendar: calendar(group.dates),
   });
 });
 
