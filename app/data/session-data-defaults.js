@@ -1,5 +1,11 @@
-module.exports = {
-  user: {
+// app/data/session-data.defaults.js
+const fs = require('fs')
+const path = require('path')
+
+// --- 1. Define your base data ---
+const base = {
+  //global data
+  user: { 
     name: 'example.user@nhs.net',
     links: {
       overview: [
@@ -27,8 +33,8 @@ module.exports = {
         }
       ]
     }
-  },
-  navigation: {
+   },
+  navigation: { 
     overview: [
       {
         text: 'Reports',
@@ -82,8 +88,8 @@ module.exports = {
         href: '#'
       }
     ]
-  },
-  statuses: {
+   },
+  statuses: { 
     online: {
       text: 'Online',
       colour: 'green'
@@ -91,37 +97,7 @@ module.exports = {
     offline: {
       text: 'Offline',
       colour: 'red'
-    }
-  },
-  sites: {
-    1: {
-      status_id: 'online',
-      name: 'Dean’s Pharmacy',
-      id: 1,
-      address: [
-        '123 Fake Street',
-        'Faketown',
-        'FK1 2AB'
-      ],
-      phone: '01234 567890',
-      ods: 'A12345',
-      icb: 'South East London Integrated Care Board',
-      region: 'London'
-    },
-    2: {
-      status_id: 'online',
-      name: 'Kariissons North Road',
-      id: 1,
-      address: [
-        '88 North Road',
-        'Brighton',
-        'B1 2AX'
-      ],
-      phone: '01234 567890',
-      ods: 'A982738',
-      icb: 'East Sussex ICB',
-      region: 'Sussex'
-    }
+    } 
   },
   services: {
     'COVID:5-11': {
@@ -206,83 +182,44 @@ module.exports = {
       }
     }
   },
-  daily_availability: require('./daily_availability'),
-  bookings: {
-    1: {
-      site_id: 1,
-      service: 'COVID:18+',
-      datetime: '2025-10-20T09:10',
-      name: 'Kenny Carpets',
-      nhsNumber: '49000000076',
-      dob: '1986-04-19',
-      contact: {
-        phone: '07890 717189',
-        email: 'carpets@hotmail.com',
-        landline: '01903 987521'
-      },
-      status: 'scheduled'
-    }, 
-    2: {
-      site_id: 2,
-      service: 'COVID:5-11',
-      datetime: '2025-10-20T09:20',
-      name: 'Ken Tussle',
-      nhsNumber: '89872903945',
-      dob: '2019-10-01',
-      contact: {
-        phone: '07890 717189',
-        email: 'tusslewithkenny19@gmail.com',
-        landline: '01903 987521'
-      },
-      status: 'scheduled'
-    }, 
-    3: {
-      site_id: 1,
-      service: 'FLU:65+',
-      datetime: '2025-10-20T10:20',
-      name: 'Ken Lump',
-      nhsNumber: '82937485038',
-      dob: '1958-03-20',
-      contact: {
-        phone: '07890 8378476'
-      },
-      status: 'cancelled'
-    },
-    4: {
-      site_id: 1,
-      service: 'FLU:18-64',
-      datetime: '2025-10-20T11:30',
-      name: 'Mary Downbyyourside',
-      nhsNumber: '9273048279',
-      dob: '1993-04-11',
-      contact: {
-        email: 'mazza1993@gcloud.net'
-      },
-      status: 'orphaned'
-    },
-    5: {
-      site_id: 1,
-      service: 'FLU:18-64',
-      datetime: '2025-10-20T11:40',
-      name: 'Ron Paving',
-      nhsNumber: '8263997304',
-      dob: '1996-09-24',
-      contact: {
-        phone: '07838 9478923'
-      },
-      status: 'orphaned'
-    },
-    6: {
-      site_id: 1,
-      service: 'RSV:Adult',
-      datetime: '2025-10-20T12:20',
-      name: 'Angela Ding-Dong',
-      nhsNumber: '9238475623',
-      dob: '1988-12-01',
-      contact: {
-        phone: '07900 123456'
-      },
-      status: 'scheduled'
+  //per site data
+  sites: {},
+  daily_availability: {},
+  bookings: {}
+}
+
+// --- 2. Deep merge helper ---
+function deepMerge(target, source) {
+  for (const key of Object.keys(source)) {
+    if (
+      typeof source[key] === 'object' &&
+      source[key] !== null &&
+      !Array.isArray(source[key])
+    ) {
+      if (!target[key]) target[key] = {}
+      deepMerge(target[key], source[key])
+    } else {
+      target[key] = source[key]
+    }
+  }
+  return target
+}
+
+// --- 3. Automatically load extra site folders ---
+// This stays inside /app/data, so no /lib edits needed.
+const dataDir = __dirname
+
+for (const entry of fs.readdirSync(dataDir, { withFileTypes: true })) {
+  if (entry.isDirectory()) {
+    const siteDir = path.join(dataDir, entry.name)
+    const jsFiles = fs.readdirSync(siteDir).filter(f => f.endsWith('.js'))
+
+    for (const file of jsFiles) {
+      const extra = require(path.join(siteDir, file))
+      deepMerge(base, extra)
     }
   }
 }
+
+// --- 4. Export the merged result ---
+module.exports = base
