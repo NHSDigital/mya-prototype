@@ -23,24 +23,14 @@ router.get('/site/:id/availability/day', (req, res) => {
 
 router.get('/site/:id/availability/all', (req, res) => {
   res.render('availabilityGroups/all-availability', {
-    availabilityGroups: availabilityGroups(req.session.data.daily_availability[req.site_id], Number(req.site_id)),
+    availabilityGroups: availabilityGroups(req.session.data.daily_availability[req.site_id]),
   });
 });
 
 router.get('/site/:id/availability/all/:groupId', (req, res) => {
-  const allGroups = availabilityGroups(req.session.data.daily_availability[req.site_id], Number(req.site_id));
+  const allGroups = availabilityGroups(req.session.data.daily_availability[req.site_id]);
   const allGroupsArray = [...allGroups.repeating, ...allGroups.single];
   const group = allGroupsArray.find(g => g.id === req.params.groupId);
-
-  //get any booked dates for this group
-  for (const date of group.dates) {
-    group.bookings = group.bookings || {};
-    group.bookings[date] = [];
-    const bookingsForDay = slotsForDay(req.session.data.daily_availability[date], req.session.data.bookings, Number(req.site_id));
-    if (bookingsForDay) {
-      group.bookings[date].push(bookingsForDay);
-    }
-  }
 
   if (!group) {
     return res.status(404).send('Availability group not found');

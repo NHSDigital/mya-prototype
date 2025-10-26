@@ -1,8 +1,11 @@
-// app/data/session-data.defaults.js
-const fs = require('fs')
-const path = require('path')
+const fs = require('fs');
+const path = require('path');
+const generateAvailability = require('./_lib/generateAvailability');
+const generateSlots = require('./_lib/generateSlots');
+const generateBookings = require('./_lib/generateBookings');
+const catNames = require('./_lib/catNames'); //stupid cat names. We might want to change this later
 
-// --- 1. Define your base data ---
+// --- Define base data ---
 const base = {
   //global data
   user: { 
@@ -181,48 +184,44 @@ const base = {
         type: 'Adult'
       }
     }
-  },
-  //per site data
-  sites: {},
-  daily_availability: {},
-  bookings: {}
-}
-
-// --- 2. Deep merge helper ---
-function deepMerge(target, source) {
-  for (const key of Object.keys(source)) {
-    if (
-      typeof source[key] === 'object' &&
-      source[key] !== null &&
-      !Array.isArray(source[key])
-    ) {
-      if (!target[key]) target[key] = {}
-      deepMerge(target[key], source[key])
-    } else {
-      target[key] = source[key]
-    }
-  }
-  return target
-}
-
-// --- 3. Automatically load extra site folders ---
-// This stays inside /app/data, so no /lib edits needed.
-const dataDir = __dirname
-
-//ignore folders
-const ignore = ['_lib'];
-
-for (const entry of fs.readdirSync(dataDir, { withFileTypes: true })) {
-  if (entry.isDirectory() && !ignore.includes(`./${entry.name}`)) {
-    const siteDir = path.join(dataDir, entry.name)
-    const jsFiles = fs.readdirSync(siteDir).filter(f => f.endsWith('.js'))
-
-    for (const file of jsFiles) {
-      const extra = require(path.join(siteDir, file))
-      deepMerge(base, extra)
-    }
   }
 }
 
-// --- 4. Export the merged result ---
-module.exports = base
+// Import all sites
+const sitesConfig = fs.readdirSync(__dirname)
+  .filter(f => /^site\d+\.config\.js$/.test(f))
+  .map(f => require(path.join(__dirname, f)));
+
+const daily_availability = {};
+const bookings = {};
+const sites = {};
+
+for (const cfg of sitesConfig) {
+  const { site, start, end, patterns, overrides, bookings: bookingConfig } = cfg;
+  const site_id = site.id;
+
+  // Add site metadata
+  sites[site_id] = site;
+
+  // Generate data
+  console.log(`Generating data for ${site.name} (site ${site_id})...`);
+  const availability = generateAvailability({ site_id, start, end, patterns, overrides });
+  const slots = generateSlots(availability);
+  const bookingData = generateBookings({
+    site_id,
+    slots,
+    ...bookingConfig,
+    names: catNames
+  });
+
+  daily_availability[site_id] = availability;
+  bookings[site_id] = bookingData;
+  console.log(`  Generated ${slots.length} slots and ${Object.keys(bookingData).length} bookings.`);
+}
+
+module.exports = {
+  ...base,
+  sites,
+  daily_availability,
+  bookings
+};
