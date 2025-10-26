@@ -209,8 +209,11 @@ function deepMerge(target, source) {
 // This stays inside /app/data, so no /lib edits needed.
 const dataDir = __dirname
 
+//ignore folders
+const ignore = ['_lib'];
+
 for (const entry of fs.readdirSync(dataDir, { withFileTypes: true })) {
-  if (entry.isDirectory()) {
+  if (entry.isDirectory() && !ignore.includes(`./${entry.name}`)) {
     const siteDir = path.join(dataDir, entry.name)
     const jsFiles = fs.readdirSync(siteDir).filter(f => f.endsWith('.js'))
 

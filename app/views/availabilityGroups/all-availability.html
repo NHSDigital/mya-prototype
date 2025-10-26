@@ -126,7 +126,7 @@
               {{ services(group.session.services) }}</td>
             <td class="nhsuk-table__cell" role="cell">
               <span class="nhsuk-table-responsive__heading" aria-hidden="true">Actions </span>
-              <a class="nhsuk-link" href="#">View</a>
+              <a class="nhsuk-link" href="/site/{{ site_id }}/availability/all/{{ group.id }}">View</a>
             </td>
           </tr>
           {% endfor %}
@@ -139,5 +139,5 @@
       </div>
   </div>
 
-   {# {{ availabilityGroups | prettyDump | safe }} #}
+   {{ availabilityGroups | prettyDump | safe }}
 {% endblock %}

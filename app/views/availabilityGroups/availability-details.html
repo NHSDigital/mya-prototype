@@ -19,8 +19,8 @@
 
       <dl class="nhsuk-summary-list">
         <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Dates</dt>
-          <dd class="nhsuk-summary-list__value">{{ group.dates[0] | formatDate('cccc, d MMMM') }} to {{ group.dates[group.dates | length - 1] | formatDate('cccc, d MMMM yyyy') }}</dd>
+          <dt class="nhsuk-summary-list__key">Date{% if group.type == 'repeating' %}s{% endif %}</dt>
+          <dd class="nhsuk-summary-list__value">{{ group.dates[0] | formatDate('cccc, d MMMM') }}{% if group.type == 'repeating' %} to {{ group.dates[group.dates | length - 1] | formatDate('cccc, d MMMM yyyy') }}{% endif %}</dd>
         </div>
         <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Times</dt>
@@ -37,7 +37,7 @@
         </div>
         <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Session length</dt>
-          <dd class="nhsuk-summary-list__value">{{ group.session.slotLength }}</dd>
+          <dd class="nhsuk-summary-list__value">{{ group.session.slotLength }} minutes</dd>
         </div>
         <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Concurrent vaccinations</dt>
@@ -65,7 +65,11 @@
           <tr>
             {% for day in week %}
               <td class="app-calendar-day{% if not day %} app-calendar-day--blank{% endif %}{% if day.hasEntry %} app-calendar-day--available{% endif %}">
-                {{ day.day }}
+                {{ day.day }}<br>
+                {% set todaysDate = yearNumber~'-'~monthNumber~'-'~day.day %}
+                {% if day.hasEntry  %}
+                  {{ group.bookings[todaysDate].totalSlots }} slots
+                {% endif %}
               </td>
             {% endfor %}
           </tr>
@@ -77,6 +81,6 @@
 
     </div>
 </div>
-{# {{ calendar | prettyDump | safe }}
-{{ group | prettyDump | safe }} #}
+{{ calendar | prettyDump | safe }}
+{{ group | prettyDump | safe }}
 {% endblock %}

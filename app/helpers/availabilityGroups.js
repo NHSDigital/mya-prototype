@@ -37,23 +37,6 @@ function addSlotInfo(session) {
   };
 }
 
-// Helper: filter data by site_id
-function filterBySiteId(data, siteId) {
-  const filtered = {};
-
-  // Loop over each date key in the data object
-  for (const dateKey in data) {
-    const day = data[dateKey];
-
-    // Only keep days that match the target site_id
-    if (day.site_id === siteId) {
-      filtered[dateKey] = day;
-    }
-  }
-
-  return filtered;
-}
-
 //Helper: generate a stable group ID for a session
 function generateGroupId(session) {
   const key = JSON.stringify({
@@ -109,8 +92,7 @@ function availabilityGroups(data, site_id) {
   const totals = {};
   weekdayNames.forEach(day => (totals[day] = 0));
 
-  const filteredData = site_id ? filterBySiteId(data, site_id) : data;
-  const grouped = groupSessions(filteredData).map(summariseWeekdays);
+  const grouped = groupSessions(data).map(summariseWeekdays);
 
   const repeating = [];
   const single = [];
