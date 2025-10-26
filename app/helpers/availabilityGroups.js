@@ -50,6 +50,21 @@ function generateGroupId(session) {
   return crypto.createHash('md5').update(key).digest('hex').slice(0, 10);
 }
 
+//Helper: calculate slots info for a session
+function calculateSlots(session) {
+  const from = parseTime(session.from);
+  const until = parseTime(session.until);
+
+  const durationMins = (until - from) / (1000 * 60); // minutes
+  const slotsPerSession = (durationMins / session.slotLength) * session.capacity;
+  const slotsPerHour = (60 / session.slotLength) * session.capacity;
+
+  return {
+    perHour: Math.round(slotsPerHour),
+    perSession: Math.round(slotsPerSession),
+  };
+}
+
 // Step 1: group identical sessions across all days
 function groupSessions(data) {
   const sessionGroups = [];

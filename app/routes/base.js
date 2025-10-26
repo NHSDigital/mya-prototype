@@ -104,11 +104,11 @@ router.get('/site/:id/view-availability/day', (req, res) => {
   const daily_availability = req.session.data.daily_availability;
   const bookings = req.session.data.bookings;
 
-  const single_day_availability = daily_availability[date];
+  const single_day_availability = daily_availability[req.site_id][date];
 
   res.render('site/view-availability/day', {
     date,
-    sessions: slotsForDay(single_day_availability, bookings, siteId),
+    sessions: slotsForDay(single_day_availability, bookings[req.site_id], siteId),
     isToday: DateTime.now().toFormat('yyyy-MM-dd') === date,
   });
 });

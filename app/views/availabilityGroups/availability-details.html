@@ -20,7 +20,7 @@
       <dl class="nhsuk-summary-list">
         <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Date{% if group.type == 'repeating' %}s{% endif %}</dt>
-          <dd class="nhsuk-summary-list__value">{{ group.dates[0] | formatDate('cccc, d MMMM') }}{% if group.type == 'repeating' %} to {{ group.dates[group.dates | length - 1] | formatDate('cccc, d MMMM yyyy') }}{% endif %}</dd>
+          <dd class="nhsuk-summary-list__value">{{ group.dates[0] | formatDate('cccc, d MMMM') }}{% if group.type == 'repeating' %}<br>to<br>{{ group.dates[group.dates | length - 1] | formatDate('cccc, d MMMM yyyy') }}{% endif %}</dd>
         </div>
         <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Times</dt>
@@ -81,6 +81,6 @@
 
     </div>
 </div>
-{{ calendar | prettyDump | safe }}
-{{ group | prettyDump | safe }}
+{# {{ calendar | prettyDump | safe }}
+{{ group | prettyDump | safe }} #}
 {% endblock %}

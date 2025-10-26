@@ -1,66 +1,44 @@
-const { sortBy } = require('lodash');
 const { DateTime } = require('luxon');
 
 /**
- * Parses a variety of date/time formats into a Luxon DateTime object.
- * @param {*} input - The input to parse (can be DateTime, Date, number, string).
- * @returns {DateTime} - The parsed DateTime object or an invalid DateTime.
+ * Parse any reasonable date/time input into a Luxon DateTime.
+ * Always normalised to Europe/London timezone.
  */
 function parseDatetime(input) {
-  if (DateTime.isDateTime(input)) return input;
+  if (DateTime.isDateTime(input)) return input.setZone('Europe/London');
+  if (input instanceof Date) return DateTime.fromJSDate(input, { zone: 'Europe/London' });
+  if (typeof input === 'number') return DateTime.fromMillis(input, { zone: 'Europe/London' });
 
-  if (input instanceof Date) return DateTime.fromJSDate(input);
-  if (typeof input === "number") return DateTime.fromMillis(input);
-
-  // Try ISO, then yyyy-MM-dd
-  let d = DateTime.fromISO(String(input));
+  // Try ISO first, then plain date
+  let d = DateTime.fromISO(String(input), { zone: 'Europe/London' });
   if (d.isValid) return d;
-  d = DateTime.fromFormat(String(input), "yyyy-MM-dd");
-  return d.isValid ? d : DateTime.invalid("bad-input");
+  d = DateTime.fromFormat(String(input), 'yyyy-MM-dd', { zone: 'Europe/London' });
+  return d.isValid ? d : DateTime.invalid('bad-input');
 }
 
 /**
-* check if a slot is booked
-* @constructor
-* @param {DateTime} slotStart - start time of the slot
-* @param {array} services - array of service IDs for this slot
-* @param {object} bookings - all bookings
-* @param {number} site_id - the ID of the site
-* @returns {number|boolean} - booking ID if booked, false if not
-*/
-function isSlotBooked(slotStart, services, bookings, site_id = 1) {
-  
-  //return booking object if any booking has the same start time, site_id and at least one matching service
+ * Check if a slot is booked.
+ * Returns booking ID if booked, false if not.
+ */
+function isSlotBooked(slotStart, services, bookings) {
   for (let id in bookings) {
+    const booking = bookings[id];
+    if (!services.includes(booking.service)) continue;
 
-    if (bookings[id].site_id !== site_id) continue;
-    if (!services.includes(bookings[id].service)) continue;
-
-    const bookingStart = parseDatetime(bookings[id].datetime);
-    if (slotStart.diff(bookingStart).milliseconds !== 0) continue;
-    return Number(id);
+    const bookingStart = parseDatetime(booking.datetime);
+    if (slotStart.hasSame(bookingStart, 'minute')) {
+      return Number(id);
+    }
   }
   return false;
 }
 
 /**
-* get all slots and bookings for a single day
-* @constructor
-* @param {object} single_day_availability - availability for a single day
-* @param {object} bookings - every booking
-* @param {number} site_id - the ID of the site
-* @param {string} sortBy - how to sort the slots (default: 'datetime')
-* @returns {object|boolean} - slots object with counts, or false if no availability
-*/
+ * Build all slots and counts for a single day's availability.
+ */
 function slotsForDay(single_day_availability, bookings, site_id, sortBy = 'datetime') {
+  if (!single_day_availability) return false;
 
-  //if there is no availability object for this day, return false
-  if(!single_day_availability) return false;
-
-  //filter bookings that match site_id
-  const bookingsForSite = Object.values(bookings).filter(b => b.site_id === site_id);
-
-  //start contracting the slots object
   const slots = [];
   const counts = {
     scheduledCount: 0,
@@ -68,20 +46,16 @@ function slotsForDay(single_day_availability, bookings, site_id, sortBy = 'datet
     orphanedCount: 0,
     totalSlots: 0,
     countsPerService: []
-  }
+  };
 
-  //hold booking IDs already processed
-  const processedBookingIds = [];
+  const processedBookingIds = new Set();
 
-  //convert each session for today into a slots object
-  for(const session of single_day_availability.sessions) {
-
-  
-    //calculate minutes between start and end of this session
+  // For each session, generate slots
+  for (const session of single_day_availability.sessions) {
     const [startHour, startMinute] = session.from.split(':').map(n => parseInt(n, 10));
     const [endHour, endMinute] = session.until.split(':').map(n => parseInt(n, 10));
 
-    const date = DateTime.fromISO(single_day_availability.date);
+    const date = DateTime.fromISO(single_day_availability.date, { zone: 'Europe/London' });
     const startDateTime = date.set({ hour: startHour, minute: startMinute, second: 0, millisecond: 0 });
     const endDateTime = date.set({ hour: endHour, minute: endMinute, second: 0, millisecond: 0 });
 
@@ -89,66 +63,60 @@ function slotsForDay(single_day_availability, bookings, site_id, sortBy = 'datet
     const step = parseInt(session.slotLength, 10) || 10;
     const totalSlots = Math.floor(totalMins / step);
 
-    console.log('total Slots', totalSlots);
+    // console.log(`Session on ${single_day_availability.date}: ${totalSlots} slots`);
 
-    //build each slot
     for (let i = 0; i < totalSlots; i++) {
-
       const slotStart = startDateTime.plus({ minutes: i * step });
       const slotEnd = slotStart.plus({ minutes: step });
 
-      //check if this slot is booked
-      const appointment_id = isSlotBooked(slotStart, session.services, bookings, site_id);
-      if (appointment_id !== false && !processedBookingIds.includes(appointment_id)) {
-        processedBookingIds.push(appointment_id);
-        if (appointment_id !== false && bookings[appointment_id].status === 'scheduled') counts.scheduledCount++;
-        if (appointment_id !== false && bookings[appointment_id].status === 'cancelled') counts.cancelledCount++;
-        if (appointment_id !== false && bookings[appointment_id].status === 'orphaned') counts.orphanedCount++;
-      }
-      
+      const appointment_id = isSlotBooked(slotStart, session.services, bookings);
+      const booking = appointment_id ? bookings[appointment_id] : null;
 
-      //calculate counts per service
+      if (appointment_id && !processedBookingIds.has(appointment_id)) {
+        processedBookingIds.add(appointment_id);
+
+        if (booking.status === 'scheduled') counts.scheduledCount++;
+        if (booking.status === 'cancelled') counts.cancelledCount++;
+        if (booking.status === 'orphaned') counts.orphanedCount++;
+      }
+
+      // Update per-service counts
       for (const service of session.services) {
-        //find or create service count object
         let serviceCount = counts.countsPerService.find(c => c.service === service);
         if (!serviceCount) {
-          serviceCount = { service: service, scheduledCount: 0, cancelledCount: 0, orphanedCount: 0, totalServicesSlots: 0 };
+          serviceCount = { service, scheduledCount: 0, cancelledCount: 0, orphanedCount: 0, totalServicesSlots: 0 };
           counts.countsPerService.push(serviceCount);
         }
-        //update counts
-        if (appointment_id !== false && bookings[appointment_id].service === service && !processedBookingIds.includes(appointment_id)) {
-          if (bookings[appointment_id].status === 'scheduled') serviceCount.scheduledCount++;
-          if (bookings[appointment_id].status === 'cancelled') serviceCount.cancelledCount++;
-          if (bookings[appointment_id].status === 'orphaned') serviceCount.orphanedCount++;
+
+        if (appointment_id && booking.service === service) {
+          if (booking.status === 'scheduled') serviceCount.scheduledCount++;
+          if (booking.status === 'cancelled') serviceCount.cancelledCount++;
+          if (booking.status === 'orphaned') serviceCount.orphanedCount++;
         }
+
         serviceCount.totalServicesSlots++;
       }
 
-      //add slot to slots array
       slots.push({
         from: slotStart,
         until: slotEnd,
-        service: session.services,
+        services: session.services,
         capacity: session.capacity,
-        appointment_id: processedBookingIds.includes(appointment_id) ? appointment_id : false
-      })
+        appointment_id: appointment_id || false,
+        status: appointment_id ? booking.status : 'available'
+      });
     }
 
-    //update total slots count
-    counts.totalSlots = counts.totalSlots + totalSlots;
-
+    counts.totalSlots += totalSlots;
   }
 
-  
-
-  //order slots by date ascending
+  // Sort
   if (sortBy === 'datetime') {
     slots.sort((a, b) => a.from - b.from);
-  }
-  if (sortBy === 'service') {
+  } else if (sortBy === 'service') {
     slots.sort((a, b) => {
-      if (a.service[0] < b.service[0]) return -1;
-      if (a.service[0] > b.service[0]) return 1;
+      if (a.services[0] < b.services[0]) return -1;
+      if (a.services[0] > b.services[0]) return 1;
       return 0;
     });
   }
@@ -156,8 +124,7 @@ function slotsForDay(single_day_availability, bookings, site_id, sortBy = 'datet
   return {
     ...counts,
     slots
-  }
-
+  };
 }
 
-module.exports = {slotsForDay};
+module.exports = { slotsForDay };
