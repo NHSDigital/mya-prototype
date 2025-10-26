@@ -86,7 +86,7 @@
           <tr class="nhsuk-table__row" role="row">
             <td class="nhsuk-table__cell" role="cell">
               <span class="nhsuk-table-responsive__heading" aria-hidden="true">Dates and times </span>
-              {{ group.dates[0] | formatDate('dd MMM') }} to {{ group.dates[group.dates | length - 1] | formatDate('dd MMM yyyy') }}<br>
+              {{ group.dates[0] | formatDate('d MMM') }} to {{ group.dates[group.dates | length - 1] | formatDate('d MMM yyyy') }}<br>
               {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}
             </td>
             <td class="nhsuk-table__cell" role="cell">
@@ -118,7 +118,7 @@
           <tr class="nhsuk-table__row" role="row">
             <td class="nhsuk-table__cell" role="cell">
               <span class="nhsuk-table-responsive__heading" aria-hidden="true">Date and times </span>
-              {{ group.dates[0] | formatDate('cccc, dd MMM yyyy') }}<br>
+              {{ group.dates[0] | formatDate('cccc, d MMM yyyy') }}<br>
               {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}
             </td>
             <td class="nhsuk-table__cell" role="cell">
