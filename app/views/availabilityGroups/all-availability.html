@@ -66,8 +66,9 @@
         })
       }}
 
-      {% if availabilityGroups|length == 0 %}
-        <p class="nhsuk-body">There is no availability set up for this site.</p>
+      {% if availabilityGroups.repeating | length == 0 and availabilityGroups.single | length == 0 %}
+        <h2 class="nhsuk-heading-l">No availability</h2>
+        <p class="nhsuk-body">There is no availability for this site. You should <a href="/site/{{ site_id }}/create-availability">add availability</a>.</p>
       {% else %}
 
       {% if availabilityGroups.repeating | length > 0 %}
