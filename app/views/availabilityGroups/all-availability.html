@@ -38,22 +38,22 @@
           items: [
             {
               text: 'Today',
-              href: '/site/' ~ site_id ~ '/view-availability/day',
+              href: '/site/' ~ site_id ~ '/availability/day',
               visuallyHiddenText: "’s availability"
             },
             {
               text: 'Week',
-              href: '/site/' ~ site_id ~ '/view-availability/week',
+              href: '/site/' ~ site_id ~ '/availability/week',
               visuallyHiddenText: ' availability'
             },
             {
               text: 'Month',
-              href: '/site/' ~ site_id ~ '/view-availability/month',
+              href: '/site/' ~ site_id ~ '/availability/month',
               visuallyHiddenText: ' availability'
             },
             {
               text: 'All',
-              href: '/site/' ~ site_id ~ '/availability',
+              href: '/site/' ~ site_id ~ '/availability/all',
               isCurrent: true,
               visuallyHiddenText: ' availability'
             },
@@ -94,7 +94,7 @@
             </td>
             <td class="nhsuk-table__cell" role="cell">
               <span class="nhsuk-table-responsive__heading" aria-hidden="true">Actions </span>
-              <a class="nhsuk-link" href="/site/{{ site_id }}/view-availability/{{ group.id }}">View</a>
+              <a class="nhsuk-link" href="/site/{{ site_id }}/availability/all/{{ group.id }}">View</a>
             </td>
           </tr>
           {% endfor %}

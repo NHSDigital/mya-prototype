@@ -123,8 +123,10 @@ function availabilityGroups(data, site_id) {
 
     // classify into single vs repeating
     if (g.dates.length > 1) {
+      g.type = 'repeating';
       repeating.push(g);
     } else {
+      g.type = 'single';
       single.push(g);
     }
   });

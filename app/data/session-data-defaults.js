@@ -64,7 +64,7 @@ module.exports = {
       {
         text: 'Availability',
         description: 'View and manage available appointments for your site',
-        hrefTemplate: '/site/:id/view-availability'
+        hrefTemplate: '/site/:id/availability/day'
       },
       {
         text: 'Change site details',
