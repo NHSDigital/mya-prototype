@@ -16,17 +16,23 @@ function pickName(usedNames, names) {
 }
 
 
-function generateBookings({ site_id, slots, services, statuses, names, fillRate = 0.8, timezone = 'Europe/London' }) {
-  const bookings = {};
-  let id = 1;
+function generateBookings({ 
+  site_id, 
+  slots, 
+  services, 
+  statuses, 
+  names, 
+  fillRate = 0.8, 
+  fillRatesByStatus = { scheduled: 0.7, cancelled: 0.2, orphaned: 0.1 },
+  timezone = 'Europe/London' 
+}) {
 
   if (!Array.isArray(names) || names.length === 0) {
     throw new Error('generateBookings(): invalid names array');
   }
-  console.log('Slot count:', slots.length);
-  console.log('Names count:', names.length);
 
-
+  const bookings = {};
+  let id = 1;
   const usedNames = new Set();
 
 
@@ -34,15 +40,26 @@ function generateBookings({ site_id, slots, services, statuses, names, fillRate 
     if (Math.random() > fillRate) continue;
     const dt = DateTime.fromISO(slotISO, { zone: timezone });
 
+    const service = randomItem(services);
+
+    // weighted status
+    const r = Math.random();
+    let status;
+    if (r < fillRatesByStatus.scheduled) status = 'scheduled';
+    else if (r < fillRatesByStatus.scheduled + fillRatesByStatus.cancelled) status = 'cancelled';
+    else status = 'orphaned';
+
+    const name = pickName(usedNames, names);
+
     bookings[id++] = {
       site_id,
-      service: randomItem(services),
+      service: service,
       datetime: dt.toISO({ suppressSeconds: true, suppressMilliseconds: true }),
-      name: pickName(usedNames, names),
+      name: name,
       nhsNumber: randomNhsNumber(),
-      dob: randomDob(),
-      contact: randomContact(),
-      status: randomItem(statuses)
+      dob: randomDob(service),
+      contact: randomContact(name),
+      status
     };
   }
 

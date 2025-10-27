@@ -52,6 +52,7 @@ module.exports = {
   bookings: {
     services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'RSV:Adult'],
     statuses: ['scheduled', 'cancelled', 'orphaned'],
-    fillRate: 0.8
+    fillRate: 0.8,
+    fillRatesByStatus: { scheduled: 0.75, cancelled: 0.20, orphaned: 0.05 }
   }
 };
