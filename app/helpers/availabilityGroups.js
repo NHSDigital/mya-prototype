@@ -30,9 +30,9 @@ function addSlotInfo(session) {
 
   return {
     ...session,
-    slots: {
+    counts: {
       perHour: Math.round(slotsPerHour),
-      perSession: Math.round(slotsPerSession),
+      perSession: Math.round(slotsPerSession)
     },
   };
 }

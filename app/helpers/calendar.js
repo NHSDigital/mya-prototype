@@ -3,6 +3,7 @@ const { DateTime } = require('luxon');
 function calendar(dates) {
   const dateSet = new Set(dates);
   const grouped = {};
+  let totalMonths = 0;
 
   // Group by year and month
   for (const iso of dates) {
@@ -23,6 +24,7 @@ function calendar(dates) {
       const daysInMonth = first.daysInMonth;
       const startWeekday = (first.weekday + 6) % 7; // Monday = 0
       const weeks = [];
+      totalMonths++;
       let week = Array(startWeekday).fill(null);
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -55,7 +57,13 @@ function calendar(dates) {
     }
   }
 
-  return result;
+  return { 
+    dates: result, 
+    counts: {
+      totalMonths,
+      totalDays: dates.length
+    } 
+  };
 }
 
 module.exports = { calendar };

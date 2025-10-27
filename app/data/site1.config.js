@@ -12,7 +12,7 @@ const baseSessions = [
     until: '17:00',
     services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'],
     slotLength: 10,
-    capacity: 1
+    capacity: 2
   }
 ];
 

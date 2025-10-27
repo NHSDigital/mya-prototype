@@ -1,6 +1,6 @@
 {% extends '../layouts/layout.html' %}
 
-{% set pageName = 'All availability - ' ~ data.sites[site_id].name %}
+{% set pageName = 'Availability pattern details - ' ~ data.sites[site_id].name %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -9,13 +9,47 @@
 }) }}
 {% endblock %}
 
+{% macro monthCalendar(dates) %}
+{% for yearNumber, year in dates %}
+{% for monthNumber, month in year %}
+
+<table class="app-calendar" role="table">
+  <caption>Available days in {{ (yearNumber~'-'~monthNumber~'-01') | formatDate('MMM yyyy') }}</caption>
+  <thead>
+    <tr>
+      <th scope="col">Mon</th>
+      <th scope="col">Tue</th>
+      <th scope="col">Wed</th>
+      <th scope="col">Thu</th>
+      <th scope="col">Fri</th>
+      <th scope="col">Sat</th>
+      <th scope="col">Sun</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for week in month.weeks %}
+    <tr>
+      {% for day in week %}
+        <td class="app-calendar-day{% if not day %} app-calendar-day--blank{% endif %}{% if day.hasEntry %} app-calendar-day--available{% endif %}">
+          {{ day.day }}<br>
+          {% set todaysDate = yearNumber~'-'~monthNumber~'-'~day.day %}
+        </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}{# end week #}
+  </tbody>
+</table>
+{% endfor %}{# end of month #}
+{% endfor %}{# end of year #}
+{% endmacro %}
+
 {% block content %}
 
 <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
 
       <span class="nhsuk-caption-xl">{{ data.sites[site_id].name }}</span>
-      <h1 class="nhsuk-heading-xl">Availability details</h1>
+      <h1 class="nhsuk-heading-xl">Availability pattern details</h1>
 
       <dl class="nhsuk-summary-list">
         <div class="nhsuk-summary-list__row">
@@ -37,50 +71,40 @@
         </div>
         <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Session length</dt>
-          <dd class="nhsuk-summary-list__value">{{ group.session.slotLength }} minutes</dd>
+          <dd class="nhsuk-summary-list__value">
+            {{ group.session.slotLength }} minutes<br>
+            {{ group.session.counts.perHour }} per hour<br>
+            {{ group.session.counts.perSession }} over {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}  
+          </dd>
         </div>
         <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Concurrent vaccinations</dt>
           <dd class="nhsuk-summary-list__value">{{ group.session.capacity }}</dd>
         </div>
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Days with this availability pattern</dt>
+          <dd class="nhsuk-summary-list__value">{{ calendar.counts.totalDays }} days over {{ calendar.counts.totalMonths }} months.</dd>
+        </div>
       </dl>
-
-      {% for yearNumber, year in calendar %}
-      {% for monthNumber, month in year %}
-      <table class="app-calendar" role="table">
-        <caption>Available days in {{ (yearNumber~'-'~monthNumber~'-01') | formatDate('MMM yyyy') }}</caption>
-        <thead>
-          <tr>
-            <th scope="col">Mon</th>
-            <th scope="col">Tue</th>
-            <th scope="col">Wed</th>
-            <th scope="col">Thu</th>
-            <th scope="col">Fri</th>
-            <th scope="col">Sat</th>
-            <th scope="col">Sun</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for week in month.weeks %}
-          <tr>
-            {% for day in week %}
-              <td class="app-calendar-day{% if not day %} app-calendar-day--blank{% endif %}{% if day.hasEntry %} app-calendar-day--available{% endif %}">
-                {{ day.day }}<br>
-                {% set todaysDate = yearNumber~'-'~monthNumber~'-'~day.day %}
-                {% if day.hasEntry  %}
-                  {{ group.bookings[todaysDate].totalSlots }} slots
-                {% endif %}
-              </td>
-            {% endfor %}
-          </tr>
-          {% endfor %}{# end week #}
-        </tbody>
-      </table>
-      {% endfor %}{# end of month #}
-      {% endfor %}{# end of year #}
 
     </div>
 </div>
-{# {{ calendar | prettyDump | safe }}
-{{ group | prettyDump | safe }} #}
+
+
+<div class="nhsuk-grid-row">
+  <div class="nhsuk-grid-column-full">
+    {{ monthCalendar(calendar.dates) | safe }}
+  </div>
+</div>
+
+{% call details({
+  summaryText: "Calendar object"
+}) %}
+  {{ calendar | prettyDump | safe }}
+{% endcall %}
+{% call details({
+  summaryText: "Group object"
+}) %}
+  {{ group | prettyDump | safe }}
+{% endcall %}
 {% endblock %}
