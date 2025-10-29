@@ -18,6 +18,13 @@ function enhanceData({ daily_availability, bookings, timezone = 'Europe/London' 
   for (const [site_id, availability] of Object.entries(daily_availability)) {
     slots[site_id] = {};
 
+    // Normalise bookings once into UTC millis for fast lookup
+    const bookingMap = new Map();
+    for (const [id, b] of Object.entries(bookings[site_id] || {})) {
+      const dt = DateTime.fromISO(b.datetime, { zone: timezone });
+      bookingMap.set(dt.toMillis(), { id, ...b });
+    }
+
     for (const [date, day] of Object.entries(availability)) {
       if (!day?.sessions?.length) continue;
       slots[site_id][date] = [];
@@ -31,12 +38,9 @@ function enhanceData({ daily_availability, bookings, timezone = 'Europe/London' 
         for (let dt = start; dt < end; dt = dt.plus({ minutes: slotLength })) {
           for (let c = 0; c < capacity; c++) {
             const datetime = dt.toISO({ suppressSeconds: true, suppressMilliseconds: true });
+            const key = dt.toMillis(); // normalised comparison key
 
-            // find booking for this exact datetime
-            const bookingEntry = Object.entries(bookings[site_id] || {}).find(
-              ([, b]) => b.datetime === datetime
-            );
-            const booking = bookingEntry ? bookingEntry[1] : null;
+            const booking = bookingMap.get(key) || null;
 
             slots[site_id][date].push({
               datetime,
@@ -52,7 +56,7 @@ function enhanceData({ daily_availability, bookings, timezone = 'Europe/London' 
               capacity_index: c + 1,
               services: session.services || [],
               booked: !!booking,
-              booking_id: bookingEntry ? bookingEntry[0] : null,
+              booking_id: booking ? booking.id : null,
               booking_status: booking ? booking.status : null
             });
           }

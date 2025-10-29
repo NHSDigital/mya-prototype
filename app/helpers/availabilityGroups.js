@@ -37,9 +37,6 @@ function addSlotInfo(session) {
   };
 }
 
-//Helper: generate a stable group ID for a session
-
-
 // Step 1: group identical sessions across all days
 function groupSessions(data) {
   const sessionGroups = [];
@@ -51,17 +48,14 @@ function groupSessions(data) {
       if (existingGroup) {
         existingGroup.dates.push(day.date);
       } else {
-        sessionGroups.push({ 
+        sessionGroups.push({
           id: generateGroupId(session),
-          session: addSlotInfo(session), 
-          dates: [day.date] 
+          session: addSlotInfo(session),
+          dates: [day.date]
         });
       }
     }
   }
-
-  //filter out any groups in the future
-  
 
   return sessionGroups;
 }
@@ -80,23 +74,31 @@ function summariseWeekdays(group) {
   return { ...group, weekdaySummary: summary };
 }
 
-// Step 3: separate single-day vs multi-day, and aggregate weekday totals
-function availabilityGroups(data, site_id) {
+// Step 3: filter, classify, and aggregate totals
+function availabilityGroups(data, startDate = null) {
   const totals = {};
   weekdayNames.forEach(day => (totals[day] = 0));
 
-  const grouped = groupSessions(data).map(summariseWeekdays);
+  const grouped = groupSessions(data)
+    // ✅ optional date filter
+    .map(g => {
+      if (!startDate) return g;
+      const cutoff = DateTime.fromISO(startDate);
+      const filteredDates = g.dates.filter(d => DateTime.fromISO(d) >= cutoff);
+      return { ...g, dates: filteredDates };
+    })
+    // ✅ drop empty groups
+    .filter(g => g.dates.length > 0)
+    .map(summariseWeekdays);
 
   const repeating = [];
   const single = [];
 
   grouped.forEach(g => {
-    // add to totals
     for (const day in g.weekdaySummary) {
       totals[day] += g.weekdaySummary[day];
     }
 
-    // classify into single vs repeating
     if (g.dates.length > 1) {
       g.type = 'repeating';
       repeating.push(g);

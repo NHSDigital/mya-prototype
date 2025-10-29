@@ -1,5 +1,5 @@
-{% extends '../layouts/layout.html' %}
-{% from '../components/subNavigation/subNavigation.njk' import subNavigation %}
+{% extends '../../layouts/layout.html' %}
+{% from '../../components/subNavigation/subNavigation.njk' import subNavigation %}
 
 {% set pageName = 'All availability - ' ~ data.sites[site_id].name %}
 
@@ -30,7 +30,7 @@
 <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
 
-            {{
+       {{
         subNavigation({
           items: [
             {
@@ -141,5 +141,5 @@
       </div>
   </div>
 
-   {{ slots | prettyDump | safe }}
+   {# {{ slots | prettyDump | safe }} #}
 {% endblock %}

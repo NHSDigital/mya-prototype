@@ -9,6 +9,7 @@ const { calendar } = require('../helpers/calendar');
 const updateDailyAvailability = require('../helpers/updateDailyAvailability');
 const slots = require('../helpers/slots');
 const enhanceData = require('../helpers/enhanceData');
+const { decorateCalendarWithSlots } = require('../helpers/decorateCalendarWithSlots');
 
 // -----------------------------------------------------------------------------
 // PARAM HANDLER – capture site_id once for all /site/:id routes
@@ -112,7 +113,7 @@ router.get('/site/:id/availability/day', (req, res) => {
   const single_day_availability = data.daily_availability[site_id][date];
   const bookings = data.bookings[site_id];
 
-  res.render('site/view-availability/day', {
+  res.render('site/availability/day', {
     date,
     sessions: slotsForDay(single_day_availability, bookings),
     isToday: DateTime.now().toFormat('yyyy-MM-dd') === date
@@ -122,9 +123,10 @@ router.get('/site/:id/availability/day', (req, res) => {
 router.get('/site/:id/availability/all', (req, res) => {
   const site_id = req.site_id;
   const data = req.session.data;
+  const today = req.query.today || DateTime.now().toFormat('yyyy-MM-dd'); //start from this date
 
-  res.render('availabilityGroups/all-availability', {
-    availabilityGroups: availabilityGroups(data.daily_availability[site_id])
+  res.render('site/availability/all', {
+    availabilityGroups: availabilityGroups(data.daily_availability[site_id], today)
   });
 });
 
@@ -132,25 +134,20 @@ router.get('/site/:id/availability/all/:groupId', (req, res) => {
   const site_id = req.site_id;
   const data = req.session.data;
 
-  //get availability for just this group
   const allGroups = availabilityGroups(data.daily_availability[site_id]);
   const allGroupsArray = [...allGroups.repeating, ...allGroups.single];
   const group = allGroupsArray.find(g => g.id === req.params.groupId);
 
-  if (!group) return res.status(404).send('Availability group not found');;
-  
-  // --- Filter slots to only those that belong to this group ---
-  const allSlots = res.locals.slots || {};
-  const groupSlots = {};
-  for (const date of group.dates) {
-    const slotsForDate = allSlots[date] || [];
-    groupSlots[date] = slotsForDate.filter(slot => slot.group?.id === group.id);
-  }
+  if (!group) return res.status(404).send('Availability group not found');
 
-  res.render('availabilityGroups/availability-details', {
+  const today = req.query.today || DateTime.now(); //start from this date
+  const rawCalendar = calendar(group.dates);
+  const decoratedCalendar = decorateCalendarWithSlots(rawCalendar, res.locals.slots, today);
+
+  res.render('site/availability/group-details', {
     group,
-    calendar: calendar(group.dates),
-    slots: groupSlots
+    calendar: decoratedCalendar,
+    today: today.toISODate()
   });
 });
 

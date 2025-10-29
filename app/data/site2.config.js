@@ -37,6 +37,9 @@ module.exports = {
     Friday: baseSessions
   },
   overrides: {
+    '2025-11-18': [
+      { from: '12:00', until: '16:00', services: ['COVID:18+'], slotLength: 10, capacity: 20 }
+    ], //a test day in the past
     '2025-12-25': [], // Christmas Day closed
     '2025-12-26': [],  // Boxing Day closed
     '2026-01-01': [   // New Year's Day reduced hours
