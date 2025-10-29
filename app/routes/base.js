@@ -1,27 +1,61 @@
 // ./routes/site/base.js
 const express = require('express');
 const router = express.Router();
-const { weeksInMonth, daysInWeek } = require('../helpers/weekAndMonthViews');
-const { slotsForDay } = require('../helpers/day');
 const { DateTime } = require('luxon');
-const updateDailyAvailability = require('../helpers/updateDailyAvailability');
 
+const { availabilityGroups } = require('../helpers/availabilityGroups');
+const { slotsForDay } = require('../helpers/day');
+const { calendar } = require('../helpers/calendar');
+const updateDailyAvailability = require('../helpers/updateDailyAvailability');
+const slots = require('../helpers/slots');
+const enhanceData = require('../helpers/enhanceData');
+
+// -----------------------------------------------------------------------------
+// PARAM HANDLER – capture site_id once for all /site/:id routes
+// -----------------------------------------------------------------------------
 router.param('id', (req, res, next, id) => {
   req.site_id = id;
-  res.locals.site_id = id;
+  res.locals.site_id = id; // expose to templates
   next();
 });
 
-// --- Dashboard ---
-router.get('/site/:id', (req, res) => {
-  console.log('Dashboard hit — req.site_id:', req.site_id);
-  console.log('res.locals.site_id:', res.locals.site_id);
 
-  const data = req.session?.data || {}; // or fake data
+// -----------------------------------------------------------------------------
+// MIDDLEWARE – enhance data for the current site before any route runs
+// -----------------------------------------------------------------------------
+router.use('/site/:id', (req, res, next) => {
+  const data = req.session.data;
+  const site_id = String(req.site_id);
+
+  if (!data?.sites?.[site_id]) {
+    console.warn(`⚠️ Site ${site_id} not found in session data`);
+    return res.status(404).send('Site not found');
+  }
+
+  // Generate fresh data for this site only
+  const slots = enhanceData({
+    daily_availability: { [site_id]: data.daily_availability[site_id] },
+    bookings: { [site_id]: data.bookings[site_id] }
+  });
+
+  // Expose to templates
+  res.locals.slots = slots[site_id];
+
+  next();
+});
+
+
+// -----------------------------------------------------------------------------
+// DASHBOARD
+// -----------------------------------------------------------------------------
+router.get('/site/:id', (req, res) => {
   res.render('site/dashboard');
 });
 
-// --- Create availability ---
+
+// -----------------------------------------------------------------------------
+// CREATE AVAILABILITY
+// -----------------------------------------------------------------------------
 router.get('/site/:id/create-availability', (req, res) => {
   res.render('site/create-availability/create-availability');
 });
@@ -51,66 +85,77 @@ router.all('/site/:id/create-availability/check-answers', (req, res) => {
 });
 
 router.get('/site/:id/create-availability/process-new-session', (req, res) => {
-  const newSession = req.session.data.newSession;
-  if (!newSession) return res.redirect(`/site/${req.site_id}/create-availability?new-session=false`);
+  const data = req.session.data;
+  const site_id = req.site_id;
+  const newSession = data.newSession;
 
-  const newDailyAvailability = updateDailyAvailability(
-    newSession,
-    req.session.data.daily_availability,
-    req.site_id
-  );
-
-  req.session.data.daily_availability = newDailyAvailability;
-  delete req.session.data.newSession;
-
-  res.redirect(`/site/${req.site_id}/create-availability?new-session=true`);
-});
-
-// --- View availability ---
-function getAvailabilityAndBookings(req) {
-  const data = (req.session && req.session.data) || {};
-  return { availability: data.availability, bookings: data.bookings };
-}
-
-router.get('/site/:id/view-availability', (req, res) => {
-  res.redirect(`/site/${req.site_id}/view-availability/week`);
-});
-
-router.get('/site/:id/view-availability/week', (req, res) => {
-  const date = req.query.date || DateTime.now().toFormat('yyyy-MM-dd');
-  const daily_availability = req.session.data.daily_availability;
-  const bookings = req.session.data.bookings;
-  const siteId = req.site_id != null ? Number(req.site_id) : null;
-
-  const weekDays = daysInWeek(date);
-  for (let i = 0; i < weekDays.length; i++) {
-    const single_day_availability = daily_availability[DateTime.fromISO(weekDays[i]).toFormat('yyyy-MM-dd')];
-    weekDays[i] = {
-      date: weekDays[i],
-      sessions: slotsForDay(single_day_availability, bookings, siteId, 'service'),
-    };
+  if (!newSession) {
+    return res.redirect(`/site/${site_id}/create-availability?new-session=false`);
   }
 
-  res.render('site/view-availability/week', {
-    monday: weekDays[0].date,
-    sunday: weekDays[6].date,
-    weekDays,
-  });
+  // Update daily availability for this site
+  data.daily_availability = updateDailyAvailability(newSession, data.daily_availability, site_id);
+  delete data.newSession;
+
+  res.redirect(`/site/${site_id}/create-availability?new-session=true`);
 });
 
-router.get('/site/:id/view-availability/day', (req, res) => {
-  const date = req.query.date || DateTime.now().toFormat('yyyy-MM-dd');
-  const siteId = req.site_id != null ? Number(req.site_id) : null;
-  const daily_availability = req.session.data.daily_availability;
-  const bookings = req.session.data.bookings;
 
-  const single_day_availability = daily_availability[req.site_id][date];
+// -----------------------------------------------------------------------------
+// VIEW AVAILABILITY
+// -----------------------------------------------------------------------------
+router.get('/site/:id/availability/day', (req, res) => {
+  const data = req.session.data;
+  const site_id = req.site_id;
+  const date = req.query.date || DateTime.now().toFormat('yyyy-MM-dd');
+
+  const single_day_availability = data.daily_availability[site_id][date];
+  const bookings = data.bookings[site_id];
 
   res.render('site/view-availability/day', {
     date,
-    sessions: slotsForDay(single_day_availability, bookings[req.site_id], siteId),
-    isToday: DateTime.now().toFormat('yyyy-MM-dd') === date,
+    sessions: slotsForDay(single_day_availability, bookings),
+    isToday: DateTime.now().toFormat('yyyy-MM-dd') === date
   });
 });
 
+router.get('/site/:id/availability/all', (req, res) => {
+  const site_id = req.site_id;
+  const data = req.session.data;
+
+  res.render('availabilityGroups/all-availability', {
+    availabilityGroups: availabilityGroups(data.daily_availability[site_id])
+  });
+});
+
+router.get('/site/:id/availability/all/:groupId', (req, res) => {
+  const site_id = req.site_id;
+  const data = req.session.data;
+
+  //get availability for just this group
+  const allGroups = availabilityGroups(data.daily_availability[site_id]);
+  const allGroupsArray = [...allGroups.repeating, ...allGroups.single];
+  const group = allGroupsArray.find(g => g.id === req.params.groupId);
+
+  if (!group) return res.status(404).send('Availability group not found');;
+  
+  // --- Filter slots to only those that belong to this group ---
+  const allSlots = res.locals.slots || {};
+  const groupSlots = {};
+  for (const date of group.dates) {
+    const slotsForDate = allSlots[date] || [];
+    groupSlots[date] = slotsForDate.filter(slot => slot.group?.id === group.id);
+  }
+
+  res.render('availabilityGroups/availability-details', {
+    group,
+    calendar: calendar(group.dates),
+    slots: groupSlots
+  });
+});
+
+
+// -----------------------------------------------------------------------------
+// EXPORT ROUTER
+// -----------------------------------------------------------------------------
 module.exports = router;

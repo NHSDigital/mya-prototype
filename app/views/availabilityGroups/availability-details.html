@@ -33,6 +33,17 @@
         <td class="app-calendar-day{% if not day %} app-calendar-day--blank{% endif %}{% if day.hasEntry %} app-calendar-day--available{% endif %}">
           {{ day.day }}<br>
           {% set todaysDate = yearNumber~'-'~monthNumber~'-'~day.day %}
+          {% set totalBooked = 0 %}
+          {% set totalSlots = 0 %}
+          {% for slot in slots[todaysDate] %}
+            {% set totalSlots = totalSlots + 1 %}
+            {% if slot.booked %}
+              {% set totalBooked = totalBooked + 1 %}
+            {% endif %}
+          {% endfor %}
+          {% if totalSlots > 0 %}
+            <span class="app-calendar-day__booked">{{ totalBooked }}</span>/<span class="app-calendar-day__total">{{ totalSlots }}</span> booked
+          {% endif %}
         </td>
       {% endfor %}
     </tr>
@@ -48,18 +59,22 @@
 <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
 
-      <span class="nhsuk-caption-xl">{{ data.sites[site_id].name }}</span>
-      <h1 class="nhsuk-heading-xl">Availability pattern details</h1>
+      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
+      <h1 class="nhsuk-heading-l">{{ group.dates[0] | formatDate('d MMMM') }}{% if group.type == 'repeating' %} to {{ group.dates[group.dates | length - 1] | formatDate('d MMMM yyyy') }}{% endif %}, {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}</h1>
+
+      <div class="nhsuk-button-group">
+        {{ button({
+          text: "Edit availability",
+          classes: "nhsuk-button--secondary app-small-button"
+        }) }}
+
+        {{ button({
+          text: "Delete availability",
+          classes: "nhsuk-button--warning app-small-button"
+        }) }}
+      </div>
 
       <dl class="nhsuk-summary-list">
-        <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Date{% if group.type == 'repeating' %}s{% endif %}</dt>
-          <dd class="nhsuk-summary-list__value">{{ group.dates[0] | formatDate('cccc, d MMMM') }}{% if group.type == 'repeating' %}<br>to<br>{{ group.dates[group.dates | length - 1] | formatDate('cccc, d MMMM yyyy') }}{% endif %}</dd>
-        </div>
-        <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Times</dt>
-          <dd class="nhsuk-summary-list__value">{{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}</dd>
-        </div>
         <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Services</dt>
           <dd class="nhsuk-summary-list__value">
@@ -70,20 +85,14 @@
           </dd>
         </div>
         <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Session length</dt>
+          <dt class="nhsuk-summary-list__key">Appointment length</dt>
           <dd class="nhsuk-summary-list__value">
             {{ group.session.slotLength }} minutes<br>
-            {{ group.session.counts.perHour }} per hour<br>
-            {{ group.session.counts.perSession }} over {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}  
           </dd>
         </div>
         <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Concurrent vaccinations</dt>
+          <dt class="nhsuk-summary-list__key">Vaccinators or vaccination spaces</dt>
           <dd class="nhsuk-summary-list__value">{{ group.session.capacity }}</dd>
-        </div>
-        <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Days with this availability pattern</dt>
-          <dd class="nhsuk-summary-list__value">{{ calendar.counts.totalDays }} days over {{ calendar.counts.totalMonths }} months.</dd>
         </div>
       </dl>
 
@@ -98,9 +107,9 @@
 </div>
 
 {% call details({
-  summaryText: "Calendar object"
+  summaryText: "Slots object"
 }) %}
-  {{ calendar | prettyDump | safe }}
+  {{ slots | prettyDump | safe }}
 {% endcall %}
 {% call details({
   summaryText: "Group object"
