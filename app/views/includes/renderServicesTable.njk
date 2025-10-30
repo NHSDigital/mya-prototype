@@ -1,0 +1,55 @@
+{% macro renderServicesTable(opts) %}
+{% set slots = opts.slots %}
+{% set date = opts.date %}
+{% set data = opts.data %}
+{% set site_id = opts.site_id %}
+
+<table class="nhsuk-table">
+  <thead class="nhsuk-table__head">
+    <tr class="nhsuk-table__row">
+      <th scope="col" class="nhsuk-table__header">Time</th>
+      <th scope="col" class="nhsuk-table__header">Services</th>
+      <th scope="col" class="nhsuk-table__header">Booked</th>
+      <th scope="col" class="nhsuk-table__header">Unbooked</th>
+      {% if not (date | isDateInPast) %}{% if not opts.hideAction %}
+      <th scope="col" class="nhsuk-table__header">Action</th>
+      {% endif %}{% endif %}
+    </tr>
+  </thead>
+  <tbody class="nhsuk-table__body">
+    {% for session in opts.sessions %}
+    <tr class="nhsuk-table__row">
+      <td class="nhsuk-table__cell">{{ session.from | nhsTime }} to {{ session.until | nhsTime }}</td>
+      <td class="nhsuk-table__cell">
+      {% set unbookedCount = slots[date] | length %}
+      {% set totalCount = slots[date] | length %}
+      {% for service in session.services %}
+        {{ data.services[service].name }}<br>
+      {% endfor %}
+      </td>
+      <td class="nhsuk-table__cell">
+        {% for service in session.services %}
+          {# counts for each service #}
+          {% set bookedCount = 0 %}
+          {% for slot in slots[date] %}
+            {% if 
+              slot.booking_status =='scheduled' 
+              and data.bookings[site_id][slot.booking_id].service == service
+              and (slot.group.start == session.from) and (slot.group.end == session.until)
+            %}
+            {% set bookedCount = bookedCount + 1 %}
+            {% set unbookedCount = unbookedCount - 1 %}
+            {% endif %}
+          {% endfor %}
+          {{ bookedCount }}<br>
+        {% endfor %}
+      </td>
+      <td class="nhsuk-table__cell">{{ unbookedCount }}</td>
+      {% if not (date | isDateInPast) %}{% if not opts.hideAction %}
+      <td class="nhsuk-table__cell"><a href="/site/{{ site_id }}/change/session?date={{ date }}&from={{ session.from }}&until={{ session.until }}">Change</a></td>
+      {% endif %}{% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}

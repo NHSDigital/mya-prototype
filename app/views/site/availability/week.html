@@ -1,5 +1,6 @@
 {% extends '../../layouts/layout.html' %}
 {% from '../../components/subNavigation/subNavigation.njk' import subNavigation %}
+{% from '../../includes/renderServicesTable.njk' import renderServicesTable %}
 
 {% set pageName = week[0] | formatDate('d LLLL') ~ ' to ' ~ week[6] | formatDate('d LLLL yyyy') %}
 
@@ -10,53 +11,7 @@
 }) }}
 {% endblock %}
 
-{% macro renderServicesTable(date) %}
-<table class="nhsuk-table">
-  <thead class="nhsuk-table__head">
-    <tr class="nhsuk-table__row">
-      <th scope="col" class="nhsuk-table__header">Time</th>
-      <th scope="col" class="nhsuk-table__header">Services</th>
-      <th scope="col" class="nhsuk-table__header">Booked</th>
-      <th scope="col" class="nhsuk-table__header">Unbooked</th>
-      <th scope="col" class="nhsuk-table__header">Action</th>
-    </tr>
-  </thead>
-  <tbody class="nhsuk-table__body">
-    {% for session in data.daily_availability[site_id][date].sessions %}
-    {% for service in session.services %}
 
-    {# counts for each service #}
-    {% set bookedCount = 0 %}
-    {% set unbookedCount = slots[date] | length %}
-    {% set totalCount = slots[date] | length %}
-    {% for slot in slots[date] %}
-      {% if 
-        slot.booking_status =='scheduled' 
-        and data.bookings[site_id][slot.booking_id].service == service
-        and (slot.group.start == session.from) and (slot.group.end == session.until)
-      %}
-      {% set bookedCount = bookedCount + 1 %}
-      {% set unbookedCount = unbookedCount - 1 %}
-      {% endif %}
-    {% endfor %}
-
-    <tr class="nhsuk-table__row">
-      {% if loop.first %}
-      <td class="nhsuk-table__cell" rowspan="{{ session.services | length }}">{{ session.from | nhsTime }} to {{ session.until | nhsTime }}</td>
-      {% endif %}
-      <td class="nhsuk-table__cell">{{ data.services[service].name }}</td>
-      <td class="nhsuk-table__cell">{{ bookedCount }}</td>
-      {% if loop.first %}
-      <td class="nhsuk-table__cell" rowspan="{{ session.services | length }}">{{ unbookedCount }}</td>
-      <td class="nhsuk-table__cell" rowspan="{{ session.services | length }}">Cancel</td>
-      {% endif %}
-
-    </tr>
-    {% endfor %}
-    {% endfor %}
-  </tbody>
-</table>
-{% endmacro %}
 
 {% block content %}
   <div class="nhsuk-grid-row">
@@ -116,7 +71,13 @@
     <div class="nhsuk-table__panel-with-heading-tab">
       <h2 class="nhsuk-table__heading-tab">{{ day | formatDate('cccc, d LLLL') }}</h2>
       {% if data.daily_availability[site_id][day] %}
-       {{ renderServicesTable(day) }}
+       {{ renderServicesTable({
+          date: day, 
+          sessions: data.daily_availability[site_id][date].sessions,
+          slots: slots,
+          site_id: site_id,
+          data: data
+        }) }}
       {% else %}
       <p>No availability</p>
       {% endif %}

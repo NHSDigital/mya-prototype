@@ -1,0 +1,78 @@
+{% extends '../../layouts/layout.html' %}
+{% from '../../includes/renderServicesTable.njk' import renderServicesTable %}
+
+{% set thisSession = {} %}
+{% for session in data.daily_availability[site_id][date].sessions %}
+{% if session.from == from and session.until == until %}
+{% set thisSession = session %}
+{% endif %}
+{% endfor %}
+
+{% set pageName = 'Change availability for '~date | formatDate %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' ~ site_id ~ '/availability/week',
+  text: 'Back to week view'
+}) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}{{ firstOfTheMonth }}</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      {{ renderServicesTable({
+        date: date, 
+        sessions: [thisSession],
+        slots: slots,
+        site_id: site_id,
+        data: data,
+        hideAction: true
+      }) }}
+
+      {{ insetText({
+        text: 'You can only reduce time, capacity or services from this screen. If you want to increase availability for this day, you must create a new session.'
+      }) }}
+
+      <form>
+        {{ radios({
+          idPrefix: "nextAction",
+          name: "nextAction",
+          fieldset: {
+            legend: {
+              text: "What do you want to do?",
+              classes: "nhsuk-fieldset__legend--m"
+            }
+          },
+          items: [
+            {
+              text: "Change the length or capacity of this session",
+              hint: {
+                text: "Shorten the session length or remove capacity"
+              },
+              value: "change"
+            },
+            {
+              value: "remove",
+              text: "Remove services from this session",
+              hint: {
+                text: "Remove booked appointments for individual services"
+              }
+            },
+            {
+              value: "cancel",
+              text: "Cancel this session"
+            }
+          ]
+        }) }}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

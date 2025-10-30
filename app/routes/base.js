@@ -106,17 +106,24 @@ router.get('/site/:id/create-availability/process-new-session', (req, res) => {
 // VIEW AVAILABILITY
 // -----------------------------------------------------------------------------
 router.get('/site/:id/availability/day', (req, res) => {
-  const data = req.session.data;
-  const site_id = req.site_id;
   const date = req.query.date || DateTime.now().toFormat('yyyy-MM-dd');
-
-  const single_day_availability = data.daily_availability[site_id][date];
-  const bookings = data.bookings[site_id];
 
   res.render('site/availability/day', {
     date,
-    sessions: slotsForDay(single_day_availability, bookings),
     isToday: DateTime.now().toFormat('yyyy-MM-dd') === date
+  });
+});
+
+router.get('/site/:id/change/:type', (req, res) => {
+  //pass url params to the template
+  const type = req.params.type;
+
+  if (!['session'].includes(type)) {
+    return res.status(404).send('Change type not found');
+  }
+
+  res.render(`site/change/${type}`, {
+    ...req.query
   });
 });
 
