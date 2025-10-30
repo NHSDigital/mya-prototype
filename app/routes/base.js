@@ -120,6 +120,38 @@ router.get('/site/:id/availability/day', (req, res) => {
   });
 });
 
+router.get('/site/:id/availability/week', (req, res) => {
+  const data = req.session.data;
+  const site_id = req.site_id;
+  const date = req.query.date || DateTime.now().toFormat('yyyy-MM-dd');
+
+  //return dates for the week containing 'date'
+  const week = [];
+  const dt = DateTime.fromISO(date);
+  const startOfWeek = dt.startOf('week'); //assuming week starts on Monday
+  for (let i = 0; i < 7; i++) {
+    week.push(startOfWeek.plus({ days: i }).toISODate());
+  }
+
+  //return previous and next week dates
+  const previousWeek = {
+    start:startOfWeek.minus({ days: 7 }).toISODate(), //previous Monday
+    end: startOfWeek.minus({ days: 1 }).toISODate() //previous Sunday
+  }
+  const nextWeek = {
+    start: startOfWeek.plus({ days: 7 }).toISODate(), //next Monday
+    end: startOfWeek.plus({ days: 13 }).toISODate() //next Sunday
+  }
+
+
+  res.render('site/availability/week', {
+    date,
+    week,
+    previousWeek,
+    nextWeek
+  });
+});
+
 router.get('/site/:id/availability/all', (req, res) => {
   const site_id = req.site_id;
   const data = req.session.data;
@@ -142,7 +174,6 @@ router.get('/site/:id/availability/all/:groupId', (req, res) => {
 
   const today = req.query.today || DateTime.now(); //start from this date
   const rawCalendar = calendar(group.dates);
-  const decoratedCalendar = decorateCalendarWithSlots(rawCalendar, res.locals.slots, today);
 
   res.render('site/availability/group-details', {
     group,

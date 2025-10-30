@@ -120,9 +120,19 @@
       margin: 0;
       padding: 0;
       list-style: none;
-      @include nhsuk-font-size("s");
+      @include nhsuk-font-size(14);
       font-weight: normal;
       margin-top: nhsuk-spacing(1);
     }
   }
+
+  &-panel-list {
+    padding: 0;
+
+    &__item {
+      list-style: none;
+    }
+
+  }
+
 }

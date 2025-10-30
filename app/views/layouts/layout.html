@@ -52,6 +52,8 @@
     <script>
       const data = {{ data | dump | safe }}
       console.log("session data:", data);
+      const slots = {{ slots | dump | safe }};
+      console.log("slots data:", slots);
     </script>
     <!-- For adding page specific JavaScript -->
     {% block pageScripts %}{% endblock %}
