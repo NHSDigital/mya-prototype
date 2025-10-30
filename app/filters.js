@@ -25,6 +25,12 @@ module.exports = function (env) {
     return `${part1}&nbsp;${part2}&nbsp;${part3}`;
   }
 
+  filters.padZero = (num, size = 2) => {
+    let s = String(num);
+    while (s.length < size) s = "0" + s;
+    return s;
+  }
+
 
   return filters
 }

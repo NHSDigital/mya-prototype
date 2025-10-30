@@ -146,7 +146,7 @@ router.get('/site/:id/availability/all/:groupId', (req, res) => {
 
   res.render('site/availability/group-details', {
     group,
-    calendar: decoratedCalendar,
+    calendar: rawCalendar,
     today: today.toISODate()
   });
 });

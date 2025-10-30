@@ -100,5 +100,14 @@ module.exports = function registerDateTimeFilters(filters = {}) {
     return `${displayHour}${displayMinutes}${period}`;
   }
 
+  filters.isDateInPast = (input, comparisonDate = null, tz = DEFAULT_TZ) => {
+    const dt = toDateTime(input, tz);
+    let now = DateTime.now().setZone(tz);
+    if (comparisonDate) {
+      now = toDateTime(comparisonDate, tz);
+    }
+    return dt < now.startOf('day');
+  }
+
   return filters;
 };

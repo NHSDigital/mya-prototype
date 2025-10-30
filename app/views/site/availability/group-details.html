@@ -10,12 +10,11 @@
 {% endblock %}
 
 {% macro monthCalendar(dates) %}
-{% set inThePast = true %}
 {% for yearNumber, year in dates %}
 {% for monthNumber, month in year %}
 
 <table class="app-calendar" role="table">
-  <caption>Available days in {{ (yearNumber~'-'~monthNumber~'-01') | formatDate('MMM yyyy') }}</caption>
+  <caption>{{ (yearNumber~'-'~monthNumber~'-01') | formatDate('MMMM yyyy') }}</caption>
   <thead>
     <tr>
       <th scope="col">Mon</th>
@@ -33,9 +32,10 @@
       {% for day in week -%}
 
         {# calculate the logic for this table #}
-        {% set thisDate = yearNumber~'-'~monthNumber~'-'~day.day %}
+        {% set thisDate = yearNumber~'-'~monthNumber | padZero~'-'~day.day | padZero %}
         {% set totalBooked = 0 %}
         {% set totalSlots = 0 %}
+
 
         {% for slot in slots[thisDate] %}
           {% set totalSlots = totalSlots + 1 %}
@@ -44,22 +44,21 @@
           {% endif %}
         {% endfor %}
 
-        {% if thisDate == today %}{% set inThePast = false %}{% endif %}
-
         {% set classes -%}
         {%- if not day %} app-calendar-day--blank{% endif -%}
         {%- if day.hasEntry %} app-calendar-day--available{% endif -%}
-        {%- if inThePast %} app-calendar-day--past{% endif -%}
+        {%- if thisDate | isDateInPast(today) %} app-calendar-day--past{% endif -%}
         {%- endset %}
 
         <td role="gridcell" class="app-calendar-day {{ classes }}" aria-label="{{ thisDate | formatDate('cccc, d MMMM yyyy') }}" {% if thisday == today %}aria-current="date"{% endif %}>
+          {% if not thisDate | isDateInPast(today) %}
           {% if day.hasEntry %}
             <a href="/site/{{ site_id }}/availability/day?date={{ thisDate }}" 
-              class="app-calendar-day__link"
+              class="app-calendar-link"
               aria-label="View availability for {{ thisDate | formatDate('cccc, d MMMM yyyy') }}">
             <span class="app-calendar-day__dayNumber">{{ day.day }}</span>
             </a>
-            <ul class="app-calendar-day__availability-summary">
+            <ul class="app-calendar-details">
             {% if totalBooked > 0 %}
               <li>{{ totalBooked }}/{{ totalSlots }} booked</li>
             {% else %}
@@ -68,6 +67,9 @@
             </ul>
           {% else %}
             <span class="app-calendar-day__dayNumber" aria-label="No availability on {{ thisDate | formatDate('cccc, d MMMM yyyy') }}">{{ day.day }}</span>
+          {% endif %}
+          {% else %}
+            <span class="app-calendar-day__dayNumber" aria-label="Date in the past: {{ thisDate | formatDate('cccc, d MMMM yyyy') }}">{{ day.day }}</span>
           {% endif %}
         </td>
       {%- endfor %}
@@ -83,8 +85,6 @@
 
 <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
-
-      <p>Today: {{ today }}</p>
 
       <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
       <h1 class="nhsuk-heading-l">{{ group.dates[0] | formatDate('d MMMM') }}{% if group.type == 'repeating' %} to {{ group.dates[group.dates | length - 1] | formatDate('d MMMM yyyy') }}{% endif %}, {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}</h1>
@@ -142,5 +142,10 @@
   summaryText: "Group object"
 }) %}
   {{ group | prettyDump | safe }}
+{% endcall %}
+{% call details({
+  summaryText: "Calendar object"
+}) %}
+  {{ calendar | prettyDump | safe }}
 {% endcall %}
 {% endblock %}
