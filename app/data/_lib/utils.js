@@ -1,4 +1,9 @@
 const { DateTime } = require('luxon');
+const crypto = require('crypto');
+
+function stableId(input) {
+  return crypto.createHash('sha256').update(input).digest('hex').slice(0, 16);
+}
 
 function clone(obj) {
   return JSON.parse(JSON.stringify(obj));
@@ -67,4 +72,4 @@ function randomContact(name) {
 }
 
 
-module.exports = { clone, randomItem, randomNhsNumber, randomDob, randomContact };
+module.exports = { clone, randomItem, randomNhsNumber, randomDob, randomContact, stableId, generateEmail };

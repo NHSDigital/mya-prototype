@@ -11,7 +11,7 @@
       <th scope="col" class="nhsuk-table__header">Services</th>
       <th scope="col" class="nhsuk-table__header">Booked</th>
       <th scope="col" class="nhsuk-table__header">Unbooked</th>
-      {% if not (date | isDateInPast) %}{% if not opts.hideAction %}
+      {% if not (date | isDateInPast) %}{% if opts.change %}
       <th scope="col" class="nhsuk-table__header">Action</th>
       {% endif %}{% endif %}
     </tr>
@@ -45,8 +45,8 @@
         {% endfor %}
       </td>
       <td class="nhsuk-table__cell">{{ unbookedCount }}</td>
-      {% if not (date | isDateInPast) %}{% if not opts.hideAction %}
-      <td class="nhsuk-table__cell"><a href="/site/{{ site_id }}/change/session?date={{ date }}&from={{ session.from }}&until={{ session.until }}">Change</a></td>
+      {% if not (date | isDateInPast) %}{% if opts.change %}
+      <td class="nhsuk-table__cell"><a href="/site/{{ site_id }}/change/{{ opts.change.type }}/{{ session.id }}">Change</a></td>
       {% endif %}{% endif %}
     </tr>
     {% endfor %}

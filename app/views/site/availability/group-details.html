@@ -89,17 +89,7 @@
       <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
       <h1 class="nhsuk-heading-l">{{ group.dates[0] | formatDate('d MMMM') }}{% if group.type == 'repeating' %} to {{ group.dates[group.dates | length - 1] | formatDate('d MMMM yyyy') }}{% endif %}, {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}</h1>
 
-      <div class="nhsuk-button-group">
-        {{ button({
-          text: "Edit availability",
-          classes: "nhsuk-button--secondary app-small-button"
-        }) }}
-
-        {{ button({
-          text: "Delete availability",
-          classes: "nhsuk-button--warning app-small-button"
-        }) }}
-      </div>
+      <p><a href="/site/{{ site_id }}/change/group/{{ group.id }}">Change availability</a></p>
 
       <dl class="nhsuk-summary-list">
         <div class="nhsuk-summary-list__row">

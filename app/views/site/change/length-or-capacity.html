@@ -1,0 +1,8 @@
+{% extends '../../layouts/layout.html' %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' ~ site_id ~ '/availability/week',
+  text: 'Back to week view'
+}) }}
+{% endblock %}

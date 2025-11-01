@@ -1,0 +1,60 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = "Confirm you are assured" %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/create-availability/services'
+}) }}
+{% endblock %}
+
+{% block content %}
+
+
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Create availability</span>
+
+      <form action="/site/{{ site_id }}/create-availability/check-assurance" method="post">
+        <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+        <p>You have added the following services:</p>
+        <ul class="nhsuk-list nhsuk-list--bullet">
+          {% for service in data.newSession.services %}
+          <li>{{ data.services[service].name }}</li>
+          {% endfor %}
+        </ul>
+      
+
+        {{ radios({
+          idPrefix: "are-you-assured",
+          name: "newSession[areYouAssured]",
+          classes: "nhsuk-radios--inline",
+          fieldset: {
+            legend: {
+              text: "Are you are assured to deliver these service types?",
+              classes: "nhsuk-fieldset__legend--s"
+            }
+          },
+          items: [
+            {
+              value: "yes",
+              text: "Yes",
+              checked: true if data.newSession.areYouAssured == "yes"
+            },
+            {
+              value: "no",
+              text: "No",
+              checked: true if data.newSession.areYouAssured == "no"
+            }
+          ]
+        }) }}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

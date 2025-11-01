@@ -2,10 +2,12 @@
 {% from '../../includes/renderServicesTable.njk' import renderServicesTable %}
 
 {% set thisSession = {} %}
-{% for session in data.daily_availability[site_id][date].sessions %}
-{% if session.from == from and session.until == until %}
-{% set thisSession = session %}
-{% endif %}
+{% set date = null %}
+{% for availabilityDate, availability in data.daily_availability[site_id] %}
+  {% set date = availabilityDate %}
+  {% for session in availability.sessions %}
+    {% if session.id == itemId %}{% set thisSession = session %}{% endif %}
+  {% endfor %}
 {% endfor %}
 
 {% set pageName = 'Change availability for '~date | formatDate %}
@@ -18,11 +20,13 @@
 {% endblock %}
 
 {% block content %}
-
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
-      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}{{ firstOfTheMonth }}</span>
+      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <p>Type: {{ type }}, ID: {{ itemId }}</p>
+
       {{ renderServicesTable({
         date: date, 
         sessions: [thisSession],
@@ -36,10 +40,13 @@
         text: 'You can only reduce time, capacity or services from this screen. If you want to increase availability for this day, you must create a new session.'
       }) }}
 
-      <form>
+      <form action="/site/{{ site_id}}/change/type-of-change?date={{ date }}&from={{ from }}&until={{ until }}" method="post">
+        <input type="hidden" name="date" value="{{ date }}">
+        <input type="hidden" name="from" value="{{ from }}">
+        <input type="hidden" name="until" value="{{ until }}">
         {{ radios({
-          idPrefix: "nextAction",
-          name: "nextAction",
+          idPrefix: "type-of-change",
+          name: "type-of-change",
           fieldset: {
             legend: {
               text: "What do you want to do?",
@@ -52,17 +59,17 @@
               hint: {
                 text: "Shorten the session length or remove capacity"
               },
-              value: "change"
+              value: "length-or-capacity"
             },
             {
-              value: "remove",
+              value: "remove-services",
               text: "Remove services from this session",
               hint: {
                 text: "Remove booked appointments for individual services"
               }
             },
             {
-              value: "cancel",
+              value: "cancel-session",
               text: "Cancel this session"
             }
           ]

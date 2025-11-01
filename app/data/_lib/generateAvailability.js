@@ -1,5 +1,5 @@
 const { DateTime } = require('luxon');
-const { clone } = require('./utils');
+const { clone, stableId } = require('./utils');
 
 function generateAvailability({ site_id, start, end, patterns, overrides = {}, timezone = 'Europe/London' }) {
   const daily_availability = {};
@@ -18,6 +18,12 @@ function generateAvailability({ site_id, start, end, patterns, overrides = {}, t
         site_id,
         sessions: clone(overrides[dateStr])
       };
+
+      daily_availability[dateStr].sessions = daily_availability[dateStr].sessions.map((session, i) => ({
+        ...session,
+        id: stableId(`${site_id}-${dateStr}-${session.start}-${session.end}-${i}`)
+      }));
+
       continue;
     }
 
@@ -27,6 +33,11 @@ function generateAvailability({ site_id, start, end, patterns, overrides = {}, t
         site_id,
         sessions: clone(patterns[dayName])
       };
+
+      daily_availability[dateStr].sessions = daily_availability[dateStr].sessions.map((session, i) => ({
+        ...session,
+        id: stableId(`${site_id}-${dateStr}-${session.start}-${session.end}-${i}`)
+      }));
     }
   }
 

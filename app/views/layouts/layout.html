@@ -49,11 +49,13 @@
   {% block scripts %}
     <!-- Custom JavaScript files can be added to this file -->
     {% include "includes/scripts.html" %}
+    {% set dataForScript %}{% if data %}{{ data | dump | safe }}{% else %}{}{% endif %}{% endset %}
+    {% set slotsForScript %}{% if slots %}{{ slots | dump | safe }}{% else %}{}{% endif %}{% endset %}
+    {% set groupsForScript %}{% if availabilityGroups %}{{ availabilityGroups | dump | safe }}{% else %}{}{% endif %}{% endset %}
     <script>
-      const data = {{ data | dump | safe }}
-      console.log("session data:", data);
-      const slots = {{ slots | dump | safe }};
-      console.log("slots data:", slots);
+      console.log("session:", {{ dataForScript | safe }});
+      console.log("slots:", {{ slotsForScript | safe }});
+      console.log("availability groups:", {{ groupsForScript | safe }});
     </script>
     <!-- For adding page specific JavaScript -->
     {% block pageScripts %}{% endblock %}

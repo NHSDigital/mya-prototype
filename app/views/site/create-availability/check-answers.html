@@ -67,6 +67,12 @@
           {% set displayDate = singleDate | formatDate %}
         {% endif %}
 
+        {# Assurance statement #}
+        {% set assuranceText = "" %}
+        {% if data.newSession.areYouAssured == "yes" %}
+          {% set assuranceText = "You confirmed you are assured to deliver the services listed" %}
+        {% endif %}
+
         {{ summaryList({
           rows: [
             {
@@ -178,6 +184,22 @@
                     href: "/site/" + site_id + "/create-availability/services",
                     text: "Change",
                     visuallyHiddenText: " services available"
+                  }
+                ]
+              }
+            }, {
+              key: {
+                text: "Assured to deliver these service types"
+              },
+              value: {
+                text: assuranceText
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/create-availability/are-you-assured",
+                    text: "Change",
+                    visuallyHiddenText: " if you are assured to deliver these service types"
                   }
                 ]
               }

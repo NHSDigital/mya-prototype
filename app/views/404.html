@@ -1,0 +1,13 @@
+{% extends 'layouts/layout.html' %}
+{% set pageName = "Page not found" %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+
+      <h1 class="nhsuk-heading-l">{{ title or pageName }}</h1>
+      <p class="nhsuk-body-l">{{ message or 'We could not find that page. Go back and try again.' }}</p>
+      
+    </div>
+  </div>
+{% endblock %}

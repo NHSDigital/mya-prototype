@@ -1,7 +1,7 @@
 {% extends '../../layouts/layout.html' %}
 {% from '../../components/subNavigation/subNavigation.njk' import subNavigation %}
 
-{% set pageName = date | formatDate('EEEE, dd LLLL yyyy') %}
+{% set pageName = date | formatDate('EEEE, d LLLL yyyy') %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -58,8 +58,17 @@
       {%- endmacro %}
 
       {% macro appointmentForToday(opts) %}
+         {# calculate if there's any booked appointments of this type #}
+        {% set hasBookedAppointments = false %}
+        {% for slot in slots[date] %}
+          {% if slot.booking_status == 'scheduled' %}
+            {% set hasBookedAppointments = true %}
+          {% endif %}
+        {% endfor %}
+
         <h2 class="nhsuk-heading-m">{{ opts.title }}</h2>
        
+        {% if hasBookedAppointments %}
         <table class="nhsuk-table-responsive" role="table">
           <thead class="nhsuk-table__head" role="rowgroup">
             <tr>
@@ -103,6 +112,9 @@
 
           </tbody>
         </table>
+        {% else %}
+          <p>No appointments.</p>
+        {% endif %}
         
       {% endmacro %}
 

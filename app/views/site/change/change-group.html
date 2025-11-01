@@ -1,0 +1,100 @@
+{% extends '../../layouts/layout.html' %}
+{% from '../../includes/renderServicesTable.njk' import renderServicesTable %}
+
+{% set thisGroup = {} %}
+{% for group in availabilityGroups.repeating %}
+  {% if group.id == itemId %}{% set thisGroup = group %}{% endif %}
+{% endfor %}
+{% for group in availabilityGroups.single %}
+  {% if group.id == itemId %}{% set thisGroup = group %}{% endif %}
+{% endfor %}
+
+{% set startDate = thisGroup.dates | first %}
+{% set endDate = thisGroup.dates | last %}
+
+{% set pageName = 'Change availability from '~startDate | formatDate('d LLLL')~ ' to '~endDate | formatDate~ ', '~thisGroup.session.from | nhsTime~ ' to ' ~thisGroup.session.until | nhsTime %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' ~ site_id ~ '/availability/all/' ~ itemId,
+  text: 'Back to '~ thisGroup.type ~ ' availability'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <p>Type: {{ type }}, ID: {{ itemId }}</p>
+
+      <dl class="nhsuk-summary-list">
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Services</dt>
+          <dd class="nhsuk-summary-list__value">
+            {% for service_id in thisGroup.session.services %}
+              {% set service = data.services[service_id] %}
+                {{ service.name }}{% if not loop.last %}<br>{% endif %}
+            {% endfor %}
+          </dd>
+        </div>
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Appointment length</dt>
+          <dd class="nhsuk-summary-list__value">
+            {{ thisGroup.session.slotLength }} minutes<br>
+          </dd>
+        </div>
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Vaccinators or vaccination spaces</dt>
+          <dd class="nhsuk-summary-list__value">{{ thisGroup.session.capacity }}</dd>
+        </div>
+      </dl>
+
+      {{ insetText({
+        text: 'You can only reduce time, capacity or services from this screen. If you want to increase availability for this day, you must create a new session.'
+      }) }}
+
+      <form action="/site/{{ site_id}}/change/type-of-change?date={{ date }}&from={{ from }}&until={{ until }}" method="post">
+        <input type="hidden" name="date" value="{{ date }}">
+        <input type="hidden" name="from" value="{{ from }}">
+        <input type="hidden" name="until" value="{{ until }}">
+        {{ radios({
+          idPrefix: "type-of-change",
+          name: "type-of-change",
+          fieldset: {
+            legend: {
+              text: "What do you want to do?",
+              classes: "nhsuk-fieldset__legend--m"
+            }
+          },
+          items: [
+            {
+              text: "Change the length or capacity of this session",
+              hint: {
+                text: "Shorten the session length or remove capacity"
+              },
+              value: "length-or-capacity"
+            },
+            {
+              value: "remove-services",
+              text: "Remove services from this session",
+              hint: {
+                text: "Remove booked appointments for individual services"
+              }
+            },
+            {
+              value: "cancel-session",
+              text: "Cancel this session"
+            }
+          ]
+        }) }}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

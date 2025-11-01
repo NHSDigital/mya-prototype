@@ -73,10 +73,13 @@
       {% if data.daily_availability[site_id][day] %}
        {{ renderServicesTable({
           date: day, 
-          sessions: data.daily_availability[site_id][date].sessions,
+          sessions: data.daily_availability[site_id][day].sessions,
           slots: slots,
           site_id: site_id,
-          data: data
+          data: data,
+          change: {
+            type: 'session'
+          }
         }) }}
       {% else %}
       <p>No availability</p>
