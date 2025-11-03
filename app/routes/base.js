@@ -236,20 +236,6 @@ router.get('/site/:id/change/:type/:itemId', (req, res) => {
 // });
 
 // -----------------------------------------------------------------------------
-// CHANGE
-// -----------------------------------------------------------------------------
-router.use((req, res) => {
-  res.status(404);
-
-  // if you're using Nunjucks or another view engine:
-  res.render('404', { url: req.originalUrl });
-
-  // or if you don’t have templates yet:
-  // res.send('<h1>404</h1><p>Sorry, page not found.</p>');
-});
-
-
-// -----------------------------------------------------------------------------
 // EXPORT ROUTER
 // -----------------------------------------------------------------------------
 module.exports = router;
