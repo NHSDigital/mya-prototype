@@ -1,75 +1,147 @@
-// app/data/helpers/summaries.js
+// summarise.js
 const { DateTime } = require('luxon');
-const { slotsForDay } = require('./slots');
 
-// Sum multiple count objects
-function addCounts(total, add) {
-  for (const key of Object.keys(add)) {
-    if (typeof add[key] === 'number') total[key] = (total[key] || 0) + add[key];
-  }
-  return total;
-}
+// ---- CONFIG ----
+const LOCAL_TZ = "Europe/London"; // align bookings to local session times
 
-function getDaySummary(site_id, dateISO, daily_availability, bookings) {
-  const dayAvail = daily_availability[site_id]?.[dateISO];
-  const day = slotsForDay(dayAvail, bookings[site_id], site_id);
-  if (!day) return false;
+// ---- HELPERS ----
+const toMinutes = (hhmm) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+};
 
-  return {
-    site_id,
-    date: dateISO,
-    ...day
-  };
-}
+const inWindow = (minutes, fromHHMM, untilHHMM) => {
+  const start = toMinutes(fromHHMM);
+  const end = toMinutes(untilHHMM);
+  return minutes >= start && minutes < end; // [start, end)
+};
 
-function getWeekSummary(site_id, weekStartISO, daily_availability, bookings) {
-  const weekStart = DateTime.fromISO(weekStartISO, { zone: 'Europe/London' }).startOf('week');
-  const days = [];
-  const totals = { scheduled: 0, cancelled: 0, orphaned: 0, totalSlots: 0 };
+const slotCount = ({ from, until, slotLength, capacity }) => {
+  const mins = toMinutes(until) - toMinutes(from);
+  return Math.max(0, Math.floor(mins / slotLength)) * capacity;
+};
 
-  for (let i = 0; i < 7; i++) {
-    const date = weekStart.plus({ days: i }).toISODate();
-    const summary = getDaySummary(site_id, date, daily_availability, bookings);
-    if (summary) {
-      days.push(summary);
-      addCounts(totals, summary);
+const weekKey = (isoDate) => {
+  const d = DateTime.fromISO(isoDate, { zone: LOCAL_TZ });
+  return `${d.weekYear}-W${String(d.weekNumber).padStart(2, "0")}`;
+};
+const monthKey = (isoDate) =>
+  DateTime.fromISO(isoDate, { zone: LOCAL_TZ }).toFormat("yyyy-MM");
+
+const ensureBucket = (obj, key) =>
+  (obj[key] ??= { totalSlots: 0, bookedSlots: 0, availableSlots: 0, bookingsPerService: {} });
+
+const bump = (map, key, by = 1) => (map[key] = (map[key] || 0) + by);
+
+// ---- CORE ----
+/**
+ * bookings: { id: { datetime, service, status, ... }, ... }
+ * availability: { "YYYY-MM-DD": { sessions: [{from,until,slotLength,capacity,services?}, ...] }, ... }
+ * groups: [{ id, session: {from,until,slotLength,capacity,services?}, dates: ["YYYY-MM-DD", ...] }, ...]
+ */
+function summarise({ bookings = {}, availability = {}, groups = [] }) {
+  const daily = {};
+  const weekly = {};
+  const monthly = {};
+  const byGroup = {};
+
+  // Precompute group slot totals and a quick lookup of groups per date
+  /** date -> [{ groupId, session }] */
+  const groupsByDate = {};
+  for (const g of groups) {
+    const perDaySlots = slotCount(g.session);
+    byGroup[g.id] = ensureBucket({}, g.id); // creates shape
+    byGroup[g.id].totalSlots = perDaySlots * g.dates.length;
+
+    for (const date of g.dates) {
+      const d = ensureBucket(daily, date);
+      d.totalSlots += perDaySlots;
+
+      const wk = ensureBucket(weekly, weekKey(date));
+      wk.totalSlots += perDaySlots;
+      const mo = ensureBucket(monthly, monthKey(date));
+      mo.totalSlots += perDaySlots;
+
+      (groupsByDate[date] ??= []).push({ groupId: g.id, session: g.session });
     }
   }
 
-  return { site_id, weekStart: weekStart.toISODate(), totals, days };
-}
+  // Add ad-hoc availability slots (non-group daily sessions)
+  for (const [date, avail] of Object.entries(availability)) {
+    let total = 0;
+    for (const s of avail.sessions || []) total += slotCount(s);
 
-function getMonthSummary(site_id, monthStartISO, daily_availability, bookings) {
-  const start = DateTime.fromISO(monthStartISO, { zone: 'Europe/London' }).startOf('month');
-  const end = start.endOf('month');
-  const days = [];
-  const totals = { scheduled: 0, cancelled: 0, orphaned: 0, totalSlots: 0 };
-  const perService = {};
+    const d = ensureBucket(daily, date);
+    d.totalSlots += total;
+    const wk = ensureBucket(weekly, weekKey(date));
+    wk.totalSlots += total;
+    const mo = ensureBucket(monthly, monthKey(date));
+    mo.totalSlots += total;
+  }
 
-  for (let dt = start; dt <= end; dt = dt.plus({ days: 1 })) {
-    const dateISO = dt.toISODate();
-    const summary = getDaySummary(site_id, dateISO, daily_availability, bookings);
-    if (!summary) continue;
+  // Process bookings — only "scheduled"
+  /** To prevent assigning one booking to multiple groups, we pick the first matching group for that date/time/service. */
+  for (const b of Object.values(bookings)) {
+    if (b.status !== "scheduled") continue;
 
-    days.push(summary);
-    addCounts(totals, summary);
+    // Convert to local date & minutes-since-midnight to compare with session windows
+    const dt = DateTime.fromISO(b.datetime).setZone(LOCAL_TZ);
+    const date = dt.toISODate();
+    const minuteOfDay = dt.hour * 60 + dt.minute;
+    const service = b.service;
 
-    for (const slot of summary.slots) {
-      if (slot.booking) {
-        const s = slot.booking.service;
-        if (!perService[s]) perService[s] = { booked: 0, cancelled: 0, orphaned: 0 };
-        perService[s][slot.booking.status]++;
+    // Daily / Week / Month booked increments
+    const d = ensureBucket(daily, date);
+    d.bookedSlots += 1;
+    bump(d.bookingsPerService, service);
+
+    const wk = ensureBucket(weekly, weekKey(date));
+    wk.bookedSlots += 1;
+    bump(wk.bookingsPerService, service);
+
+    const mo = ensureBucket(monthly, monthKey(date));
+    mo.bookedSlots += 1;
+    bump(mo.bookingsPerService, service);
+
+    // Try to assign this booking to ONE group (time + service match)
+    const todaysGroups = groupsByDate[date] || [];
+    let assigned = false;
+
+    for (const { groupId, session } of todaysGroups) {
+      // time inside window?
+      if (!inWindow(minuteOfDay, session.from, session.until)) continue;
+      // service allowed? (if services array present, require inclusion)
+      if (Array.isArray(session.services) && session.services.length > 0) {
+        if (!session.services.includes(service)) continue;
       }
+      // assign and stop
+      const g = byGroup[groupId] || ensureBucket(byGroup, groupId);
+      g.bookedSlots += 1;
+      bump(g.bookingsPerService, service);
+      assigned = true;
+      break; // IMPORTANT: avoid double counting across groups
     }
+
+    // (Optional) If you want to count bookings that don't belong to any group into a synthetic "ungrouped" bucket:
+    // if (!assigned) {
+    //   const g = byGroup["_ungrouped"] || ensureBucket(byGroup, "_ungrouped");
+    //   g.bookedSlots += 1;
+    //   bump(g.bookingsPerService, service);
+    // }
   }
 
-  return {
-    site_id,
-    month: start.toFormat('LLLL yyyy'),
-    totals,
-    perService: Object.entries(perService).map(([service, counts]) => ({ service, ...counts })),
-    days
+  // Derive availableSlots everywhere (never negative)
+  const applyAvailable = (obj) => {
+    for (const val of Object.values(obj)) {
+      val.availableSlots = Math.max(0, val.totalSlots - val.bookedSlots);
+    }
   };
+  applyAvailable(daily);
+  applyAvailable(weekly);
+  applyAvailable(monthly);
+  applyAvailable(byGroup);
+
+  return { daily, weekly, monthly, byGroup };
 }
 
-module.exports = { getDaySummary, getWeekSummary, getMonthSummary };
+module.exports = summarise;

@@ -34,8 +34,8 @@ module.exports = {
   },
 
   // ---- Availability generation ----
-  start: '2025-10-13',
-  end: '2026-01-31',
+  start: '2025-11-22',
+  end: '2026-11-21',
   patterns: {
     Monday: baseSessions,
     Tuesday: baseSessions,

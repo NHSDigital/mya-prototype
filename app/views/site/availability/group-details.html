@@ -1,12 +1,22 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = 'Availability pattern details - ' ~ data.sites[site_id].name %}
+{% set pageName = "Edit availability" %}
+
+{% set group = null %}
+{% for g in availabilityGroups.repeating.concat(availabilityGroups.single) %}
+  {% if g.id == groupId %}
+    {% set group = g %}
+  {% endif %}
+{% endfor %}
+
+{% set groupSummary = summaries.byGroup[group.id] %}
 
 {% block beforeContent %}
 {{ backLink({
   href: '/site/' ~ site_id ~ '/availability/all',
   text: 'Back'
 }) }}
+{% set group = null %}
 {% endblock %}
 
 {% macro monthCalendar(dates) %}
@@ -84,58 +94,126 @@
 {% block content %}
 
 <div class="nhsuk-grid-row">
-    <div class="nhsuk-grid-column-full">
+    <div class="nhsuk-grid-column-two-thirds">
 
       <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
-      <h1 class="nhsuk-heading-l">{{ group.dates[0] | formatDate('d MMMM') }}{% if group.type == 'repeating' %} to {{ group.dates[group.dates | length - 1] | formatDate('d MMMM yyyy') }}{% endif %}, {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}</h1>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
-      <p><a href="/site/{{ site_id }}/change/group/{{ group.id }}">Change availability</a></p>
+      <div class="app-summary-card">
+        <div class="app-summary-card__title-wrapper">
+          <h2 class="app-summary-card__title">Dates</h2>
+          <a class="app-summary-card__action" href="#">Edit</a>
+        </div>
+        <div class="app-summary-card__content">
+          <dl class="nhsuk-summary-list">
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">Start date</dt>
+              <dd class="nhsuk-summary-list__value">{{ group.dates[0] | formatDate('d MMMM yyyy') }}</dd>
+            </div>
+            {% if group.type == 'repeating' %}
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">End date</dt>
+              <dd class="nhsuk-summary-list__value">{{ group.dates[group.dates | length - 1] | formatDate('d MMMM yyyy') }}</dd>
+            </div>
+            {% endif %}
+          </dl>
+        </div>
+      </div>
 
-      <dl class="nhsuk-summary-list">
-        <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Services</dt>
-          <dd class="nhsuk-summary-list__value">
-            {% for service_id in group.session.services %}
-              {% set service = data.services[service_id] %}
-                {{ service.name }}{% if not loop.last %}<br>{% endif %}
-            {% endfor %}
-          </dd>
+      <div class="app-summary-card">
+        <div class="app-summary-card__title-wrapper">
+          <h2 class="app-summary-card__title">Times, appointment length and vaccination spaces</h2>
+          <a class="app-summary-card__action" href="#">Edit</a>
         </div>
-        <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Appointment length</dt>
-          <dd class="nhsuk-summary-list__value">
-            {{ group.session.slotLength }} minutes<br>
-          </dd>
+        <div class="app-summary-card__content">
+          <dl class="nhsuk-summary-list">
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">Start time</dt>
+              <dd class="nhsuk-summary-list__value">{{ group.session.from | nhsTime }}</dd>
+            </div>
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">End date</dt>
+              <dd class="nhsuk-summary-list__value">{{ group.session.until | nhsTime }}</dd>
+            </div>
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">Available vaccinators or vaccination slots</dt>
+              <dd class="nhsuk-summary-list__value">{{ group.session.capacity }}</dd>
+            </div>
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">Appointment length</dt>
+              <dd class="nhsuk-summary-list__value">{{ group.session.slotLength }}</dd>
+            </div>
+          </dl>
         </div>
-        <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Vaccinators or vaccination spaces</dt>
-          <dd class="nhsuk-summary-list__value">{{ group.session.capacity }}</dd>
+      </div>
+
+      <div class="app-summary-card">
+        <div class="app-summary-card__title-wrapper">
+          <h2 class="app-summary-card__title">Services</h2>
+          <a class="app-summary-card__action" href="#">Edit</a>
         </div>
-      </dl>
+        <div class="app-summary-card__content">
+          <table class="nhsuk-table">
+            <thead class="nhsuk-table__head">
+              <tr class="nhsuk-table__row">
+                <th scope="col" class="nhsuk-table__header">Service</th>
+                <th scope="col" class="nhsuk-table__header nhsuk-table__header--numeric">Bookings</th>
+              </tr>
+            </thead>
+            <tbody class="nhsuk-table__body">
+              {% for service_id in group.session.services %}
+              <tr class="nhsuk-table__row">
+                <td class="nhsuk-table__cell">{{ data.services[service_id].name  }}</td>
+                <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ groupSummary.bookingsPerService[service_id] }}</td></td>
+              </tr>
+              {% endfor %}
+              <tr class="nhsuk-table__row app-table-row--total">
+                <th scope="row" class="nhsuk-table__header">Booked appointments</td>
+                <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ groupSummary.bookedSlots | formatNumber }}</td></td>
+              </tr>
+              <tr class="nhsuk-table__row">
+                <th scope="row" class="nhsuk-table__header">Available appointments</td>
+                <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ groupSummary.availableSlots | formatNumber }}</td></td>
+              </tr>
+              <tr class="nhsuk-table__row">
+                <th scope="row" class="nhsuk-table__header">Total available and booked</td>
+                <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ groupSummary.totalSlots | formatNumber }}</td></td>
+              </tr>   
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {% if group.type == 'repeating' %}
+      <div class="app-summary-card">
+        <div class="app-summary-card__title-wrapper">
+          <h2 class="app-summary-card__title">Repeating pattern</h2>
+          <a class="app-summary-card__action" href="#">Edit</a>
+        </div>
+        <div class="app-summary-card__content">
+          <table class="nhsuk-table">
+            <thead class="nhsuk-table__head">
+              <tr class="nhsuk-table__row">
+                <th scope="col" class="nhsuk-table__header">Day</th>
+                <th scope="col" class="nhsuk-table__header nhsuk-table__header--numeric">Number of days with pattern</th>
+              </tr>
+            </thead>
+            <tbody class="nhsuk-table__body">
+              {% for day, count in group.weekdaySummary %}
+              <tr class="nhsuk-table__row">
+                <td class="nhsuk-table__cell">{{ day  }}</td>
+                <td class="nhsuk-table__cell nhsuk-table__cell--numeric {% if count == 0 %}nhsuk-u-secondary-text-colour{% endif %}">{% if count == 0 %}None{% else %}{{ count }}{% endif %}</td></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          
+        </div>
+      </div>
+      {% endif %}
+      
 
     </div>
 </div>
 
-
-<div class="nhsuk-grid-row">
-  <div class="nhsuk-grid-column-full">
-    {{ monthCalendar(calendar.dates) | safe }}
-  </div>
-</div>
-
-{% call details({
-  summaryText: "Slots object"
-}) %}
-  {{ slots | prettyDump | safe }}
-{% endcall %}
-{% call details({
-  summaryText: "Group object"
-}) %}
-  {{ group | prettyDump | safe }}
-{% endcall %}
-{% call details({
-  summaryText: "Calendar object"
-}) %}
-  {{ calendar | prettyDump | safe }}
-{% endcall %}
 {% endblock %}

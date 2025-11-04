@@ -12,6 +12,8 @@
 {% set startDate = thisGroup.dates | first %}
 {% set endDate = thisGroup.dates | last %}
 
+{% set groupSummary = summaries.byGroup[thisGroup.id] %}
+
 {% set pageName = 'Change availability from '~startDate | formatDate('d LLLL')~ ' to '~endDate | formatDate~ ', '~thisGroup.session.from | nhsTime~ ' to ' ~thisGroup.session.until | nhsTime %}
 
 {% block beforeContent %}
@@ -25,40 +27,76 @@
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
       <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
-      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
-
-      <p>Type: {{ type }}, ID: {{ itemId }}</p>
+      <h1 class="nhsuk-heading-l">Change availability</h1>
 
       <dl class="nhsuk-summary-list">
         <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Services</dt>
-          <dd class="nhsuk-summary-list__value">
-            {% for service_id in thisGroup.session.services %}
-              {% set service = data.services[service_id] %}
-                {{ service.name }}{% if not loop.last %}<br>{% endif %}
-            {% endfor %}
-          </dd>
+          <dt class="nhsuk-summary-list__key">Dates</dt>
+          <dd class="nhsuk-summary-list__value">{{ startDate | formatDate('d LLLL') }} to {{ endDate | formatDate }}</dd>
+        </div>
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Time</dt>
+          <dd class="nhsuk-summary-list__value">{{ thisGroup.session.from | nhsTime }} to {{ thisGroup.session.until | nhsTime }}</dd>
         </div>
         <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Appointment length</dt>
           <dd class="nhsuk-summary-list__value">
-            {{ thisGroup.session.slotLength }} minutes<br>
+            {{ thisGroup.session.slotLength }} minutes
           </dd>
         </div>
         <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Vaccinators or vaccination spaces</dt>
           <dd class="nhsuk-summary-list__value">{{ thisGroup.session.capacity }}</dd>
         </div>
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Services</dt>
+          <dd class="nhsuk-summary-list__value">
+            {% for service_id in thisGroup.session.services %}
+              {{ data.services[service_id].name }} <span class="app-service-count">({{ groupSummary.bookingsPerService[service_id] }} booked)</span>{% if not loop.last %}<br>{% endif %}
+            {% endfor %}
+          </dd>
+        </div>
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Availability</dt>
+          <dd class="nhsuk-summary-list__value">
+            {{ groupSummary.bookedSlots | formatNumber }} booked<br>
+            {{ groupSummary.availableSlots | formatNumber }} available to book<br>
+            {{ groupSummary.totalSlots | formatNumber }} total
+          </dd>
+        </div>
       </dl>
 
-      {{ insetText({
-        text: 'You can only reduce time, capacity or services from this screen. If you want to increase availability for this day, you must create a new session.'
-      }) }}
+      {# <table class="nhsuk-table">
+        <caption class="nhsuk-table__caption nhsuk-table__caption--m">Services</caption>
+        <thead class="nhsuk-table__head">
+          <tr class="nhsuk-table__row">
+            <th scope="col" class="nhsuk-table__header">Service</th>
+            <th scope="col" class="nhsuk-table__header nhsuk-table__header--numeric">Bookings</th>
+          </tr>
+        </thead>
+        <tbody class="nhsuk-table__body">
+          {% for service_id in thisGroup.session.services %}
+          <tr class="nhsuk-table__row">
+            <td class="nhsuk-table__cell">{{ data.services[service_id].name  }}</td>
+            <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ groupSummary.bookingsPerService[service_id] }}</td></td>
+          </tr>
+          {% endfor %}
+          <tr class="nhsuk-table__row app-table-row--total">
+            <th scope="row" class="nhsuk-table__header">Total bookings</td>
+            <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ groupSummary.bookedSlots }}</td></td>
+          </tr>
+          <tr class="nhsuk-table__row">
+            <th scope="row" class="nhsuk-table__header">Available to book</td>
+            <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ groupSummary.availableSlots }}</td></td>
+          </tr>
+          <tr class="nhsuk-table__row">
+            <th scope="row" class="nhsuk-table__header">Total availability for these sessions</td>
+            <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ groupSummary.totalSlots }}</td></td>
+          </tr>   
+        </tbody>
+      </table>     #}
 
-      <form action="/site/{{ site_id}}/change/type-of-change?date={{ date }}&from={{ from }}&until={{ until }}" method="post">
-        <input type="hidden" name="date" value="{{ date }}">
-        <input type="hidden" name="from" value="{{ from }}">
-        <input type="hidden" name="until" value="{{ until }}">
+      <form action="/site/{{ site_id}}/change/{{ type }}/{{ itemId }}/type-of-change" method="post">
         {{ radios({
           idPrefix: "type-of-change",
           name: "type-of-change",
@@ -70,22 +108,19 @@
           },
           items: [
             {
-              text: "Change the length or capacity of this session",
-              hint: {
-                text: "Shorten the session length or remove capacity"
-              },
+              text: "Change the length or number of vaccinators in these sessions",
               value: "length-or-capacity"
             },
             {
-              value: "remove-services",
-              text: "Remove services from this session",
-              hint: {
-                text: "Remove booked appointments for individual services"
-              }
+              value: "services",
+              text: "Add or remove services from these sessions"
             },
             {
-              value: "cancel-session",
-              text: "Cancel this session"
+              divider: "or"
+            },
+            {
+              value: "cancel",
+              text: "Cancel these sessions"
             }
           ]
         }) }}

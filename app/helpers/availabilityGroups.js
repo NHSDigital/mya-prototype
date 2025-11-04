@@ -75,16 +75,25 @@ function summariseWeekdays(group) {
 }
 
 // Step 3: filter, classify, and aggregate totals
-function availabilityGroups(data, startDate = null) {
+function availabilityGroups(data, startDate = null, endDate = null) {
   const totals = {};
   weekdayNames.forEach(day => (totals[day] = 0));
 
   const grouped = groupSessions(data)
-    // ✅ optional date filter
+    // ✅ optional date filters
     .map(g => {
-      if (!startDate) return g;
-      const cutoff = DateTime.fromISO(startDate);
-      const filteredDates = g.dates.filter(d => DateTime.fromISO(d) >= cutoff);
+      let filteredDates = g.dates;
+
+      if (startDate) {
+        const cutoffStart = DateTime.fromISO(startDate);
+        filteredDates = filteredDates.filter(d => DateTime.fromISO(d) >= cutoffStart);
+      }
+
+      if (endDate) {
+        const cutoffEnd = DateTime.fromISO(endDate);
+        filteredDates = filteredDates.filter(d => DateTime.fromISO(d) <= cutoffEnd);
+      }
+
       return { ...g, dates: filteredDates };
     })
     // ✅ drop empty groups
@@ -110,5 +119,6 @@ function availabilityGroups(data, startDate = null) {
 
   return { repeating, single, counts: totals };
 }
+
 
 module.exports = { availabilityGroups };

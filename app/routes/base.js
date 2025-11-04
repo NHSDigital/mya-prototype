@@ -6,7 +6,9 @@ const { DateTime } = require('luxon');
 const { availabilityGroups } = require('../helpers/availabilityGroups');
 const { calendar } = require('../helpers/calendar');
 const updateDailyAvailability = require('../helpers/updateDailyAvailability');
-const enhanceData = require('../helpers/enhanceData');;
+const enhanceData = require('../helpers/enhanceData');
+
+const summarise = require('../helpers/summaries');
 
 // -----------------------------------------------------------------------------
 // PARAM HANDLER – capture site_id once for all /site/:id routes
@@ -24,7 +26,10 @@ router.param('id', (req, res, next, id) => {
 router.use('/site/:id', (req, res, next) => {
   const data = req.session.data;
   const site_id = String(req.site_id);
-  const today = req.query.today || DateTime.now().toFormat('yyyy-MM-dd'); //start from this date
+  const from = req.query.from || DateTime.now().toFormat('yyyy-MM-dd'); //start from this date
+  const until = req.query.until || null; //end on this date
+
+  res.locals.filters = { from, until };
 
 
   if (!data?.sites?.[site_id]) {
@@ -32,14 +37,23 @@ router.use('/site/:id', (req, res, next) => {
     return res.status(404).send('Site not found');
   }
 
-  // Generate fresh data for this site only
+  // Generate slots data for this site
   const slots = enhanceData({
     daily_availability: { [site_id]: data.daily_availability[site_id] },
     bookings: { [site_id]: data.bookings[site_id] }
   });
 
   //generate groups for this site
-  res.locals.availabilityGroups = availabilityGroups(data.daily_availability[site_id], today);
+  const groupsForThisSite = availabilityGroups(data.daily_availability[site_id], from, until)
+  res.locals.availabilityGroups = groupsForThisSite;
+
+  //generate summaries for this site
+  const summaries = summarise({
+    bookings: data.bookings[site_id],
+    availability: data.daily_availability[site_id],
+    groups: groupsForThisSite.repeating.concat(groupsForThisSite.single)
+  });
+  res.locals.summaries = summaries;
 
   // Expose to templates
   res.locals.slots = slots[site_id];
@@ -183,7 +197,7 @@ router.get('/site/:id/availability/all/:groupId', (req, res) => {
   const rawCalendar = calendar(group.dates);
 
   res.render('site/availability/group-details', {
-    group,
+    groupId: req.params.groupId,
     calendar: rawCalendar,
     today: today
   });
@@ -216,6 +230,62 @@ router.get('/site/:id/change/:type/:itemId', (req, res) => {
     itemId
   });
 });
+
+router.post('/site/:id/change/:type/:itemId/type-of-change', (req, res) => {
+  const type = req.params.type;
+  const itemId = req.params.itemId;
+  const typeOfChange = req.body['type-of-change'];
+  
+  const typeToRouteMap = { 
+    'session': {
+      'length-or-capacity': `/site/${req.site_id}/change/session/${itemId}/length-or-capacity`,
+      'services': `/site/${req.site_id}/change/session/${itemId}/services`,
+      'cancel': `/site/${req.site_id}/change/session/${itemId}/cancel`
+    },
+    'group': {
+      'length-or-capacity': `/site/${req.site_id}/change/group/${itemId}/length-or-capacity`,
+      'services': `/site/${req.site_id}/change/group/${itemId}/services`,
+      'cancel': `/site/${req.site_id}/change/group/${itemId}/cancel`
+    }
+  };
+  const redirectUrl = typeToRouteMap[type]?.[typeOfChange];
+
+  //deep clone group or session data for editing
+  if(type === 'group') {
+    const data = req.session.data;
+    const groups = {...res.locals.availabilityGroups.repeating.reduce((acc, group) => {
+      acc[group.id] = group;
+      return acc;
+    }, {}), ...res.locals.availabilityGroups.single.reduce((acc, group) => {
+      acc[group.id] = group;
+      return acc;
+    }, {})};
+
+    const groupClone = groups[itemId];
+    if (groupClone) {
+      req.session.data.groupClone = JSON.parse(JSON.stringify(groupClone));
+    } else {
+      console.warn(`⚠️ Group ${itemId} not found for editing`);
+    } 
+  }
+
+  if (!redirectUrl) {
+    return res.status(404).render('404', {
+      title: `You cannot change ${typeOfChange} for ${type}`,
+      message: `The change type "${typeOfChange}" is not recognised for "${type}".`,
+    });
+  }
+
+  res.redirect(redirectUrl);
+});
+
+router.get('/site/:id/change/:type/:itemId/length-or-capacity', (req, res) => {
+  res.render('site/change/length-or-capacity', {
+    type: req.params.type,
+    itemId: req.params.itemId
+  });
+});
+  
 
 // router.post('/site/:id/change/type-of-change', (req, res) => {
 //   const typeOfChange = req.body['type-of-change'];

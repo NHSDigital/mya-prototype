@@ -31,6 +31,19 @@ module.exports = function (env) {
     return s;
   }
 
+  filters.formatNumber = ((value, locale = 'en-GB', options = {}) => {
+    if (typeof value !== 'number') value = Number(value);
+    return new Intl.NumberFormat(locale, options).format(value);
+  })
+
+  filters.splitString = (str, separator = ',', index = null) => {
+    const parts = String(str).split(separator).map(s => s.trim());
+    if (index !== null) {
+      return parts[index] || '';
+    }
+    return parts;
+  }
+
 
   return filters
 }

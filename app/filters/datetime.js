@@ -120,5 +120,28 @@ module.exports = function registerDateTimeFilters(filters = {}) {
     return dt >= startDt && dt <= endDt;
   }
 
+  filters.extractTimePart = (input, part = 'hours', tz = DEFAULT_TZ) => {
+    const dt = toDateTime(input, tz);
+
+    switch (part) {
+      case 'hours':
+      case 'hour':
+      case 'h':
+        return dt.hour;
+
+      case 'minutes':
+      case 'minute':
+      case 'm':
+        return dt.minute;
+
+      case 'seconds':
+      case 's':
+        return dt.second;
+
+      default:
+        return null;
+    }
+  };
+
   return filters;
 };

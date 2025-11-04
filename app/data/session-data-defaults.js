@@ -200,24 +200,32 @@ for (const cfg of sitesConfig) {
   const { site, start, end, patterns, overrides, bookings: bookingConfig } = cfg;
   const site_id = site.id;
 
-  // Add site metadata
-  sites[site_id] = site;
+  console.log(`\n=== Starting site ${site_id}: ${site.name} ===`);
 
-  // Generate data
-  console.log(`Generating data for ${site.name} (site ${site_id})...`);
+  console.log('  1️⃣ Generating availability...');
   const availability = generateAvailability({ site_id, start, end, patterns, overrides });
+  console.log('  ✅ Availability done');
+
+  console.log('  2️⃣ Generating slots...');
   const slots = generateSlots(availability);
+  console.log(`  ✅ Slots done (${slots.length} total)`);
+
+  console.log('  3️⃣ Generating bookings...');
   const bookingData = generateBookings({
     site_id,
     slots,
     ...bookingConfig,
     names: catNames
   });
+  console.log(`  ✅ Bookings done (${Object.keys(bookingData).length})`);
 
   daily_availability[site_id] = availability;
   bookings[site_id] = bookingData;
-  console.log(`  Generated ${slots.length} slots and ${Object.keys(bookingData).length} bookings.`);
+  sites[site_id] = site;
+
+  console.log(`=== Finished site ${site_id} ===`);
 }
+
 
 module.exports = {
   ...base,

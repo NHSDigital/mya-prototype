@@ -52,10 +52,12 @@
     {% set dataForScript %}{% if data %}{{ data | dump | safe }}{% else %}{}{% endif %}{% endset %}
     {% set slotsForScript %}{% if slots %}{{ slots | dump | safe }}{% else %}{}{% endif %}{% endset %}
     {% set groupsForScript %}{% if availabilityGroups %}{{ availabilityGroups | dump | safe }}{% else %}{}{% endif %}{% endset %}
+    {% set summariesForScript %}{% if summaries %}{{ summaries | dump | safe }}{% else %}{}{% endif %}{% endset %}
     <script>
       console.log("session:", {{ dataForScript | safe }});
       console.log("slots:", {{ slotsForScript | safe }});
       console.log("availability groups:", {{ groupsForScript | safe }});
+      console.log("summaries:", {{ summariesForScript | safe }});
     </script>
     <!-- For adding page specific JavaScript -->
     {% block pageScripts %}{% endblock %}
