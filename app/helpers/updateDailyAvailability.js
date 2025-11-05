@@ -1,37 +1,38 @@
 const { DateTime } = require('luxon');
+
 /**
- * 
- * @param {object} newSession - new session object from create session form
- * @param {array} existingSessions - existing sessions to check for conflicts
+ * Add new session availability into an existing structure.
+ *
+ * @param {object} newSession - The session form data.
+ * @param {object} existingSessions - Full availability object, shaped like { [site_id]: { [date]: {...} } }
+ * @param {string|number} site_id - Site identifier.
  */
-module.exports = (newSession, existingSessions, site_id = 1) => {
-  
-  //convert start and end dates to ISO strings
+module.exports = (newSession, existingSessions = {}, site_id) => {
   newSession.startDate = DateTime.fromObject({
-    day: parseInt(newSession.startDate.day, 10),
-    month: parseInt(newSession.startDate.month, 10),
-    year: parseInt(newSession.startDate.year, 10)
+    day: +newSession.startDate.day,
+    month: +newSession.startDate.month,
+    year: +newSession.startDate.year
   }).toISODate();
 
   newSession.endDate = DateTime.fromObject({
-    day: parseInt(newSession.endDate.day, 10),
-    month: parseInt(newSession.endDate.month, 10),
-    year: parseInt(newSession.endDate.year, 10)
+    day: +newSession.endDate.day,
+    month: +newSession.endDate.month,
+    year: +newSession.endDate.year
   }).toISODate();
 
-  //break session into days
-  const daily_availability = existingSessions || {};
   const startDate = DateTime.fromISO(newSession.startDate);
   const endDate = DateTime.fromISO(newSession.endDate);
 
   console.log('Updating daily availability from', startDate.toISODate(), 'to', endDate.toISODate());
 
+  // Get or create the site-level container
+  if (!existingSessions[site_id]) existingSessions[site_id] = {};
+  const siteAvailability = existingSessions[site_id];
+
   for (let dt = startDate; dt <= endDate; dt = dt.plus({ days: 1 })) {
-    //check if day of week is included
     const dayName = dt.toFormat('cccc');
     if (!newSession.days.includes(dayName)) continue;
 
-    //create a new session object for this date
     const newSessionObject = {
       from: `${newSession.startTime.hour}:${newSession.startTime.minute}`,
       until: `${newSession.endTime.hour}:${newSession.endTime.minute}`,
@@ -40,20 +41,20 @@ module.exports = (newSession, existingSessions, site_id = 1) => {
       capacity: newSession.capacity
     };
 
-    //check for existing availability on this date
-    if (daily_availability[dt.toISODate()]) {
-      //append new session to existing date
-      daily_availability[dt.toISODate()].sessions.push(newSessionObject);
+    const dateKey = dt.toISODate();
+
+    // Merge safely — append or create
+    if (siteAvailability[dateKey]) {
+      siteAvailability[dateKey].sessions.push(newSessionObject);
     } else {
-      //create new date with this session
-      daily_availability[dt.toISODate()] = {
-        date: dt.toISODate(),
-        site_id: site_id,
+      siteAvailability[dateKey] = {
+        date: dateKey,
+        site_id,
         sessions: [newSessionObject]
       };
     }
-
   }
-  console.log(daily_availability);
-  return daily_availability;
-}
+
+  console.log('Updated availability:', JSON.stringify(existingSessions, null, 2));
+  return existingSessions;
+};

@@ -131,7 +131,7 @@ router.get('/site/:id/create-availability/process-new-session', (req, res) => {
   data.daily_availability = updateDailyAvailability(newSession, data.daily_availability, site_id);
   delete data.newSession;
 
-  res.redirect(`/site/${site_id}/create-availability?new-session=true`);
+  res.redirect(`/site/${site_id}/availability/all?new-session=true`);
 });
 
 

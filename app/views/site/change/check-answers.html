@@ -53,16 +53,16 @@
         <div class="app-summary-card__content">
           {% set cancelMessage %}
             {% if data.currentGroup['cancel-bookings'] == 'true' -%}
-              Bookings will be cancelled
+              Affected bookings will be cancelled
             {%- else -%}
-              Bookings will kept
+              Affected bookings will kept
             {%- endif %}
           {% endset %}
           {{ summaryList({
             rows: [
               {
                 key: {
-                  text: "Do you want to cancel 29 affected bookings"
+                  text: "Cancel affected bookings"
                 },
                 value: {
                   text: cancelMessage
@@ -72,7 +72,7 @@
                     {
                       href: "/site/"~site_id~"/change/"~type~"/"~itemId~"/do-you-want-to-cancel-bookings",
                       text: "Change",
-                      visuallyHiddenText: "do you want to cancel bookings"
+                      visuallyHiddenText: " if you want to cancel bookings"
                     }
                   ]
                 }
