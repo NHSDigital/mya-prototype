@@ -2,13 +2,6 @@
 
 {% set pageName = "Edit availability" %}
 
-{% set group = null %}
-{% for g in availabilityGroups.repeating.concat(availabilityGroups.single) %}
-  {% if g.id == groupId %}
-    {% set group = g %}
-  {% endif %}
-{% endfor %}
-
 {% set groupSummary = summaries.byGroup[group.id] %}
 
 {% block beforeContent %}
@@ -95,8 +88,6 @@
 
 <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-
-      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       <div class="app-summary-card">
@@ -123,7 +114,7 @@
       <div class="app-summary-card">
         <div class="app-summary-card__title-wrapper">
           <h2 class="app-summary-card__title">Times, appointment length and vaccination spaces</h2>
-          <a class="app-summary-card__action" href="#">Edit</a>
+          <a class="app-summary-card__action" href="/site/{{ site_id }}/change/group/{{ group.id }}/time-or-capacity">Edit</a>
         </div>
         <div class="app-summary-card__content">
           <dl class="nhsuk-summary-list">

@@ -79,7 +79,8 @@ function generateBookings({
 
     const name = pickName(usedNames, names);
 
-    bookings[id++] = {
+    bookings[id] = {
+      id,
       site_id,
       service,
       datetime: dt.toISO({ suppressSeconds: true, suppressMilliseconds: true }),
@@ -89,6 +90,7 @@ function generateBookings({
       contact: randomContact(name),
       status
     };
+    id++;
   }
   console.log('    → finished generateBookings', Object.keys(bookings).length);
   return bookings;

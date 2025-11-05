@@ -1,0 +1,53 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = "29 bookings are affected by this change" %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' ~ site_id ~ '/change/' ~ type ~ '/' ~ itemId ~ '/time-or-capacity',
+  text: 'Back'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      <p>You can choose to keep affected bookings.</p>
+      <p class="nhsuk-paragraph-lead">If you choose to cancel bookings, people will be sent a text message or email confirming their appointment has been cancelled.</p>
+      <form action="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/check-answers" method="post">
+        {{ radios({
+          idPrefix: "do-you-want-to-cancel-bookings",
+          name: "currentGroup[cancel-bookings]",
+          fieldset: {
+            legend: {
+              text: "Do you want to cancel 29 affected bookings?",
+              classes: "nhsuk-fieldset__legend--m"
+            }
+          },
+          items: [
+            {
+              value: "true",
+              text: "Yes",
+              hint: {
+                text: "Both the session and affected bookings will be cancelled."
+              },
+              checked: true if data.currentGroup['cancel-bookings'] == 'true'
+            },
+            {
+              value: "false",
+              text: "No",
+              hint: {
+                text: "People will be unable to book new appointments, but existing bookings will remain."
+              },
+              checked: true if data.currentGroup['cancel-bookings'] == 'false'
+            }
+          ]
+        }) }}
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

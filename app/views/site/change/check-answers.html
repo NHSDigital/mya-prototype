@@ -1,0 +1,88 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = "Check your answers" %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' ~ site_id ~ '/change/' ~ type ~ '/' ~ itemId ~ '/do-you-want-to-cancel-bookings',
+  text: 'Back'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+      
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      
+      {% if data.currentGroup.changeType == 'time-or-capacity' %}
+      {% set startTime %}{{ data.currentGroup.session.from.hour }}:{{ data.currentGroup.session.from.minute }}{% endset %}
+      {% set endTime %}{{ data.currentGroup.session.until.hour }}:{{ data.currentGroup.session.until.minute }}{% endset %}
+      <div class="app-summary-card">
+        <div class="app-summary-card__title-wrapper">
+          <h2 class="app-summary-card__title">Times, appointment length and vaccination spaces</h2>
+          <a class="app-summary-card__action" href="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/time-or-capacity">Change</a>
+        </div>
+        <div class="app-summary-card__content">
+          <dl class="nhsuk-summary-list">
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">Start time</dt>
+              <dd class="nhsuk-summary-list__value">{{ startTime | nhsTime }}</dd>
+            </div>
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">End time</dt>
+              <dd class="nhsuk-summary-list__value">{{ endTime | nhsTime }}</dd>
+            </div>
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">Available vaccinators or vaccination slots</dt>
+              <dd class="nhsuk-summary-list__value">{{ data.currentGroup.session.capacity }}</dd>
+            </div>
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">Appointment length</dt>
+              <dd class="nhsuk-summary-list__value">{{ data.currentGroup.session.slotLength }} minutes</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="app-summary-card">
+        <div class="app-summary-card__title-wrapper">
+          <h2 class="app-summary-card__title">Affected bookings</h2>
+        </div>
+        <div class="app-summary-card__content">
+          {% set cancelMessage %}
+            {% if data.currentGroup['cancel-bookings'] == 'true' -%}
+              Bookings will be cancelled
+            {%- else -%}
+              Bookings will kept
+            {%- endif %}
+          {% endset %}
+          {{ summaryList({
+            rows: [
+              {
+                key: {
+                  text: "Do you want to cancel 29 affected bookings"
+                },
+                value: {
+                  text: cancelMessage
+                },
+                actions: {
+                  items: [
+                    {
+                      href: "/site/"~site_id~"/change/"~type~"/"~itemId~"/do-you-want-to-cancel-bookings",
+                      text: "Change",
+                      visuallyHiddenText: "do you want to cancel bookings"
+                    }
+                  ]
+                }
+              }
+            ]
+          }) }}
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+{% endblock %}

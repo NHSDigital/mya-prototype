@@ -1,0 +1,100 @@
+{% extends '../../layouts/layout.html' %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' ~ site_id ~ '/availability/all/'~ itemId ~'?from='~ data.currentGroup.dates[0] ~'&until='~ data.currentGroup.dates[data.currentGroup.dates | length -1],
+  text: 'Back'
+}) }}
+{% endblock %}
+
+{% macro timeInput(timeStringOrObject, opts) %}
+{% if timeStringOrObject.hour is defined %}
+  {% set hour = timeStringOrObject.hour %}
+  {% set minute = timeStringOrObject.minute %}
+{% else %}
+  {% set timeParts = timeStringOrObject | splitString(':') %}
+  {% set hour = timeParts[0] %}
+  {% set minute = timeParts[1] %}
+{% endif %}
+
+  {{ dateInput({
+      id: opts.id,
+      namePrefix: opts.namePrefix,
+      fieldset: {
+        legend: {
+          text: opts.title,
+          classes: "nhsuk-label--m"
+        }
+      },
+      hint: {
+        text: opts.hint
+      } if opts.hint,
+      items: [
+        {
+          name: "hour",
+          classes: "nhsuk-input--width-2",
+          value: hour
+        },
+        {
+          name: "minute",
+          classes: "nhsuk-input--width-2",
+          value: minute
+        }
+      ]
+    }) }}
+{% endmacro %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+      <h1 class="nhsuk-heading-l">Change time or capacity</h1>
+      <form action="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/do-you-want-to-cancel-bookings" method="post">
+        <input type="hidden" name="currentGroup[changeType]" value="time-or-capacity">
+        {{ timeInput(data.currentGroup.session.from, {
+          id: "start-time",
+          namePrefix: "currentGroup[session][from]",
+          title: "Start time",
+          hint: "For example, 10:00"
+        }) }}
+
+        {{ timeInput(data.currentGroup.session.until, {
+          id: "end-time",
+          namePrefix: "currentGroup[session][until]",
+          title: "End time",
+          hint: "For example, 17:00"
+        }) }}
+        
+
+          {{ input({
+            label: {
+              text: "How many vaccinators or vaccination spaces do you have?",
+              classes: "nhsuk-label--m"
+            },
+            id: "capacity",
+            name: "currentGroup[session][capacity]",
+            classes: "nhsuk-input--width-2",
+            value: data.currentGroup.session.capacity
+          }) }}
+
+          {{ input({
+            label: {
+              text: "How long are your appointments?",
+              classes: "nhsuk-label--m"
+            },
+            hint: {
+              text: "Appointment length must be a maximum of 60 minutes"
+            },
+            id: "duration",
+            name: "currentGroup[session][slotLength]",
+            classes: "nhsuk-input--width-2",
+            suffix: "minutes",
+            value: data.currentGroup.session.slotLength
+          }) }}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

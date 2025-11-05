@@ -7,7 +7,6 @@ const { availabilityGroups } = require('../helpers/availabilityGroups');
 const { calendar } = require('../helpers/calendar');
 const updateDailyAvailability = require('../helpers/updateDailyAvailability');
 const enhanceData = require('../helpers/enhanceData');
-
 const summarise = require('../helpers/summaries');
 
 // -----------------------------------------------------------------------------
@@ -185,21 +184,18 @@ router.get('/site/:id/availability/all', (req, res) => {
 });
 
 router.get('/site/:id/availability/all/:groupId', (req, res) => {
-  const site_id = req.site_id;
-  const data = req.session.data;
-  const today = req.query.today || DateTime.now().toFormat('yyyy-MM-dd'); //start from this date
 
-  const allGroups = availabilityGroups(data.daily_availability[site_id], today);
-  const allGroupsArray = [...allGroups.repeating, ...allGroups.single];
-  const group = allGroupsArray.find(g => g.id === req.params.groupId);
+  //This is where we start editing journeys
+  //So we need to copy the selected group into session data
+  //That way, we always have access to the session we're editing
+  //without relying on query params or similar
+  const currentGroup = res.locals.availabilityGroups.repeating.concat(res.locals.availabilityGroups.single)
+    .find(g => g.id === req.params.groupId);
 
-  if (!group) return res.status(404).send('Availability group not found');
-  const rawCalendar = calendar(group.dates);
+  req.session.data.currentGroup = JSON.parse(JSON.stringify(currentGroup));
 
   res.render('site/availability/group-details', {
-    groupId: req.params.groupId,
-    calendar: rawCalendar,
-    today: today
+    group: currentGroup
   });
 });
 
@@ -207,103 +203,26 @@ router.get('/site/:id/availability/all/:groupId', (req, res) => {
 // CHANGE
 // -----------------------------------------------------------------------------
 
-router.get('/site/:id/change/:type/:itemId', (req, res) => {
-  //pass url params to the template
-  const type = req.params.type;
-  const itemId = req.params.itemId;
-
-  const changeTypesRenderMap = {
-    'session': `site/change/change-session`,
-    'group': 'site/change/change-group'
-  }
-
-  if (!changeTypesRenderMap[type]) {
-    return res.status(404).render('404', {
-      title: `You cannot change ${type}`,
-      message: `The change type "${type}" is not recognised.`,
-    });
-  }
-
-  res.render(changeTypesRenderMap[type], {
-    ...req.query,
-    type,
-    itemId
-  });
-});
-
-router.post('/site/:id/change/:type/:itemId/type-of-change', (req, res) => {
-  const type = req.params.type;
-  const itemId = req.params.itemId;
-  const typeOfChange = req.body['type-of-change'];
-  
-  const typeToRouteMap = { 
-    'session': {
-      'length-or-capacity': `/site/${req.site_id}/change/session/${itemId}/length-or-capacity`,
-      'services': `/site/${req.site_id}/change/session/${itemId}/services`,
-      'cancel': `/site/${req.site_id}/change/session/${itemId}/cancel`
-    },
-    'group': {
-      'length-or-capacity': `/site/${req.site_id}/change/group/${itemId}/length-or-capacity`,
-      'services': `/site/${req.site_id}/change/group/${itemId}/services`,
-      'cancel': `/site/${req.site_id}/change/group/${itemId}/cancel`
-    }
-  };
-  const redirectUrl = typeToRouteMap[type]?.[typeOfChange];
-
-  //deep clone group or session data for editing
-  if(type === 'group') {
-    const data = req.session.data;
-    const groups = {...res.locals.availabilityGroups.repeating.reduce((acc, group) => {
-      acc[group.id] = group;
-      return acc;
-    }, {}), ...res.locals.availabilityGroups.single.reduce((acc, group) => {
-      acc[group.id] = group;
-      return acc;
-    }, {})};
-
-    const groupClone = groups[itemId];
-    if (groupClone) {
-      req.session.data.groupClone = JSON.parse(JSON.stringify(groupClone));
-    } else {
-      console.warn(`⚠️ Group ${itemId} not found for editing`);
-    } 
-  }
-
-  if (!redirectUrl) {
-    return res.status(404).render('404', {
-      title: `You cannot change ${typeOfChange} for ${type}`,
-      message: `The change type "${typeOfChange}" is not recognised for "${type}".`,
-    });
-  }
-
-  res.redirect(redirectUrl);
-});
-
-router.get('/site/:id/change/:type/:itemId/length-or-capacity', (req, res) => {
-  res.render('site/change/length-or-capacity', {
+router.get('/site/:id/change/:type/:itemId/time-or-capacity', (req, res) => {
+  res.render('site/change/time-or-capacity', {
     type: req.params.type,
     itemId: req.params.itemId
   });
 });
-  
 
-// router.post('/site/:id/change/type-of-change', (req, res) => {
-//   const typeOfChange = req.body['type-of-change'];
+router.post('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (req, res) => {
+  res.render('site/change/do-you-want-to-cancel-bookings', {
+    type: req.params.type,
+    itemId: req.params.itemId
+  });
+});
 
-//   const typeToRouteMap = {
-//     'length-or-capacity': '/site/:id/change/length-or-capacity',
-//     'remove-services': '/site/:id/change/remove-services',
-//     'cancel-session': '/site/:id/change/cancel-session'
-//   };
-//   const queryString = new URLSearchParams(req.query).toString();
-//   res.redirect(`${typeToRouteMap[typeOfChange].replace(':id', req.site_id)}?${queryString}`);
-// });
-
-// router.get('/site/:id/change/length-or-capacity', (req, res) => {
-//   res.render('site/change/length-or-capacity', {
-//     ...req.query
-//   });
-// });
+router.post('/site/:id/change/:type/:itemId/check-answers', (req, res) => {
+  res.render('site/change/check-answers', {
+    type: req.params.type,
+    itemId: req.params.itemId
+  });
+});
 
 // -----------------------------------------------------------------------------
 // EXPORT ROUTER
