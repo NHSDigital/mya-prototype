@@ -1,7 +1,7 @@
 {% extends '../../layouts/layout.html' %}
 {% from '../../components/subNavigation/subNavigation.njk' import subNavigation %}
 
-{% set pageName = 'All availability - ' ~ data.sites[site_id].name %}
+{% set pageName = 'Manage availability - ' ~ data.sites[site_id].name %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -49,10 +49,9 @@
               visuallyHiddenText: ' availability'
             },
             {
-              text: 'All',
+              text: 'Manage availability',
               href: '/site/' ~ site_id ~ '/availability/all',
-              isCurrent: true,
-              visuallyHiddenText: ' availability'
+              isCurrent: true
             },
             {
               text: 'Add availability',
@@ -64,32 +63,85 @@
       }}
 
       <span class="nhsuk-caption-xl">{{ data.sites[site_id].name }}</span>
-      <h1 class="nhsuk-heading-xl">All availability</h1>
+      <h1 class="nhsuk-heading-xl">Manage availability</h1>
     </div>
     
     <div class="nhsuk-grid-column-one-third">
       <div class="nhsuk-card nhsuk-card--feature app-filters">
         <div class="nhsuk-card__content nhsuk-card__content--feature">
-          <h3 class="nhsuk-card__heading nhsuk-card__heading--feature">Filter by date</h3>
+          <h3 class="nhsuk-card__heading nhsuk-card__heading--feature">Find availability</h3>
           <form method="get" action="">
+            {% set startDateHtml %}
             {{ input({
               label: {
-                text: "Start date"
+                text: "Select a start date"
               },
               type: "date",
               value: filters.from,
               id: "from",
               name: "from"
             }) }}
-            {{ input({
-              label: {
-                text: "End date"
+            {% endset %}
+
+            {% set endDateHtml %}
+              {{ input({
+                label: {
+                  text: "Select an end date"
+                },
+                type: "date",
+                value: filters.until,
+                id: "until",
+                name: "until"
+              }) }}
+            {% endset %}
+
+            {{ radios({
+              idPrefix: "date-start-group",
+              name: "date-start-group",
+              fieldset: {
+                legend: {
+                  text: "Start date"
+                }
               },
-              type: "date",
-              value: filters.until,
-              id: "until",
-              name: "until"
+              classes: "nhsuk-radios--small",
+              items: [
+                {
+                  value: "any",
+                  text: "Today"
+                },
+                {
+                  value: "select",
+                  text: "Another date",
+                  conditional: {
+                    html: startDateHtml
+                  }
+                }
+              ]
             }) }}
+            {{ radios({
+              idPrefix: "date-end-group",
+              name: "date-end-group",
+              fieldset: {
+                legend: {
+                  text: "End date"
+                }
+              },
+              classes: "nhsuk-radios--small",
+              items: [
+                {
+                  value: "any",
+                  text: "All dates"
+                },
+                {
+                  value: "select",
+                  text: "Another date",
+                  conditional: {
+                    html: endDateHtml
+                  }
+                }
+              ]
+            }) }}
+            
             {{ button({
               text: "Apply filters",
               type: "submit",

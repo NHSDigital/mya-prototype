@@ -8,6 +8,7 @@ const { calendar } = require('../helpers/calendar');
 const updateDailyAvailability = require('../helpers/updateDailyAvailability');
 const enhanceData = require('../helpers/enhanceData');
 const summarise = require('../helpers/summaries');
+const compareGroups = require('../helpers/compareGroups');
 
 // -----------------------------------------------------------------------------
 // PARAM HANDLER – capture site_id once for all /site/:id routes
@@ -211,16 +212,36 @@ router.get('/site/:id/change/:type/:itemId/time-or-capacity', (req, res) => {
 });
 
 router.post('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (req, res) => {
+
+  //compare groups and identify affected bookings
+  const data = req.session.data;
+  const site_id = req.site_id;
+  const editedGroup = data.currentGroup;
+  const originalGroup = res.locals.availabilityGroups.repeating.concat(res.locals.availabilityGroups.single)
+    .find(g => g.id === req.params.itemId);
+
+  const differences = compareGroups(originalGroup, editedGroup, data.bookings[site_id] || []);
+
+  if(differences.counts.totalAffected === 0) {
+    //no affected bookings – skip to check answers
+    return res.redirect(`/site/${site_id}/change/${req.params.type}/${req.params.itemId}/check-answers`);
+  }
+
+  //store comparison results in session data for later steps
+  data.changeComparison = differences;
+
   res.render('site/change/do-you-want-to-cancel-bookings', {
     type: req.params.type,
     itemId: req.params.itemId
   });
 });
 
-router.post('/site/:id/change/:type/:itemId/check-answers', (req, res) => {
+router.all('/site/:id/change/:type/:itemId/check-answers', (req, res) => {
+  console.log('Route hit!', req.params);
   res.render('site/change/check-answers', {
     type: req.params.type,
     itemId: req.params.itemId
+
   });
 });
 

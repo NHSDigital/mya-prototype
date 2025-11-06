@@ -1,6 +1,6 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = "29 bookings are affected by this change" %}
+{% set pageName = data.changeComparison.counts.totalAffected | formatNumber~" bookings are affected by this change" %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -21,7 +21,7 @@
           name: "currentGroup[cancel-bookings]",
           fieldset: {
             legend: {
-              text: "Do you want to cancel 29 affected bookings?",
+              text: "Do you want to cancel "~data.changeComparison.counts.totalAffected | formatNumber~" affected bookings?",
               classes: "nhsuk-fieldset__legend--m"
             }
           },

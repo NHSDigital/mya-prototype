@@ -17,11 +17,8 @@
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
       <p>You cannot add availability for services for which you are not assured.</p>
       <h2 class="nhsuk-heading-m">What to do next</h2>
-      <p>You should...</p>
-      {{ button({
-        text: "View availability",
-        href: '/site/' + site_id + '/availability'
-      }) }}
+      <p>If you selected the wrong services, you should <a href="#">go back and change services</a>.</p>
+      <p>Otherwise, <a href="#">cancel and return to view availability</a>.</p>
     </div>
   </div>
 {% endblock %}

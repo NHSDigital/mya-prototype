@@ -3,43 +3,29 @@
 
 {% set pageName = date | formatDate('EEEE, d LLLL yyyy') %}
 
-{% block beforeContent %}
-{{ backLink({
-  href: '/site/' + site_id,
-  text: 'Back to dashboard'
-}) }}
-{% endblock %}
-
 {% block content %}
 
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
-
-      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
-      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
       {{
         subNavigation({
           items: [
             {
-              text: 'Day',
+              text: 'Day view',
               href: '/site/' ~ site_id ~ '/availability/day',
-              isCurrent: true,
-              visuallyHiddenText: "’s availability"
+              isCurrent: true
             },
             {
-              text: 'Week',
-              href: '/site/' ~ site_id ~ '/availability/week',
-              visuallyHiddenText: ' availability'
+              text: 'Week view',
+              href: '/site/' ~ site_id ~ '/availability/week'
             },
             {
-              text: 'Month',
-              href: '/site/' ~ site_id ~ '/availability/month',
-              visuallyHiddenText: ' availability'
+              text: 'Month view',
+              href: '/site/' ~ site_id ~ '/availability/month'
             },
             {
-              text: 'All',
-              href: '/site/' ~ site_id ~ '/availability/all',
-              visuallyHiddenText: ' availability'
+              text: 'Manage availability',
+              href: '/site/' ~ site_id ~ '/availability/all'
             },
             {
               text: 'Add availability',
@@ -49,6 +35,8 @@
           ]
         })
       }}
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      
 
       {% macro orphanNote(count) -%}
         {% set isAre = 'is' if count == 1 else 'are' %}

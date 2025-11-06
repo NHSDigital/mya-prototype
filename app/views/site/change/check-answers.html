@@ -46,6 +46,7 @@
       </div>
       {% endif %}
 
+      {% if data.currentGroup['cancel-bookings'] is defined %}
       <div class="app-summary-card">
         <div class="app-summary-card__title-wrapper">
           <h2 class="app-summary-card__title">Affected bookings</h2>
@@ -81,7 +82,21 @@
           }) }}
         </div>
       </div>
+      {% endif %}
 
+      <form action="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/confirm-change" method="post">
+        {% if data.changeComparison is not defined %}
+        {{ button({
+          text: "Save changes and continue"
+        }) }}
+        {% endif %}
+        {% if data.changeComparison.counts.totalAffected > 0 and data.currentGroup['cancel-bookings'] == 'true' %}
+        {{ button({
+          text: "Save changes, cancel bookings and continue",
+          classes: "nhsuk-button--warning"
+        }) }}
+        {% endif %}
+      </form>
 
     </div>
   </div>

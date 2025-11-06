@@ -87,7 +87,7 @@
 {% block content %}
 
 <div class="nhsuk-grid-row">
-    <div class="nhsuk-grid-column-two-thirds">
+    <div class="nhsuk-grid-column-full">
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       <div class="app-summary-card">
@@ -151,23 +151,22 @@
                 <th scope="col" class="nhsuk-table__header nhsuk-table__header--numeric">Bookings</th>
               </tr>
             </thead>
-            <tbody class="nhsuk-table__body">
               {% for service_id in group.session.services %}
               <tr class="nhsuk-table__row">
                 <td class="nhsuk-table__cell">{{ data.services[service_id].name  }}</td>
-                <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ groupSummary.bookingsPerService[service_id] }}</td></td>
+                <td class="nhsuk-table__cell nhsuk-table__cell--numeric ">{% if groupSummary.bookingsPerService[service_id] is defined %}{{ groupSummary.bookingsPerService[service_id] }}{% else %}<span class="nhsuk-u-secondary-text-colour">None</span>{% endif %}</td></td>
               </tr>
               {% endfor %}
               <tr class="nhsuk-table__row app-table-row--total">
-                <th scope="row" class="nhsuk-table__header">Booked appointments</td>
+                <th scope="row" class="nhsuk-table__header">Booked</td>
                 <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ groupSummary.bookedSlots | formatNumber }}</td></td>
               </tr>
               <tr class="nhsuk-table__row">
-                <th scope="row" class="nhsuk-table__header">Available appointments</td>
+                <th scope="row" class="nhsuk-table__header">Available</td>
                 <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ groupSummary.availableSlots | formatNumber }}</td></td>
               </tr>
               <tr class="nhsuk-table__row">
-                <th scope="row" class="nhsuk-table__header">Total available and booked</td>
+                <th scope="row" class="nhsuk-table__header">Total</td>
                 <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ groupSummary.totalSlots | formatNumber }}</td></td>
               </tr>   
             </tbody>
