@@ -180,6 +180,10 @@ router.get('/site/:id/availability/week', (req, res) => {
   });
 });
 
+router.get('/site/:id/availability/month', (req, res) => { 
+  res.render('site/availability/month');
+});
+
 router.get('/site/:id/availability/all', (req, res) => { 
   res.render('site/availability/all');
 });

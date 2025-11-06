@@ -13,18 +13,13 @@ const base = {
     links: {
       overview: [
         {
-          text: 'example.user@nhs.net',
-          icon: true
-        },
-        {
           text: 'Log out',
           href: '/login'
         }
       ],
       site: [
         {
-          text: 'example.user@nhs.net',
-          icon: true
+          isSiteName: true
         },
         {
           text: 'Change site',
@@ -46,30 +41,10 @@ const base = {
     ],
     site: [
       {
-        text: 'View availability',
-        description: 'View availability and manage appointments for your site',
-        hrefTemplate: '/site/:id/view-availability'
+        text: 'Overview',
+        hideCard: true,
+        hrefTemplate: '/site/:id'
       },
-      {
-        text: 'Create availability',
-        hrefTemplate: '/site/:id/create-availability'
-      },
-      {
-        text: 'Change site details',
-        description: 'Change site details and accessibility information',
-        href: '#'
-      },
-      {
-        text: 'Manage users',
-        href: '#'
-      },
-      {
-        text: 'Reports',
-        description: 'Download reports',
-        href: '#'
-      }
-    ],
-    siteAvailabilityGroups: [
       {
         text: 'Availability',
         description: 'View and manage available appointments for your site',

@@ -4,44 +4,30 @@
 
 {% set pageName = week[0] | formatDate('d LLLL') ~ ' to ' ~ week[6] | formatDate('d LLLL yyyy') %}
 
-{% block beforeContent %}
-{{ backLink({
-  href: '/site/' ~ site_id,
-  text: 'Back to dashboard'
-}) }}
-{% endblock %}
-
-
-
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
 
-      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}{{ firstOfTheMonth }}</span>
-      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      
       {{
         subNavigation({
           items: [
             {
-              text: 'Day',
-              href: '/site/' ~ site_id ~ '/availability/day',
-              visuallyHiddenText: "’s availability"
+              text: 'Day view',
+              href: '/site/' ~ site_id ~ '/availability/day'
             },
             {
-              text: 'Week',
+              text: 'Week view',
               href: '/site/' ~ site_id ~ '/availability/week',
-              isCurrent: true,
-              visuallyHiddenText: ' availability'
+              isCurrent: true
             },
             {
-              text: 'Month',
-              href: '/site/' ~ site_id ~ '/availability/month',
-              visuallyHiddenText: ' availability'
+              text: 'Month view',
+              href: '/site/' ~ site_id ~ '/availability/month'
             },
             {
-              text: 'All',
-              href: '/site/' ~ site_id ~ '/availability/all',
-              visuallyHiddenText: ' availability'
+              text: 'Manage availability',
+              href: '/site/' ~ site_id ~ '/availability/all'
             },
             {
               text: 'Add availability',
@@ -51,6 +37,8 @@
           ]
         })
       }}
+
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       {{ pagination({
         previous: {

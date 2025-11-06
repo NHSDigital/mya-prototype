@@ -1,14 +1,7 @@
 {% extends '../../layouts/layout.html' %}
 {% from '../../components/subNavigation/subNavigation.njk' import subNavigation %}
 
-{% set pageName = 'Manage availability - ' ~ data.sites[site_id].name %}
-
-{% block beforeContent %}
-{{ backLink({
-  href: '/site/' + site_id,
-  text: 'Back to dashboard'
-}) }}
-{% endblock %}
+{% set pageName = 'Manage availability' %}
 
 {% macro services(service_ids) %}
   {% set servicesCount = service_ids | length %}
@@ -29,24 +22,20 @@
 
 <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
-
-       {{
+      {{
         subNavigation({
           items: [
             {
-              text: 'Today',
-              href: '/site/' ~ site_id ~ '/availability/day',
-              visuallyHiddenText: "’s availability"
+              text: 'Day view',
+              href: '/site/' ~ site_id ~ '/availability/day'
             },
             {
-              text: 'Week',
-              href: '/site/' ~ site_id ~ '/availability/week',
-              visuallyHiddenText: ' availability'
+              text: 'Week view',
+              href: '/site/' ~ site_id ~ '/availability/week'
             },
             {
-              text: 'Month',
-              href: '/site/' ~ site_id ~ '/availability/month',
-              visuallyHiddenText: ' availability'
+              text: 'Month view',
+              href: '/site/' ~ site_id ~ '/availability/month'
             },
             {
               text: 'Manage availability',
@@ -61,9 +50,7 @@
           ]
         })
       }}
-
-      <span class="nhsuk-caption-xl">{{ data.sites[site_id].name }}</span>
-      <h1 class="nhsuk-heading-xl">Manage availability</h1>
+      <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
     </div>
     
     <div class="nhsuk-grid-column-one-third">

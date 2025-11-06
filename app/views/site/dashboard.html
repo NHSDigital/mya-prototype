@@ -65,14 +65,11 @@
       }) }}
 
       <ul class="nhsuk-grid-row nhsuk-card-group">
-        {% if features.availabilityGroups %}
-          {% set navigationItems = data.navigation.siteAvailabilityGroups %}
-        {% else %}
-          {% set navigationItems = data.navigation.site %}
-        {% endif %}
+        {% set navigationItems = data.navigation.site %}
         {% for item in navigationItems %}
         {% set itemHref = item.href %}
         {% if item.hrefTemplate %}{% set itemHref = item.hrefTemplate | replace(':id', site_id) %}{% endif %}
+        {% if not item.hideCard %}
         <li class="nhsuk-grid-column-one-third nhsuk-card-group__item">
         {{ card({
           href: itemHref,
@@ -83,6 +80,7 @@
           description: item.description if item.description
         }) }}
         </li>
+        {% endif %}
         {% endfor %}
       </ul>
     </div>
