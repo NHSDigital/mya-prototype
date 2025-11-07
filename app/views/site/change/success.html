@@ -34,28 +34,30 @@
     <div class="nhsuk-grid-column-two-thirds">
       {# summary information #}
       {% if (data.changeComparison is not defined) or (data.changeComparison.counts.totalAffected <= 1) %}
-        <h2 class="nhsuk-heading-m">No bookings affected</h2>
         <p>No bookings were affected by this change.</p>
       {% else %}
+        
         {% if data.currentGroup['cancel-bookings'] == 'true' %}
           <h2 class="nhsuk-heading-m">{{ data.changeComparison.counts.totalAffected | formatNumber }} bookings have been cancelled</h2>
           <p>People will be sent a text message or email confirming their bookings has been cancelled.</p>
         {% else %}
-          <h2 class="nhsuk-heading-m">{{ data.changeComparison.counts.totalAffected | formatNumber }} bookings have not been cancelled</h2>
-          <p>{{ data.changeComparison.counts.totalAffected | formatNumber }} bookings have not been cancelled. </p>
+          <p>{{ data.changeComparison.counts.totalAffected | formatNumber }} bookings have not been cancelled.</p>
         {% endif %}
 
         {% if data.changeComparison.counts.notAutoCancelled > 0 and data.currentGroup['cancel-bookings'] == 'true' %}
           <h2 class="nhsuk-heading-m">Some people have not been contacted</h2>
-          <p>{{ data.changeComparison.counts.notAutoCancelled | formatNumber }} people did not provide an email or mobile number, and have not been notified that their bookings were cancelled. <a href="#">View the list of people who have not been notified.</a></p>
+          <p>{{ data.changeComparison.counts.notAutoCancelled | formatNumber }} people did not provide an email or mobile number, and have not been notified that their bookings were cancelled.</p>
+          <p><a href="#">View the list of people who have not been notified.</a></p>
          {% endif %}
       {% endif %}
 
+      {% if not(data.changeComparison.counts.notAutoCancelled > 0 and data.currentGroup['cancel-bookings'] == 'true') %}
       <h2 class="nhsuk-heading-m">What to do next</h2>
       <ul class="nhsuk-list nhsuk-list--bullet">
         <li>Go back to <a href="/sites/{{ site_id }}/availability/all">Manage availability</a></li>
         <li>Go back to <a href="/sites/{{ site_id }}/availability/day">Day view</a></li>
       </ul>
+      {% endif %}
 
     </div>
 {% endblock %}

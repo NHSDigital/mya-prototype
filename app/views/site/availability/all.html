@@ -80,7 +80,7 @@
                 {
                   value: "today",
                   text: "Today",
-                  checked: data.filters[site_id].fromDateGroup == "today"
+                  checked: data.filters[site_id].fromDateGroup == "today" or data.filters[site_id].fromDateGroup is not defined
                 },
                 {
                   value: "custom",
@@ -113,7 +113,7 @@
                 {
                   value: "none",
                   text: "No end date",
-                  checked: data.filters[site_id].untilDateGroup == "none"
+                  checked: data.filters[site_id].untilDateGroup == "none" or data.filters[site_id].untilDateGroup is not defined
                 },
                 {
                   value: "custom",
