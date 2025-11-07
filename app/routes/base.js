@@ -267,6 +267,13 @@ router.get('/site/:id/change/:type/:itemId/time-or-capacity', (req, res) => {
   });
 });
 
+router.get('/site/:id/change/:type/:itemId/services', (req, res) => {
+  res.render('site/change/services', {
+    type: req.params.type,
+    itemId: req.params.itemId
+  });
+});
+
 router.post('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (req, res) => {
 
   //compare groups and identify affected bookings
@@ -280,14 +287,16 @@ router.post('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (re
 
   console.log('Differences found:', differences);
 
+  //store comparison results in session data for later steps
+  data.changeComparison = differences;
+  req.session.data = data; //persist back to session
+
   if(differences.counts.totalAffected === 0) {
     //no affected bookings – skip to check answers
     return res.redirect(`/site/${site_id}/change/${req.params.type}/${req.params.itemId}/check-answers`);
   }
 
-  //store comparison results in session data for later steps
-  data.changeComparison = differences;
-  req.session.data = data; //persist back to session
+  
 
   //redirect to do-you-want-to-cancel-bookings page
   res.redirect(`/site/${site_id}/change/${req.params.type}/${req.params.itemId}/do-you-want-to-cancel-bookings`);

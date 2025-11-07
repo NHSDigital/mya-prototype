@@ -1,21 +1,21 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = "Add services to your session" %}
+{% set pageName = "Services" %}
 
 {% block beforeContent %}
 {{ backLink({
-  href: '/site/' + site_id + '/create-availability/time-and-capacity'
+  href: '/site/' ~ site_id ~ '/availability/all/'~ itemId,
+  text: 'Back'
 }) }}
 {% endblock %}
 
+
 {% block content %}
-
-
   <div class="nhsuk-grid-row">
-    <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Add availability</span>
-
-      <form action="/site/{{ site_id }}/create-availability/are-you-assured" method="post">
+    <div class="nhsuk-grid-column-full">
+      <span class="nhsuk-caption-l">Edit availability</span>
+      <form action="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/do-you-want-to-cancel-bookings" method="post">
+        <input type="hidden" name="currentGroup[changeType]" value="services">
         <div class="nhsuk-form-group">
 
           <fieldset class="nhsuk-fieldset">
@@ -25,8 +25,14 @@
             <div class="nhsuk-checkboxes" data-module="nhsuk-checkboxes">
 
               {% for id, service in data.services %}
+              {% set checked = false %}
+              {% for serviceId in data.currentGroup.session.services %}
+                {% if serviceId == id %}
+                  {% set checked = true %}
+                {% endif %}
+              {% endfor %}
               <div class="nhsuk-checkboxes__item">
-                <input class="nhsuk-checkboxes__input" id="service-{{ id }}" name="newSession[services]" type="checkbox" value="{{ id }}" data-checkbox-exclusive-group="services-list" {% if id in (data.newSession.services or []) %}checked{% endif %}>
+                <input class="nhsuk-checkboxes__input" id="service-{{ id }}" name="currentGroup[session][services]" type="checkbox" value="{{ id }}" {% if checked %}checked{% endif %}>
                 <label class="nhsuk-label nhsuk-checkboxes__label" for="service-{{ id }}">{{ service.name }}</label>
               </div>
               {% endfor %}
@@ -38,7 +44,6 @@
           text: "Continue"
         }) }}
       </form>
-
     </div>
   </div>
 {% endblock %}

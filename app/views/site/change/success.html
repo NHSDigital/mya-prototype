@@ -3,7 +3,7 @@
 {% if data.currentGroup.changeType == 'time-or-capacity' %}
   {% set changeTypeText = 'Time and capacity' %}
 {% else %}
-  {% set changeTypeText = data.currentGroup.changeType %}
+  {% set changeTypeText = data.currentGroup.changeType | title %}
 {% endif %}
 
 {% set startDate = data.currentGroup.dates[0] %}

@@ -65,6 +65,27 @@
       </div>
       {% endif %}
 
+      {% if data.currentGroup.changeType == 'services' %}
+      <div class="app-summary-card">
+        <div class="app-summary-card__title-wrapper">
+          <h2 class="app-summary-card__title">Services</h2>
+          <a class="app-summary-card__action" href="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/services">Change</a>
+        </div>
+        <div class="app-summary-card__content">
+          <dl class="nhsuk-summary-list">
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">Services</dt>
+              <dd class="nhsuk-summary-list__value">
+                {% for serviceId in data.currentGroup.session.services %}
+                  {{ data.services[serviceId].name }}{% if not loop.last %}<br>{% endif %}
+                {% endfor %}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+      {% endif %}
+
       {% if data.currentGroup['cancel-bookings'] is defined %}
       <div class="app-summary-card">
         <div class="app-summary-card__title-wrapper">
@@ -117,9 +138,7 @@
         {% endif %}
 
         {# If there's more than 0 affected bookings and we've changed time or capacity #}
-        {% if data.changeComparison.counts.totalAffected > 0 
-          and data.currentGroup.changeType == 'time-or-capacity'
-        %}
+        {% if data.changeComparison.counts.totalAffected > 0 %}
           {% if data.currentGroup['cancel-bookings'] == 'false' %}
           {{ button({
             text: "Save changes"
@@ -130,6 +149,11 @@
             classes: "nhsuk-button--warning"
           }) }}
           {% endif %}
+        {% else %}
+          {# If there are 0 affected bookings, just show normal save button #}
+          {{ button({
+            text: "Save changes"
+          }) }}
         {% endif %}
       </form>
     </div>
