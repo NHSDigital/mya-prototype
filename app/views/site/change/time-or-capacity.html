@@ -47,6 +47,7 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
+      <span class="nhsuk-caption-l">Edit availability</span>
       <h1 class="nhsuk-heading-l">Change time or capacity</h1>
       <form action="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/do-you-want-to-cancel-bookings" method="post">
         <input type="hidden" name="currentGroup[changeType]" value="time-or-capacity">

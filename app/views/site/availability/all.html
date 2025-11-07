@@ -57,83 +57,79 @@
       <div class="nhsuk-card nhsuk-card--feature app-filters">
         <div class="nhsuk-card__content nhsuk-card__content--feature">
           <h3 class="nhsuk-card__heading nhsuk-card__heading--feature">Find availability</h3>
-          <form method="get" action="">
+          <form method="get" action="" novalidate>
+            {# --- Start Date --- #}
             {% set startDateHtml %}
-            {{ input({
-              label: {
-                text: "Select a start date"
-              },
-              type: "date",
-              value: filters.from,
-              id: "from",
-              name: "from"
-            }) }}
-            {% endset %}
-
-            {% set endDateHtml %}
               {{ input({
-                label: {
-                  text: "Select an end date"
-                },
+                label: { text: "Select a start date" },
                 type: "date",
-                value: filters.until,
-                id: "until",
-                name: "until"
+                id: "from",
+                name: "from",
+                value: data.filters[site_id].from if data.filters[site_id].fromDateGroup == "custom" else ""
               }) }}
             {% endset %}
 
             {{ radios({
-              idPrefix: "date-start-group",
-              name: "date-start-group",
+              idPrefix: "fromDateGroup",
+              name: "fromDateGroup",
               fieldset: {
-                legend: {
-                  text: "Start date"
-                }
+                legend: { text: "Start date" }
               },
               classes: "nhsuk-radios--small",
               items: [
                 {
-                  value: "any",
-                  text: "Today"
+                  value: "today",
+                  text: "Today",
+                  checked: data.filters[site_id].fromDateGroup == "today"
                 },
                 {
-                  value: "select",
+                  value: "custom",
                   text: "Another date",
-                  conditional: {
-                    html: startDateHtml
-                  }
+                  conditional: { html: startDateHtml },
+                  checked: data.filters[site_id].fromDateGroup == "custom"
                 }
               ]
             }) }}
+
+            {# --- End Date --- #}
+            {% set endDateHtml %}
+              {{ input({
+                label: { text: "Select an end date" },
+                type: "date",
+                id: "until",
+                name: "until",
+                value: data.filters[site_id].until if data.filters[site_id].untilDateGroup == "custom" else ""
+              }) }}
+            {% endset %}
+
             {{ radios({
-              idPrefix: "date-end-group",
-              name: "date-end-group",
+              idPrefix: "untilDateGroup",
+              name: "untilDateGroup",
               fieldset: {
-                legend: {
-                  text: "End date"
-                }
+                legend: { text: "End date" }
               },
               classes: "nhsuk-radios--small",
               items: [
                 {
-                  value: "any",
-                  text: "All dates"
+                  value: "none",
+                  text: "No end date",
+                  checked: data.filters[site_id].untilDateGroup == "none"
                 },
                 {
-                  value: "select",
+                  value: "custom",
                   text: "Another date",
-                  conditional: {
-                    html: endDateHtml
-                  }
+                  conditional: { html: endDateHtml },
+                  checked: data.filters[site_id].untilDateGroup == "custom"
                 }
               ]
             }) }}
             
             {{ button({
-              text: "Apply filters",
+              text: "Update results",
               type: "submit",
               classes: "app-button--small nhsuk-u-margin-bottom-0"
             }) }}
+            <a href="/site/{{ site_id }}/availability/all" class="nhsuk-button nhsuk-button--secondary app-button--small">Clear</a>
           </form>
         </div>
       </div>
@@ -143,8 +139,27 @@
 
       {% if availabilityGroups.repeating | length == 0 and availabilityGroups.single | length == 0 %}
         <h2 class="nhsuk-heading-l">No availability</h2>
-        <p class="nhsuk-body">There is no availability for this site. You should <a href="/site/{{ site_id }}/create-availability">add availability</a>.</p>
+        <p class="nhsuk-body">There is no availability for this site on the dates you selected.</p>
       {% else %}
+
+      {% macro editLink(group_id) %}
+        {% set filters = data.filters[site_id] %}
+        {% set queryParts = [] %}
+
+        {% if filters.from %}
+          {% set _ = queryParts.push('from=' + filters.from) %}
+        {% endif %}
+
+        {% if filters.until %}
+          {% set _ = queryParts.push('until=' + filters.until) %}
+        {% endif %}
+
+        {% set query = queryParts | join('&') %}
+
+        <a class="nhsuk-link" href="/site/{{ site_id }}/availability/all/{{ group_id }}{% if query %}?{{ query | urlencode(false) }}{% endif %}">
+          Edit
+        </a>
+      {% endmacro %}
 
       {% if availabilityGroups.repeating | length > 0 %}
       <table class="nhsuk-table-responsive" role="table">
@@ -170,7 +185,7 @@
             </td>
             <td class="nhsuk-table__cell" role="cell">
               <span class="nhsuk-table-responsive__heading" aria-hidden="true">Actions </span>
-              <a class="nhsuk-link" href="/site/{{ site_id }}/availability/all/{{ group.id }}?from={{ filters.from }}&until={{ filters.until }}">Edit</a>
+              {{ editLink(group.id ) }}
             </td>
           </tr>
           {% endfor %}

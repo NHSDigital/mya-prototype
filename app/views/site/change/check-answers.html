@@ -13,7 +13,26 @@
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
       
+      <span class="nhsuk-caption-l">Change availability</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <div class="app-summary-card">
+        <div class="app-summary-card__title-wrapper">
+          <h2 class="app-summary-card__title">Dates</h2>
+        </div>
+        <div class="app-summary-card__content">
+          <dl class="nhsuk-summary-list">
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">Start date</dt>
+              <dd class="nhsuk-summary-list__value">{{ data.currentGroup.dates[0] | formatDate }}</dd>
+            </div>
+            <div class="nhsuk-summary-list__row">
+              <dt class="nhsuk-summary-list__key">End date</dt>
+              <dd class="nhsuk-summary-list__value">{{ data.currentGroup.dates[data.currentGroup.dates | length - 1] | formatDate }}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
       
       {% if data.currentGroup.changeType == 'time-or-capacity' %}
       {% set startTime %}{{ data.currentGroup.session.from.hour }}:{{ data.currentGroup.session.from.minute }}{% endset %}
@@ -54,9 +73,9 @@
         <div class="app-summary-card__content">
           {% set cancelMessage %}
             {% if data.currentGroup['cancel-bookings'] == 'true' -%}
-              Affected bookings will be cancelled
+              Yes, cancel bookings
             {%- else -%}
-              Affected bookings will kept
+              No, keep bookings
             {%- endif %}
           {% endset %}
           {{ summaryList({
@@ -84,20 +103,34 @@
       </div>
       {% endif %}
 
-      <form action="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/confirm-change" method="post">
-        {% if data.changeComparison is not defined %}
-        {{ button({
-          text: "Save changes and continue"
-        }) }}
-        {% endif %}
-        {% if data.changeComparison.counts.totalAffected > 0 and data.currentGroup['cancel-bookings'] == 'true' %}
-        {{ button({
-          text: "Save changes, cancel bookings and continue",
-          classes: "nhsuk-button--warning"
-        }) }}
-        {% endif %}
-      </form>
-
     </div>
   </div>
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+
+      <form action="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/confirm-change" method="post">
+        {# if no comparison was made, then this is a simple change #}
+        {% if data.changeComparison is not defined %}
+        {{ button({
+          text: "Save changes"
+        }) }}
+        {% endif %}
+
+        {# If there's more than 0 affected bookings and we've changed time or capacity #}
+        {% if data.changeComparison.counts.totalAffected > 0 
+          and data.currentGroup.changeType == 'time-or-capacity'
+        %}
+          {% if data.currentGroup['cancel-bookings'] == 'false' %}
+          {{ button({
+            text: "Save changes"
+          }) }}
+          {% else %}
+          {{ button({
+            text: "Save changes and cancel bookings",
+            classes: "nhsuk-button--warning"
+          }) }}
+          {% endif %}
+        {% endif %}
+      </form>
+    </div>
 {% endblock %}

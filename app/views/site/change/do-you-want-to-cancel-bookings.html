@@ -1,6 +1,13 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = data.changeComparison.counts.totalAffected | formatNumber~" bookings are affected by this change" %}
+{% set startDate = data.currentGroup.dates[0] %}
+{% set endDate = data.currentGroup.dates[data.currentGroup.dates | length - 1] %}
+
+{% if startDate == endDate %}
+  {% set pageName = "New time and capacity for " ~ startDate | formatDate('d LLLL yyyy') %}
+{% else %}
+  {% set pageName = "New time and capacity for " ~ startDate | formatDate ~ " to " ~ endDate | formatDate %}
+{% endif %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -12,34 +19,29 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Edit availability</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
-      <p>You can choose to keep affected bookings.</p>
-      <p class="nhsuk-paragraph-lead">If you choose to cancel bookings, people will be sent a text message or email confirming their appointment has been cancelled.</p>
+      <p>Changing the time and capacity will affect {{ data.changeComparison.counts.totalAffected | formatNumber }} bookings.</p>
+      <p>People will be sent a text message or email confirming their booking has been cancelled.</p>
       <form action="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/check-answers" method="post">
         {{ radios({
           idPrefix: "do-you-want-to-cancel-bookings",
           name: "currentGroup[cancel-bookings]",
           fieldset: {
             legend: {
-              text: "Do you want to cancel "~data.changeComparison.counts.totalAffected | formatNumber~" affected bookings?",
+              text: "Do you want to cancel the bookings?",
               classes: "nhsuk-fieldset__legend--m"
             }
           },
           items: [
             {
               value: "true",
-              text: "Yes",
-              hint: {
-                text: "Both the session and affected bookings will be cancelled."
-              },
+              text: "Yes, cancel the bookings and change this session",
               checked: true if data.currentGroup['cancel-bookings'] == 'true'
             },
             {
               value: "false",
-              text: "No",
-              hint: {
-                text: "People will be unable to book new appointments, but existing bookings will remain."
-              },
+              text: "No, do not cancel the bookings but change this session",
               checked: true if data.currentGroup['cancel-bookings'] == 'false'
             }
           ]

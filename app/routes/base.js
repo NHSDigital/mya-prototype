@@ -9,6 +9,8 @@ const updateDailyAvailability = require('../helpers/updateDailyAvailability');
 const enhanceData = require('../helpers/enhanceData');
 const summarise = require('../helpers/summaries');
 const compareGroups = require('../helpers/compareGroups');
+const removeServicesFromDailyAvailability = require('../helpers/removeDailyAvailability');
+const { every } = require('lodash');
 
 // -----------------------------------------------------------------------------
 // PARAM HANDLER – capture site_id once for all /site/:id routes
@@ -26,10 +28,38 @@ router.param('id', (req, res, next, id) => {
 router.use('/site/:id', (req, res, next) => {
   const data = req.session.data;
   const site_id = String(req.site_id);
-  const from = req.query.from || DateTime.now().toFormat('yyyy-MM-dd'); //start from this date
-  const until = req.query.until || null; //end on this date
+  
+  //use filters everywhere
+  const today = DateTime.now().toFormat('yyyy-MM-dd');
+  const sessionFilters = data.filters?.[site_id] || {};
 
-  res.locals.filters = { from, until };
+   // --- Prefer query, then session, then default ---
+  const fromDateGroup =
+    req.query.fromDateGroup || sessionFilters.fromDateGroup || 'today';
+  const untilDateGroup =
+    req.query.untilDateGroup || sessionFilters.untilDateGroup || 'none';
+
+  const from =
+    req.query.from ||
+    sessionFilters.from ||
+    (fromDateGroup === 'today' ? today : null);
+  const until =
+    req.query.until ||
+    sessionFilters.until ||
+    (untilDateGroup === 'none' ? null : null);
+
+  // --- Normalise: if radio says "today", force from = today, etc. ---
+  const resolvedFrom = fromDateGroup === 'today' ? today : from;
+  const resolvedUntil = untilDateGroup === 'none' ? null : until;
+
+  // --- Persist back to session ---
+  data.filters = data.filters || {};
+  data.filters[site_id] = {
+    fromDateGroup,
+    untilDateGroup,
+    from: resolvedFrom,
+    until: resolvedUntil
+  };
 
 
   if (!data?.sites?.[site_id]) {
@@ -59,6 +89,25 @@ router.use('/site/:id', (req, res, next) => {
   res.locals.slots = slots[site_id];
 
   next();
+});
+
+// -----------------------------------------------------------------------------
+// SET FILTERS
+// -----------------------------------------------------------------------------
+router.post('/set-filters', (req, res) => {
+  const filters = { ...req.body.filters }
+
+  req.session.data.filters = filters;
+
+  res.redirect(req.body.next);
+});
+
+// -----------------------------------------------------------------------------
+// All sites (reset any site-specific data)
+// -----------------------------------------------------------------------------
+router.get('/sites', (req, res) => {
+  req.session.data = {};
+  res.render('sites');
 });
 
 
@@ -185,7 +234,10 @@ router.get('/site/:id/availability/month', (req, res) => {
 });
 
 router.get('/site/:id/availability/all', (req, res) => { 
-  res.render('site/availability/all');
+  res.render('site/availability/all', {
+    startDateGroup: req.query.startDateGroup || null,
+    endDateGroup: req.query.endDateGroup || null,
+  });
 });
 
 router.get('/site/:id/availability/all/:groupId', (req, res) => {
@@ -226,6 +278,8 @@ router.post('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (re
 
   const differences = compareGroups(originalGroup, editedGroup, data.bookings[site_id] || []);
 
+  console.log('Differences found:', differences);
+
   if(differences.counts.totalAffected === 0) {
     //no affected bookings – skip to check answers
     return res.redirect(`/site/${site_id}/change/${req.params.type}/${req.params.itemId}/check-answers`);
@@ -233,7 +287,25 @@ router.post('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (re
 
   //store comparison results in session data for later steps
   data.changeComparison = differences;
+  req.session.data = data; //persist back to session
 
+  //redirect to do-you-want-to-cancel-bookings page
+  res.redirect(`/site/${site_id}/change/${req.params.type}/${req.params.itemId}/do-you-want-to-cancel-bookings`);
+});
+
+router.get('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (req, res) => {
+    const type = req.params.type;
+    const itemId = req.params.itemId;
+
+    res.render('site/change/do-you-want-to-cancel-bookings', {
+      type,
+      itemId
+    });
+  }
+);
+
+//GET route for do-you-want-to-cancel-bookings to allow users to go back and change their answer
+router.get('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (req, res) => {
   res.render('site/change/do-you-want-to-cancel-bookings', {
     type: req.params.type,
     itemId: req.params.itemId
@@ -247,6 +319,14 @@ router.all('/site/:id/change/:type/:itemId/check-answers', (req, res) => {
     itemId: req.params.itemId
 
   });
+});
+
+router.post('/site/:id/change/:type/:itemId/confirm-change', (req, res) => {
+  res.redirect(`/site/${req.params.id}/change/${req.params.type}/${req.params.itemId}/success`);
+});
+
+router.get('/site/:id/change/:type/:itemId/success', (req, res) => {
+  res.render('site/change/success');
 });
 
 // -----------------------------------------------------------------------------
