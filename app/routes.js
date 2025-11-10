@@ -17,4 +17,7 @@ router.use('/', require('./routes/base'));
 // flags routes
 router.use('/', require('./routes/flags'));
 
+//concepts routes
+router.use('/', require('./views/concepts/edit-the-blob/routes'));
+
 module.exports = router;

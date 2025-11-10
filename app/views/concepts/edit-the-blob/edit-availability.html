@@ -1,0 +1,67 @@
+{% extends '../../layouts/layout.html' %}
+{% from '../../components/subNavigation/subNavigation.njk' import subNavigation %}
+
+{% set pageName = 'Weekday Flu and Covid' %}
+
+{% block content %}
+
+<div class="nhsuk-grid-row">
+  <div class="nhsuk-grid-column-full">
+    {{
+      subNavigation({
+        items: [
+          {
+            text: 'Day view',
+            href: '#'
+          },
+          {
+            text: 'Week view',
+            href: '#'
+          },
+          {
+            text: 'Month view',
+            href: '#'
+          },
+          {
+            text: 'All availability',
+            href: '#',
+            isCurrent: true
+          },
+          {
+            text: 'Add availability',
+            href: '#',
+            isPrimary: true
+          }
+        ]
+      })
+    }}
+    <span class="nhsuk-heading-caption-xl">Edit availability</span>
+    <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
+
+    {{ table({
+      firstCellIsHeader: false,
+      head: [
+        {
+          text: "Session"
+        },{
+          text: "Dates and times"
+        }, {
+          text: "Actions"
+        }
+      ],
+      rows: [
+        [
+          {
+            text: "Weekday Flu and Covid"
+          },{
+            html: "18 October 2025 to 31 January 2026<br>9am to 5pm"
+          }, {
+            html: '<a class="nhsuk-link" href="/concepts/edit-the-blob/edit">Edit</a> | <a class="nhsuk-link" href="#">Delete</a>'
+          }
+        ]
+      ]
+    }) }}
+
+  </div>
+</div>
+{% endblock %}
