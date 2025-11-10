@@ -22,6 +22,19 @@
 
 <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
+
+      {% if newSession %}
+      {% set html %}
+        <h3 class="nhsuk-notification-banner__heading">Availability added</h3>
+        <p>People can now book appointments in the new availability</p>
+      {% endset %}
+
+      {{ notificationBanner({
+        html: html,
+        type: "success"
+      }) }}
+      {% endif %}
+
       {{
         subNavigation({
           items: [
@@ -44,7 +57,7 @@
             },
             {
               text: 'Add availability',
-              href: '/site/' ~ site_id ~ '/create-availability/type-of-session',
+              href: '/site/' ~ site_id ~ '/create-availability',
               isPrimary: true
             }
           ]

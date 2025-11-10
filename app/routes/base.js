@@ -123,11 +123,7 @@ router.get('/site/:id', (req, res) => {
 // CREATE AVAILABILITY
 // -----------------------------------------------------------------------------
 router.get('/site/:id/create-availability', (req, res) => {
-  res.render('site/create-availability/create-availability');
-});
-
-router.get('/site/:id/create-availability/type-of-session', (req, res) => {
-  res.render('site/create-availability/type-of-session');
+  res.render('site/create-availability/dates');
 });
 
 router.all('/site/:id/create-availability/dates', (req, res) => {
@@ -237,6 +233,7 @@ router.get('/site/:id/availability/all', (req, res) => {
   res.render('site/availability/all', {
     startDateGroup: req.query.startDateGroup || null,
     endDateGroup: req.query.endDateGroup || null,
+    newSession: req.query['new-session'] === 'true'
   });
 });
 

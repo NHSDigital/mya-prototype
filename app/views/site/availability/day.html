@@ -29,7 +29,7 @@
             },
             {
               text: 'Add availability',
-              href: '/site/' ~ site_id ~ '/create-availability/type-of-session',
+              href: '/site/' ~ site_id ~ '/create-availability',
               isPrimary: true
             }
           ]
@@ -49,7 +49,7 @@
          {# calculate if there's any booked appointments of this type #}
         {% set hasBookedAppointments = false %}
         {% for slot in slots[date] %}
-          {% if slot.booking_status == 'scheduled' %}
+          {% if slot.booking_status == opts.status %}
             {% set hasBookedAppointments = true %}
           {% endif %}
         {% endfor %}
@@ -57,6 +57,7 @@
         <h2 class="nhsuk-heading-m">{{ opts.title }}</h2>
        
         {% if hasBookedAppointments %}
+        <a href="#" class="nhsuk-button nhsuk-button--secondary app-small-button">Print {{ opts.title | lower }}</a>
         <table class="nhsuk-table-responsive" role="table">
           <thead class="nhsuk-table__head" role="rowgroup">
             <tr>
@@ -92,7 +93,7 @@
               </td>
               <td class="nhsuk-table__cell">{{ data.services[booking.service].name }}</td>
               {% if opts.canCancel %}
-              <td class="nhsuk-table__cell"><a href="/sites/{{ site_id }}/cancel-appointment/{{ slot.appointment_id }}">Cancel</a></td>
+              <td class="nhsuk-table__cell"><a href="#">Cancel</a></td>
               {% endif %}
             </tr>
             {% endif %}

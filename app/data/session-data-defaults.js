@@ -13,6 +13,9 @@ const base = {
     links: {
       overview: [
         {
+          text: 'user@example.com'
+        },
+        {
           text: 'Log out',
           href: '/login'
         }
@@ -22,8 +25,7 @@ const base = {
           isSiteName: true
         },
         {
-          text: 'Change site',
-          href: '/sites'
+          text: 'user@example.com'
         },
         {
           text: 'Log out',
@@ -33,6 +35,9 @@ const base = {
     }
    },
   navigation: { 
+    homepage: {
+      href: '/sites'
+    },
     overview: [
       {
         text: 'Reports',

@@ -28,7 +28,7 @@ module.exports = {
       'FK1 2AB'
     ],
     phone: '01234 567890',
-    ods: 'A12345',
+    ods: 'A123458',
     icb: 'South East London Integrated Care Board',
     region: 'London'
   },
