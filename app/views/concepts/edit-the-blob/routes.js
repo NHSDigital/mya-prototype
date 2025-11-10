@@ -7,33 +7,6 @@ router.use('/concepts/edit-the-blob', (req, res, next) => {
     isOverview: false,
     isSite: true,
   };
-  req.session.data.navigation.site = [
-      {
-        text: 'Overview',
-        hideCard: true,
-        hrefTemplate: '#'
-      },
-      {
-        text: 'Availability',
-        description: 'View and manage available appointments for your site',
-        hrefTemplate: '#'
-      },
-      {
-        text: 'Change site details',
-        description: 'Change site details and accessibility information',
-        href: '#'
-      },
-      {
-        text: 'Manage users',
-        description: 'Add or remove users for your site',
-        href: '#'
-      },
-      {
-        text: 'Reports',
-        description: 'Download reports',
-        href: '#'
-      }
-    ];
   req.session.data.user.links.site = [
     {
       text: 'Kariison Health Centre',
@@ -57,7 +30,10 @@ router.get('/concepts/edit-the-blob', (req, res) => {
 });
 
 router.get('/concepts/edit-the-blob/edit', (req, res) => {
-  res.render('concepts/edit-the-blob/edit-availability');
+  res.render('concepts/edit-the-blob/edit-availability', {
+    calendar: require('./calendars-data.js'),
+    availability: require('./availability-data.js')
+  });
 });
 
 

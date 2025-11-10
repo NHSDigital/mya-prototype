@@ -232,3 +232,52 @@
     margin-right: 0;
   }
 }
+
+.app-sessionInput {
+
+  @include nhsuk-responsive-padding(4);
+   @include nhsuk-responsive-margin(4, 'bottom');
+  background-color: nhsuk-colour("grey-5");
+  border: 1px solid $nhsuk-border-colour;
+
+  &__title {
+    @include nhsuk-font-size(22);
+    @include nhsuk-responsive-margin(2, "bottom");
+  }
+  
+  &__row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+
+    .nhsuk-form-group {
+      margin-bottom: 0;
+    }
+  }
+
+  &__times {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  &__to-seperator {
+    font-size: 19px;
+  }
+
+  &__controls {
+    @include nhsuk-font-size(19);
+  }
+
+  &__time .nhsuk-date-input__label {
+    display: none; //naughty!
+  }
+  &__time .nhsuk-date-input__item {
+    margin-right: nhsuk-spacing(2);
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+
+}

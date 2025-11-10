@@ -67,12 +67,6 @@
           {% set displayDate = singleDate | formatDate %}
         {% endif %}
 
-        {# Assurance statement #}
-        {% set assuranceText = "" %}
-        {% if data.newSession.areYouAssured == "yes" %}
-          {% set assuranceText = "You confirmed you are assured to deliver the services listed" %}
-        {% endif %}
-
         {{ summaryList({
           rows: [
             {
@@ -171,25 +165,12 @@
                   }
                 ]
               }
-            }, {
-              key: {
-                text: "Assured to deliver these service types"
-              },
-              value: {
-                text: assuranceText
-              },
-              actions: {
-                items: [
-                  {
-                    href: "/site/" + site_id + "/create-availability/are-you-assured",
-                    text: "Change",
-                    visuallyHiddenText: " if you are assured to deliver these service types"
-                  }
-                ]
-              }
             }
           ]
         }) }}
+
+        <h2 class="nhsuk-heading-m nhsuk-u-margin-top-6">Before you continue</h2>
+        <p class="nhsuk-body">By making this session available to book, you confirm that your site is assured to deliver the services you have selected.</p>
         
         {{ button({
           text: "Make session available to book"

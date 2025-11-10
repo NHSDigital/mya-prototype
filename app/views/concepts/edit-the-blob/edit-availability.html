@@ -1,65 +1,186 @@
 {% extends '../../layouts/layout.html' %}
-{% from '../../components/subNavigation/subNavigation.njk' import subNavigation %}
+{% from './calendar.njk' import monthCalendar %}
+
 
 {% set pageName = 'Weekday Flu and Covid' %}
 
-{% block content %}
+{% block beforeContent %}
+  {{
+    backLink({
+      href: '/concepts/edit-the-blob'
+    })
+  }}
+{% endblock %}
 
+{% macro sessionInput(label, sessions) %}
+  <div class="app-sessionInput">
+    <h3 class="app-sessionInput__title">{{ label }}</h3>
+    {% for session in sessions %}
+    <div class="app-sessionInput__row">
+      
+      <div class="app-sessionInput__times">
+
+        {{ dateInput({
+            id: "from"~loop.index,
+            namePrefix: "from",
+            fieldset: {
+              legend: {
+                text: "Start time",
+                classes: "nhsuk-u-visually-hidden"
+              }
+            },
+            classes: "app-sessionInput__time",
+            items: [
+              {
+                name: "hour",
+                classes: "nhsuk-input--width-2",
+                value: session.from | splitString(':', 0)
+              },
+              {
+                name: "minute",
+                classes: "nhsuk-input--width-2",
+                value: session.from | splitString(':', 1)
+              }
+            ]
+          }) }}
+
+        <span class="app-sessionInput__to-seperator">to</span>
+        {{ dateInput({
+            id: "until"~loop.index,
+            namePrefix: "until",
+            fieldset: {
+              legend: {
+                text: "Start time",
+                classes: "nhsuk-u-visually-hidden"
+              }
+            },
+            classes: "app-sessionInput__time",
+            items: [
+              {
+                name: "hour",
+                classes: "nhsuk-input--width-2",
+                value: session.until | splitString(':', 0)
+              },
+              {
+                name: "minute",
+                classes: "nhsuk-input--width-2",
+                value: session.until | splitString(':', 1)
+              }
+            ]
+          }) }}
+      </div>
+
+      <div class="app-sessionInput__controls">
+        <a href="#" class="nhsuk-link">Remove</a>
+      </div>
+
+    </div>
+    {% endfor %}
+    {% if sessions | length == 0 %}
+    <p class="nhsuk-u-secondary-text-colour nhsuk-u-margin-bottom-1">No sessions</p>
+    {% endif %}
+    <a href="#" class="nhsuk-link nhsuk-u-font-size-19">Add times</a>
+  </div>
+  
+{% endmacro %}
+
+{% block content %}
 <div class="nhsuk-grid-row">
   <div class="nhsuk-grid-column-full">
-    {{
-      subNavigation({
-        items: [
-          {
-            text: 'Day view',
-            href: '#'
-          },
-          {
-            text: 'Week view',
-            href: '#'
-          },
-          {
-            text: 'Month view',
-            href: '#'
-          },
-          {
-            text: 'All availability',
-            href: '#',
-            isCurrent: true
-          },
-          {
-            text: 'Add availability',
-            href: '#',
-            isPrimary: true
-          }
-        ]
-      })
-    }}
-    <span class="nhsuk-heading-caption-xl">Edit availability</span>
+    
+    <span class="nhsuk-caption-xl">Edit availability</span>
     <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
 
-    {{ table({
-      firstCellIsHeader: false,
-      head: [
-        {
-          text: "Session"
-        },{
-          text: "Dates and times"
-        }, {
-          text: "Actions"
+    <p class="nhsuk-body-l">You should <a href="#">split this session</a> if you need to edit dates within it.</p>
+
+    {% set detailsForm %}
+    <form>
+      <div class="nhsuk-grid-row">
+        <div class="nhsuk-grid-column-two-thirds">
+          <h2 class="nhsuk-heading-m">Availability details</h2>
+          {{ input({
+            label: {
+              text: "Label"
+            },
+            id: "label",
+            name: "label",
+            value: availability.label
+          }) }}
+          {{ input({
+            label: {
+                text: "Vaccinators or vaccination slots"
+            },
+            id: "capacity",
+            name: "capacity",
+            classes: "nhsuk-input--width-2",
+            value: availability.capacity
+          }) }}
+          {{ input({
+            label: {
+                text: "Session length"
+            },
+            id: "slotLength",
+            name: "slotLength",
+            suffix: "minutes",
+            classes: "nhsuk-input--width-2",
+            value: availability.slotLength
+          }) }}
+          <hr class="nhsuk-section-break nhsuk-section-break--m nhsuk-section-break--visible">
+          <h2 class="nhsuk-heading-m">Dates</h2>
+          {{ input({
+            label: {
+                text: "Start date"
+            },
+            id: "date",
+            name: "date",
+            classes: "nhsuk-input--width-10",
+            type: 'date',
+            value: availability.date
+          }) }}
+          {{ input({
+            label: {
+                text: "End date"
+            },
+            id: "date",
+            name: "date",
+            classes: "nhsuk-input--width-10",
+            type: 'date',
+            value: availability.dateTo
+          }) }}
+        </div>
+        <div class="nhsuk-grid-column-full">
+          <hr class="nhsuk-section-break nhsuk-section-break--m nhsuk-section-break--visible">
+          <h2 class="nhsuk-heading-m">Sessions</h2>
+          {% for dayLabel, sessions in availability.days %}
+            {{ sessionInput(dayLabel, sessions)}}
+          {% endfor %}
+        </div>
+      </div>
+      {{ button({
+        text: 'Save availability',
+        type: 'submit'
+      }) }}
+    </form>
+    
+    {% endset %}
+
+    {{ tabs({ 
+      items: [ 
+      { 
+        label: "Details", 
+        id: "details", 
+        panel: { 
+          html: detailsForm 
+          } 
+        }, 
+        { 
+          label: "Preview", 
+          id: "preview", 
+          panel: { 
+            html: '' 
+          } 
         }
-      ],
-      rows: [
-        [
-          {
-            text: "Weekday Flu and Covid"
-          },{
-            html: "18 October 2025 to 31 January 2026<br>9am to 5pm"
-          }, {
-            html: '<a class="nhsuk-link" href="/concepts/edit-the-blob/edit">Edit</a> | <a class="nhsuk-link" href="#">Delete</a>'
-          }
-        ]
-      ]
+      ] 
     }) }}
 
   </div>
