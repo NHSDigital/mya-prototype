@@ -1,6 +1,6 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = "Create availability for " + data.sites[site_id].name + " - " %}
+{% set pageName = "Add availability for " + data.sites[site_id].name + " - " %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -13,8 +13,8 @@
     <div class="nhsuk-grid-column-full">
       
       <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
-      <h1 class="nhsuk-heading-l">Create availability</h1>
-      <p>You can create availability with multiple days and repeating sessions, to accurately reflect your site’s capacity.</p>
+      <h1 class="nhsuk-heading-l">Add availability</h1>
+      <p>You can add availability with multiple days and repeating sessions, to accurately reflect your site’s capacity.</p>
 
       <table class="nhsuk-table">
         <thead class="nhsuk-table__head">
@@ -64,7 +64,7 @@
       </table>
 
       {{ button({
-        text: "Create availability",
+        text: "Add availability",
         href: "/site/" + site_id + "/create-availability/type-of-session"
       }) }}
 
