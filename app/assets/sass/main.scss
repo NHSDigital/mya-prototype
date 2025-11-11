@@ -14,7 +14,7 @@
 
   &-small-button,
   &-button--small {
-    font-size: nhsuk-font-size("s");
+    @include nhsuk-font-size(16);
     padding: nhsuk-spacing(1) nhsuk-spacing(2);
   }
 
@@ -280,4 +280,17 @@
     }
   }
 
+}
+
+.app-heading-with-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: nhsuk-spacing(2);
+
+
+  > a {
+    flex-shrink: 0;
+  }
 }

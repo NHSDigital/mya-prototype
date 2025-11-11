@@ -1,6 +1,9 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = "Edit availability" %}
+{% set pageName = "Edit availability for "~group.dates[0] | formatDate('d MMMM yyyy') %}
+{% if group.type == 'repeating' %}
+  {% set pageName = pageName ~ " to " ~ group.dates[group.dates | length - 1] | formatDate('d MMMM yyyy') %}
+{% endif %}
 
 {% set groupSummary = summaries.byGroup[group.id] %}
 
@@ -16,10 +19,12 @@
 
 <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
-      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
-      <a href="#" class="nhsuk-button nhsuk-button--warning">Delete this availability</a>
+      <div class="app-heading-with-button">
+        <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+        <a href="#" class="nhsuk-button nhsuk-button--warning app-small-button">Delete this availability</a>
+      </div>
 
-      <div class="app-summary-card">
+      {# <div class="app-summary-card">
         <div class="app-summary-card__title-wrapper">
           <h2 class="app-summary-card__title">Dates</h2>
         </div>
@@ -37,7 +42,7 @@
             {% endif %}
           </dl>
         </div>
-      </div>
+      </div> #}
 
       <div class="app-summary-card">
         <div class="app-summary-card__title-wrapper">
@@ -55,7 +60,7 @@
               <dd class="nhsuk-summary-list__value">{{ group.session.until | nhsTime }}</dd>
             </div>
             <div class="nhsuk-summary-list__row">
-              <dt class="nhsuk-summary-list__key">Available vaccinators or vaccination slots</dt>
+              <dt class="nhsuk-summary-list__key">Available vaccinators or vaccination spaces</dt>
               <dd class="nhsuk-summary-list__value">{{ group.session.capacity }}</dd>
             </div>
             <div class="nhsuk-summary-list__row">

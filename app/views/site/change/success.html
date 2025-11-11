@@ -54,8 +54,8 @@
       {% if not(data.changeComparison.counts.notAutoCancelled > 0 and data.currentGroup['cancel-bookings'] == 'true') %}
       <h2 class="nhsuk-heading-m">What to do next</h2>
       <ul class="nhsuk-list nhsuk-list--bullet">
-        <li>Go back to <a href="/sites/{{ site_id }}/availability/all">Manage availability</a></li>
-        <li>Go back to <a href="/sites/{{ site_id }}/availability/day">Day view</a></li>
+        <li>Go back to <a href="/site/{{ site_id }}/availability/all">Manage availability</a></li>
+        <li>Go back to <a href="/site/{{ site_id }}/availability/day">Day view</a></li>
       </ul>
       {% endif %}
 
