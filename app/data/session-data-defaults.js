@@ -46,7 +46,7 @@ const base = {
     ],
     site: [
       {
-        text: 'Overview',
+        text: 'Home',
         hideCard: true,
         hrefTemplate: '/site/:id'
       },

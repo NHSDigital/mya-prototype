@@ -39,11 +39,23 @@ module.exports = {
   overrides: {
     '2025-12-25': [], // Christmas Day closed
     '2025-12-26': [],  // Boxing Day closed
-    '2026-01-01': [   // New Year's Day reduced hours
-      { from: '10:00', until: '13:00', services: ['FLU:18-64'], slotLength: 20, capacity: 1 }
+    '2025-11-14': [   // Random day where slots are longer
+      { 
+        from: '10:00', 
+        until: '17:00', 
+        services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'], 
+        slotLength: 11, 
+        capacity: 1
+      }
     ],
-    '2025-12-27': [   // Additional clinic
-      { from: '10:00', until: '13:00', services: ['FLU:18-64'], slotLength: 10, capacity: 1 }
+    '2025-11-21': [  // Random day where slots are longer
+      { 
+        from: '10:00', 
+        until: '17:00', 
+        services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'], 
+        slotLength: 10, 
+        capacity: 1
+      }
     ]
   },
 
