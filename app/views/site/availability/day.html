@@ -36,6 +36,17 @@
         })
       }}
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      {{ pagination({
+        previous: {
+          labelText: yesterday | formatDate('EEE, d LLL'),
+          href: "/site/"~site_id~"/availability/day?date="~yesterday
+        },
+        next: {
+          labelText: tomorrow | formatDate('EEE, d LLL'),
+          href: "/site/"~site_id~"/availability/day?date="~tomorrow
+        }
+      }) }}
       
 
       {% macro orphanNote(count) -%}

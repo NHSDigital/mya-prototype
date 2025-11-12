@@ -189,7 +189,9 @@ router.get('/site/:id/availability/day', (req, res) => {
 
   res.render('site/availability/day', {
     date,
-    isToday: DateTime.now().toFormat('yyyy-MM-dd') === date
+    today: DateTime.now().toFormat('yyyy-MM-dd'),
+    tomorrow: DateTime.fromISO(date).plus({ days: 1 }).toISODate(),
+    yesterday: DateTime.fromISO(date).minus({ days: 1 }).toISODate()
   });
 });
 
