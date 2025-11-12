@@ -48,6 +48,15 @@ module.exports = {
         capacity: 1
       }
     ],
+    '2025-11-15': [   // A random saturday
+      { 
+        from: '10:00', 
+        until: '17:00', 
+        services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'], 
+        slotLength: 5, 
+        capacity: 1
+      }
+    ],
     '2025-11-20': [  // Random day where slots are longer
       { 
         from: '10:00', 
