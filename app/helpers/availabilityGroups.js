@@ -1,7 +1,7 @@
 const { DateTime } = require('luxon');
 const generateGroupId = require('./groupId');
 
-const weekdayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 // Helper: compare two sessions for equality
 function sessionsEqual(a, b) {

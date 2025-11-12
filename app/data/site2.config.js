@@ -44,7 +44,16 @@ module.exports = {
         from: '10:00', 
         until: '17:00', 
         services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'], 
-        slotLength: 11, 
+        slotLength: 20, 
+        capacity: 1
+      }
+    ],
+    '2025-11-20': [  // Random day where slots are longer
+      { 
+        from: '10:00', 
+        until: '17:00', 
+        services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'], 
+        slotLength: 15, 
         capacity: 1
       }
     ],
@@ -53,7 +62,7 @@ module.exports = {
         from: '10:00', 
         until: '17:00', 
         services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'], 
-        slotLength: 10, 
+        slotLength: 20, 
         capacity: 1
       }
     ]
