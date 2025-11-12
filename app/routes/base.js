@@ -228,7 +228,8 @@ router.get('/site/:id/availability/week', (req, res) => {
 });
 
 router.get('/site/:id/availability/month', (req, res) => { 
-  res.render('site/availability/month');
+  res.redirect('/not-in-this-prototype');
+  //res.render('site/availability/month');
 });
 
 router.get('/site/:id/availability/all', (req, res) => { 
