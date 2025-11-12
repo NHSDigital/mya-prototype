@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { DateTime } = require('luxon');
 
 //set global locals and session data for all routes in this file
 router.use('/concepts/edit-the-blob', (req, res, next) => {
@@ -26,7 +27,9 @@ router.use('/concepts/edit-the-blob', (req, res, next) => {
 
 //route for edit-the-blob starting point
 router.get('/concepts/edit-the-blob', (req, res) => {
-  res.render('concepts/edit-the-blob/all-availability');
+  res.render('concepts/edit-the-blob/all-availability', {
+    today: DateTime.now().setZone('Europe/London').toISODate()
+  });
 });
 
 router.get('/concepts/edit-the-blob/edit', (req, res) => {
