@@ -285,10 +285,14 @@
 .app-heading-with-button {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: nowrap;
-  gap: nhsuk-spacing(2);
+  gap: nhsuk-spacing(9);
+  margin-bottom: nhsuk-spacing(6);
 
+  >* {
+    margin-bottom: 0;
+  }
 
   > a {
     flex-shrink: 0;
