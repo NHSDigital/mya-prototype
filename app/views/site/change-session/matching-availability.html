@@ -1,0 +1,65 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set thisSession = {} %}
+{% set date = null %}
+{% for availabilityDate, availability in data.daily_availability[site_id] %}
+  {% for session in availability.sessions %}
+    {% if session.id == itemId %}
+      {% set date = availabilityDate %}
+      {% set thisSession = session %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+{% set pageName = 'Matching availability for '~date | formatDate('cccc, d MMMM yyyy') %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' ~ site_id ~ '/change/'~ type ~ '/' ~ itemId,
+  text: 'Back'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Cancel availability</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <p>We found other sessions with the same</p>
+      <ul class="nhsuk-list nhsuk-list--bullet">
+        <li>start and end times</li>
+        <li>services</li>
+        <li>vaccinators and session length</li>
+      </ul>
+
+      <form action="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/change-matching-availability" method="post">
+        {{ radios({
+          idPrefix: "change-matching-availability",
+          name: "change-matching-availability",
+          fieldset: {
+            legend: {
+              text: "What do you want to do?",
+              classes: "nhsuk-fieldset__legend--m"
+            }
+          },
+          items: [
+            {
+              text: "Cancel this session only",
+              value: "false"
+            },
+            {
+              value: "true",
+              text: "Review and cancel multiple sessions"
+            }
+          ]
+        }) }}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

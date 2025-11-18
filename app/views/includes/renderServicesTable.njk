@@ -46,7 +46,7 @@
       </td>
       <td class="nhsuk-table__cell">{{ unbookedCount }}</td>
       {% if not (date | isDateInPast) %}{% if opts.change %}
-      <td class="nhsuk-table__cell"><a href="/not-in-this-prototype">Change</a></td>
+      <td class="nhsuk-table__cell"><a href="/site/{{ site_id }}/change/{{ opts.change.type }}/{{ session.id }}">Change</a></td>
       {% endif %}{% endif %}
     </tr>
     {% endfor %}

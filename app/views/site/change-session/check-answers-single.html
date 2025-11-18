@@ -1,0 +1,49 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = "Check your answers" %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' ~ site_id ~ '/change/' ~ type ~ '/' ~ itemId ~ '/do-you-want-to-cancel-bookings-single',
+  text: 'Back'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+      
+      <span class="nhsuk-caption-l">Change availability</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <dl class="nhsuk-summary-list">
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Session</dt>
+          <dd class="nhsuk-summary-list__value">{{ data.currentGroup.from | nhsTime }} to {{ data.currentGroup.until | nhsTime }} on {{ data.currentGroup.dates[0] | formatDate('cccc, d MMMM yyyy') }}</dd>
+        </div>
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Cancel matched sessions</dt>
+          <dd class="nhsuk-summary-list__value">{{ 'Cancel multiple sessions' if data['change-matching-availability'] == 'true' }}{{ 'Cancel this session only' if data['change-matching-availability'] == 'false' }}</dd>
+          <dd class="nhsuk-summary-list__actions"><a href="#">Change</a></dd>
+        </div>
+        {% if data['select-date'] is defined %}
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Matched sessions that will be cancelled</dt>
+          <dd class="nhsuk-summary-list__value">
+            {% for date in data['select-date'] %}
+              {{ date | formatDate('cccc, d MMMM yyyy') }}{% if not loop.last %}<br>{% endif %}
+            {% endfor %}
+          </dd>
+          <dd class="nhsuk-summary-list__actions"><a href="#">Change</a></dd>
+        </div>
+        {% endif %}
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Cancel affected bookings</dt>
+          <dd class="nhsuk-summary-list__value">{{ 'Yes' if data.currentGroup['cancel-bookings'] == 'true' }}{{ 'No' if data.currentGroup['cancel-bookings'] == 'false' }}</dd>
+          <dd class="nhsuk-summary-list__actions"><a href="#">Change</a></dd>
+        </div>
+      </dl>
+
+      </form>
+    </div>
+{% endblock %}

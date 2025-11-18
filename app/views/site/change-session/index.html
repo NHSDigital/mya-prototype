@@ -4,13 +4,15 @@
 {% set thisSession = {} %}
 {% set date = null %}
 {% for availabilityDate, availability in data.daily_availability[site_id] %}
-  {% set date = availabilityDate %}
   {% for session in availability.sessions %}
-    {% if session.id == itemId %}{% set thisSession = session %}{% endif %}
+    {% if session.id == itemId %}
+      {% set date = availabilityDate %}
+      {% set thisSession = session %}
+    {% endif %}
   {% endfor %}
 {% endfor %}
 
-{% set pageName = 'Change availability for '~date | formatDate %}
+{% set pageName = date | formatDate('cccc, d MMMM yyyy') %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -22,10 +24,8 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
-      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
+      <span class="nhsuk-caption-l">Edit availability</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
-
-      <p>Type: {{ type }}, ID: {{ itemId }}</p>
 
       {{ renderServicesTable({
         date: date, 
@@ -40,10 +40,7 @@
         text: 'You can only reduce time, capacity or services from this screen. If you want to increase availability for this day, you must create a new session.'
       }) }}
 
-      <form action="/site/{{ site_id}}/change/type-of-change?date={{ date }}&from={{ from }}&until={{ until }}" method="post">
-        <input type="hidden" name="date" value="{{ date }}">
-        <input type="hidden" name="from" value="{{ from }}">
-        <input type="hidden" name="until" value="{{ until }}">
+      <form action="/site/{{ site_id}}/change/{{ type }}/{{ itemId }}/select-type-of-change" method="post">
         {{ radios({
           idPrefix: "type-of-change",
           name: "type-of-change",
@@ -59,17 +56,17 @@
               hint: {
                 text: "Shorten the session length or remove capacity"
               },
-              value: "length-or-capacity"
+              value: "time-or-capacity"
             },
             {
-              value: "remove-services",
+              value: "services",
               text: "Remove services from this session",
               hint: {
                 text: "Remove booked appointments for individual services"
               }
             },
             {
-              value: "cancel-session",
+              value: "cancel",
               text: "Cancel this session"
             }
           ]

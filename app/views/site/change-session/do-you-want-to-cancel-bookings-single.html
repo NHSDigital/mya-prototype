@@ -1,0 +1,52 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set startDate = data.currentGroup.dates[0] %}
+{% if data.currentGroup['change-matching-availability'] == 'true' %}
+  {% set pageName = startDate | formatDate('d LLLL yyyy')  ~ " and matching sessions" %}
+{% else %}  
+  {% set pageName = startDate | formatDate('d LLLL yyyy') %}
+{% endif %}
+
+
+{% block beforeContent %}
+{{ backLink({
+  href: 'javascript:history.back();',
+  text: 'Back'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Cancel availability</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      <p>Changing the time and capacity will affect 17 bookings.</p>
+      <p>People will be sent a text message or email confirming their booking has been cancelled.</p>
+      <form action="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/check-answers-single" method="post">
+        {{ radios({
+          idPrefix: "do-you-want-to-cancel-bookings",
+          name: "currentGroup[cancel-bookings]",
+          fieldset: {
+            legend: {
+              text: "Do you want to cancel the bookings?",
+              classes: "nhsuk-fieldset__legend--m"
+            }
+          },
+          items: [
+            {
+              value: "true",
+              text: "Yes, cancel the bookings and change this session"
+            },
+            {
+              value: "false",
+              text: "No, do not cancel the bookings but change this session"
+            }
+          ]
+        }) }}
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

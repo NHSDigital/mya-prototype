@@ -298,3 +298,9 @@
     flex-shrink: 0;
   }
 }
+
+.app-table-select-checkbox--header {
+  .nhsuk-checkboxes__label {
+    font-weight: bold;
+  }
+}

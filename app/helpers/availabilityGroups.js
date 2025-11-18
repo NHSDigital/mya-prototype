@@ -47,11 +47,13 @@ function groupSessions(data) {
       const existingGroup = sessionGroups.find(g => sessionsEqual(g.session, session));
       if (existingGroup) {
         existingGroup.dates.push(day.date);
+        existingGroup.sessionIds.push(session.id)
       } else {
         sessionGroups.push({
           id: generateGroupId(session),
           session: addSlotInfo(session),
-          dates: [day.date]
+          dates: [day.date],
+          sessionIds: [session.id]
         });
       }
     }

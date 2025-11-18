@@ -1,0 +1,71 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set thisSession = {} %}
+{% set date = null %}
+{% for availabilityDate, availability in data.daily_availability[site_id] %}
+  {% for session in availability.sessions %}
+    {% if session.id == itemId %}
+      {% set date = availabilityDate %}
+      {% set thisSession = session %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+{% macro selectCheckBox(opts) %}
+<div class="nhsuk-checkboxes__item nhsuk-checkboxes--small app-table-select-checkbox {{ opts.classes }}">
+  <input class="nhsuk-checkboxes__input" id="{{ opts.id }}" type="checkbox" name="{{ opts.id }}" value="{{ opts.value }}">
+  <label class="nhsuk-label nhsuk-checkboxes__label" for="{{ opts.id }}">{{ opts.label | safe }}</label>
+</div>
+{% endmacro %}
+
+{% set pageName = 'Select matching availability for '~date | formatDate('cccc, d MMMM yyyy') %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' ~ site_id ~ '/change/'~ type ~ '/' ~ itemId~'/matching-availability',
+  text: 'Back'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+      <span class="nhsuk-caption-l">Cancel availability</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <form action="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/do-you-want-to-cancel-bookings-single" method="post">
+      <table class="nhsuk-table" id="bookings-table">
+        <thead class="nhsuk-table__head">
+          <tr>
+            <th scope="col" class="nhsuk-table__header app-table-select">{{ selectCheckBox({
+              id: 'select-all',
+              label: '<span class="nhsuk-u-visually-hidden">Select all </span>Dates',
+              classes: 'app-table-select-checkbox--header'
+            }) }}</th>
+            <th scope="col" class="nhsuk-table__header">Total booked</th>
+            <th scope="col" class="nhsuk-table__header">Available</th>
+          </tr>
+        </thead>
+        <tbody class="nhsuk-table__body">
+          {% for date in group.dates %}
+          <tr class="nhsuk-table__row">
+            <td class="nhsuk-table__cell">{{ selectCheckBox({
+              id: 'select-date',
+              label: date | formatDate('cccc, d MMMM yyyy'),
+              value: date
+            }) }}</td>
+            <td class="nhsuk-table__cell">0</td>
+            <td class="nhsuk-table__cell">10</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

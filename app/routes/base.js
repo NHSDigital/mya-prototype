@@ -256,8 +256,10 @@ router.get('/site/:id/availability/all/:groupId', (req, res) => {
   });
 });
 
+
+
 // -----------------------------------------------------------------------------
-// CHANGE
+// CHANGE GROUP
 // -----------------------------------------------------------------------------
 
 router.get('/site/:id/change/:type/:itemId/time-or-capacity', (req, res) => {
@@ -285,8 +287,6 @@ router.post('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (re
 
   const differences = compareGroups(originalGroup, editedGroup, data.bookings[site_id] || []);
 
-  console.log('Differences found:', differences);
-
   //store comparison results in session data for later steps
   data.changeComparison = differences;
   req.session.data = data; //persist back to session
@@ -294,9 +294,7 @@ router.post('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (re
   if(differences.counts.totalAffected === 0) {
     //no affected bookings – skip to check answers
     return res.redirect(`/site/${site_id}/change/${req.params.type}/${req.params.itemId}/check-answers`);
-  }
-
-  
+  } 
 
   //redirect to do-you-want-to-cancel-bookings page
   res.redirect(`/site/${site_id}/change/${req.params.type}/${req.params.itemId}/do-you-want-to-cancel-bookings`);
