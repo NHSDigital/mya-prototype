@@ -103,6 +103,13 @@ router.get('/site/:id/change/:type/:itemId/check-answers-single', (req, res) => 
   });
 });
 
+router.get('/site/:id/change/:type/:itemId/success-single', (req, res) => {
+  res.render('site/change-session/success-single', {
+    type: req.params.type,
+    itemId: req.params.itemId
+  });
+});
+
 
 
 // -----------------------------------------------------------------------------

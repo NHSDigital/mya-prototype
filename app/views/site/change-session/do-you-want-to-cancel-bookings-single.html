@@ -18,19 +18,20 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Cancel availability</span>
-      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
-      <p>Changing the time and capacity will affect 17 bookings.</p>
-      <p>People will be sent a text message or email confirming their booking has been cancelled.</p>
       <form action="/site/{{ site_id }}/change/{{ type }}/{{ itemId }}/check-answers-single" method="post">
         {{ radios({
+
           idPrefix: "do-you-want-to-cancel-bookings",
           name: "currentGroup[cancel-bookings]",
           fieldset: {
             legend: {
               text: "Do you want to cancel the bookings?",
-              classes: "nhsuk-fieldset__legend--m"
+              classes: "nhsuk-fieldset__legend--l",
+              isPageHeading: true
             }
+          },
+          hint: {
+            text: "Changing the time and capacity will affect 17 bookings. People will be sent a text message or email confirming their booking has been cancelled."
           },
           items: [
             {

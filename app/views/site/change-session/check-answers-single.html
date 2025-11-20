@@ -23,16 +23,20 @@
         </div>
         <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Cancel matched sessions</dt>
-          <dd class="nhsuk-summary-list__value">{{ 'Cancel multiple sessions' if data['change-matching-availability'] == 'true' }}{{ 'Cancel this session only' if data['change-matching-availability'] == 'false' }}</dd>
+          <dd class="nhsuk-summary-list__value">{{ 'Yes' if data['change-matching-availability'] == 'true' }}{{ 'No' if data['change-matching-availability'] == 'false' }}</dd>
           <dd class="nhsuk-summary-list__actions"><a href="#">Change</a></dd>
         </div>
         {% if data['select-date'] is defined %}
         <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Matched sessions that will be cancelled</dt>
+          <dt class="nhsuk-summary-list__key">Other sessions that will be cancelled</dt>
           <dd class="nhsuk-summary-list__value">
+            {% if data['select-all'][0] == 'true' %}
+              from {{ data['select-date'][0] | formatDate('cccc, d MMMM yyyy') }} to {{ data['select-date'][data['select-date'] | length] | formatDate('cccc, d MMMM yyyy') }}
+            {% else %}
             {% for date in data['select-date'] %}
               {{ date | formatDate('cccc, d MMMM yyyy') }}{% if not loop.last %}<br>{% endif %}
             {% endfor %}
+            {% endif %}
           </dd>
           <dd class="nhsuk-summary-list__actions"><a href="#">Change</a></dd>
         </div>
@@ -44,6 +48,18 @@
         </div>
       </dl>
 
-      </form>
+      {% if data.currentGroup['cancel-bookings'] == 'true' %}
+      {{ button({
+        text: "Save changes and cancel bookings",
+        classes: "nhsuk-button--warning",
+        href: '/site/' ~ site_id ~ '/change/session/' ~ itemId ~ '/success-single'
+      }) }}
+      {% else %}
+      {{ button({
+        text: "Save changes",
+        href: '/site/' ~ site_id ~ '/change/session/' ~ itemId ~ '/success-single'
+      }) }}
+      {% endif %}
+
     </div>
 {% endblock %}

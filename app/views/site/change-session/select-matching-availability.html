@@ -18,7 +18,7 @@
 </div>
 {% endmacro %}
 
-{% set pageName = 'Select matching availability for '~date | formatDate('cccc, d MMMM yyyy') %}
+{% set pageName = 'Select other sessions to cancel' %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -44,7 +44,7 @@
               value: 'true'
             }) }}</th>
             <th scope="col" class="nhsuk-table__header">Total booked</th>
-            <th scope="col" class="nhsuk-table__header">Available</th>
+            <th scope="col" class="nhsuk-table__header">Total available</th>
           </tr>
         </thead>
         <tbody class="nhsuk-table__body">
@@ -55,8 +55,8 @@
               label: date | formatDate('cccc, d MMMM yyyy'),
               value: date
             }) }}</td>
-            <td class="nhsuk-table__cell">0</td>
-            <td class="nhsuk-table__cell">10</td>
+            <td class="nhsuk-table__cell">{{ 0 | randomNumber(10) }}</td>
+            <td class="nhsuk-table__cell">{{ 30 | randomNumber(50) }}</td>
           </tr>
           {% endfor %}
         </tbody>

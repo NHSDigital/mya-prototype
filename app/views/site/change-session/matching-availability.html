@@ -11,7 +11,7 @@
   {% endfor %}
 {% endfor %}
 
-{% set pageName = 'Matching availability for '~date | formatDate('cccc, d MMMM yyyy') %}
+{% set pageName = 'There are other sessions similar to '~date | formatDate('cccc, d MMMM yyyy') %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -50,7 +50,7 @@
             },
             {
               value: "true",
-              text: "Review and cancel multiple sessions"
+              text: "Cancel multiple sessions"
             }
           ]
         }) }}

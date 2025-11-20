@@ -48,6 +48,11 @@ module.exports = function (env) {
     return String(str).replace(/([a-z])([A-Z])/g, '$1 $2');
   }
 
+  filters.randomNumber = (min, max) => {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
 
   return filters
 }
