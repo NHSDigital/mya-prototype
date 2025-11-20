@@ -31,7 +31,9 @@
           <dt class="nhsuk-summary-list__key">Other sessions that will be cancelled</dt>
           <dd class="nhsuk-summary-list__value">
             {% if data['select-all'][0] == 'true' %}
-              from {{ data['select-date'][0] | formatDate('cccc, d MMMM yyyy') }} to {{ data['select-date'][data['select-date'] | length] | formatDate('cccc, d MMMM yyyy') }}
+              {# {{ data['select-date'] | length }} sessions<br> #}
+              from {{ data['select-date'][0] | formatDate('cccc, d MMMM yyyy') }}<br>
+              to {{ data['select-date'][data['select-date'] | length] | formatDate('cccc, d MMMM yyyy') }}
             {% else %}
             {% for date in data['select-date'] %}
               {{ date | formatDate('cccc, d MMMM yyyy') }}{% if not loop.last %}<br>{% endif %}
