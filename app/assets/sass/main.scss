@@ -311,3 +311,11 @@
   padding: 6px;
   background-color: white;
 }
+
+.app-table__panel-with-heading-tab--past {
+  background-color: transparent;
+  .nhsuk-table__heading-tab {
+    background-color: nhsuk-colour("grey-1");
+    color: white;
+  }
+}
