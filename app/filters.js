@@ -44,6 +44,10 @@ module.exports = function (env) {
     return parts;
   }
 
+  filters.splitCamelCase = (str) => {
+    return String(str).replace(/([a-z])([A-Z])/g, '$1 $2');
+  }
+
 
   return filters
 }

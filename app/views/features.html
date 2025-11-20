@@ -12,7 +12,7 @@
         {% for key, value in features %}
         <div class="nhsuk-form-group">
           <fieldset class="nhsuk-fieldset">
-            <legend class="nhsuk-fieldset__legend">Enable {{ key | title }}?</legend>
+            <legend class="nhsuk-fieldset__legend">Enable <span class="app-monospace">{{ key | splitCamelCase | lower }}</span></legend>
             <div class="nhsuk-radios nhsuk-radios--inline" data-module="nhsuk-radios">
               <div class="nhsuk-radios__item">
                 <input class="nhsuk-radios__input" id="{{ key}}-yes" name="features[{{ key }}]" type="radio" value="true" {% if value == true %}checked{% endif %}>

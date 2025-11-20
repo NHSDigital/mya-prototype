@@ -28,7 +28,7 @@
             {
               text: 'Manage availability',
               href: '/site/' ~ site_id ~ '/availability/all'
-            },
+            } if features.manageAvailability,
             {
               text: 'Add availability',
               href: '/site/' ~ site_id ~ '/create-availability',

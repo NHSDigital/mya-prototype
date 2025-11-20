@@ -304,3 +304,10 @@
     font-weight: bold;
   }
 }
+
+.app-monospace {
+  font-family: monospace;
+  border: 1px solid $nhsuk-border-colour;
+  padding: 6px;
+  background-color: white;
+}
