@@ -32,11 +32,12 @@
           <dd class="nhsuk-summary-list__value">
             {% if data['select-all'][0] == 'true' %}
               {# {{ data['select-date'] | length }} sessions<br> #}
+              {{ data.currentGroup.from | nhsTime }} to {{ data.currentGroup.until | nhsTime }}<br>
               from {{ data['select-date'][0] | formatDate('cccc, d MMMM yyyy') }}<br>
               to {{ data['select-date'][data['select-date'] | length] | formatDate('cccc, d MMMM yyyy') }}
             {% else %}
             {% for date in data['select-date'] %}
-              {{ date | formatDate('cccc, d MMMM yyyy') }}{% if not loop.last %}<br>{% endif %}
+              {{ data.currentGroup.from | nhsTime }} to {{ data.currentGroup.until | nhsTime }} on {{ date | formatDate('cccc, d MMM yyyy') }}{% if not loop.last %}<br>{% endif %}
             {% endfor %}
             {% endif %}
           </dd>
