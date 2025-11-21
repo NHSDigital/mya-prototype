@@ -22,7 +22,7 @@
           <dd class="nhsuk-summary-list__value">{{ data.currentGroup.from | nhsTime }} to {{ data.currentGroup.until | nhsTime }} on {{ data.currentGroup.dates[0] | formatDate('cccc, d MMMM yyyy') }}</dd>
         </div>
         <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Cancel matched sessions</dt>
+          <dt class="nhsuk-summary-list__key">Cancel multiple sessions</dt>
           <dd class="nhsuk-summary-list__value">{{ 'Yes' if data['change-matching-availability'] == 'true' }}{{ 'No' if data['change-matching-availability'] == 'false' }}</dd>
           <dd class="nhsuk-summary-list__actions"><a href="#">Change</a></dd>
         </div>
