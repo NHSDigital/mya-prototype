@@ -34,14 +34,14 @@ module.exports = {
   },
 
   // ---- Availability generation ----
-  start: '2025-11-22',
-  end: '2026-11-21',
+  start: '2025-10-22',
+  end: '2026-01-31',
   patterns: {
     Monday: baseSessions,
     Tuesday: baseSessions,
     Wednesday: baseSessions,
     Thursday: baseSessions,
-    Sunday: baseSessions
+    Friday: baseSessions
   },
   overrides: {
     '2025-12-25': [], // Christmas Day closed
@@ -52,7 +52,7 @@ module.exports = {
   bookings: {
     services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'RSV:Adult'],
     statuses: ['scheduled', 'cancelled', 'orphaned'],
-    fillRate: 0.8,
-    fillRatesByStatus: { scheduled: 0.75, cancelled: 0.20, orphaned: 0.05 }
+    fillRate: 1,
+    fillRatesByStatus: { scheduled: 0.99, cancelled: 0.01, orphaned: 0 }
   }
 };
