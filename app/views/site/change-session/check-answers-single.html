@@ -34,7 +34,7 @@
               {# {{ data['select-date'] | length }} sessions<br> #}
               {{ data.currentGroup.from | nhsTime }} to {{ data.currentGroup.until | nhsTime }}<br>
               from {{ data['select-date'][0] | formatDate('cccc, d MMMM yyyy') }}<br>
-              to {{ data['select-date'][data['select-date'] | length] | formatDate('cccc, d MMMM yyyy') }}
+              to {{ data['select-date'][data['select-date'] | length - 1] | formatDate('cccc, d MMMM yyyy') }}
             {% else %}
             {% for date in data['select-date'] %}
               {{ data.currentGroup.from | nhsTime }} to {{ data.currentGroup.until | nhsTime }} on {{ date | formatDate('cccc, d MMM yyyy') }}{% if not loop.last %}<br>{% endif %}
