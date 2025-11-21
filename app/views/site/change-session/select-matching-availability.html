@@ -13,7 +13,7 @@
 
 {% macro selectCheckBox(opts) %}
 <div class="nhsuk-checkboxes__item nhsuk-checkboxes--small app-table-select-checkbox {{ opts.classes }}">
-  <input class="nhsuk-checkboxes__input" id="{{ opts.id }}" type="checkbox" name="{{ opts.id }}" value="{{ opts.value }}">
+  <input class="nhsuk-checkboxes__input" id="{{ opts.id }}" type="checkbox" name="{{ opts.name }}" value="{{ opts.value }}">
   <label class="nhsuk-label nhsuk-checkboxes__label" for="{{ opts.id }}">{{ opts.label | safe }}</label>
 </div>
 {% endmacro %}
@@ -38,6 +38,7 @@
           <tr>
             <th scope="col" class="nhsuk-table__header app-table-select">{{ selectCheckBox({
               id: 'select-all',
+              name: 'select-all',
               label: '<span class="nhsuk-u-visually-hidden">Select all </span>Dates',
               classes: 'app-table-select-checkbox--header',
               value: 'true'
@@ -50,8 +51,9 @@
           {% for date in group.dates %}
           <tr class="nhsuk-table__row">
             <td class="nhsuk-table__cell">{{ selectCheckBox({
-              id: 'select-date',
-              label: date | formatDate('cccc, d MMMM yyyy'),
+              id: 'select-date'~date,
+              name: 'select-date',
+              label: thisSession.from | nhsTime  ~ ' to ' ~ thisSession.until | nhsTime  ~ ' ' ~ date | formatDate('cccc, d MMMM yyyy'),
               value: date
             }) }}</td>
             <td class="nhsuk-table__cell">{{ 0 | randomNumber(10) }}</td>
