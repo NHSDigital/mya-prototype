@@ -299,6 +299,18 @@ router.all('/site/:id/remove/:itemId/check-answers', (req, res) => {
   });
 });
 
+router.all('/site/:id/remove/:itemId/success', (req, res) => {
+  const itemId = req.params.itemId;
+
+  //remove all matched dates from session
+  const data = req.session.data;
+  data['select-date'] = {};
+
+  res.render('site/remove/success', {
+    itemId
+  });
+});
+
 // -----------------------------------------------------------------------------
 // CONFIRM REMOVE
 // -----------------------------------------------------------------------------

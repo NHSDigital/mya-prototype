@@ -40,12 +40,12 @@
       {{ button({
         text: "Save changes and cancel bookings",
         classes: "nhsuk-button--warning",
-        href: '/site/' ~ site_id ~ '/change/session/' ~ itemId ~ '/success-single'
+        href: '/site/' ~ site_id ~ '/remove/' ~ itemId ~ '/success'
       }) }}
       {% else %}
       {{ button({
         text: "Save changes",
-        href: '/site/' ~ site_id ~ '/change/session/' ~ itemId ~ '/success-single'
+        href: '/site/' ~ site_id ~ '/remove/' ~ itemId ~ '/success'
       }) }}
       {% endif %}
 
