@@ -13,7 +13,7 @@ module.exports = {
   // ---- Static site data ----
   site: {
     status_id: 'online',
-    name: 'Availability Oct AND Nov',
+    name: 'No Availability Clinic',
     id: 5,
     address: [
       '88 North Road',
@@ -29,20 +29,11 @@ module.exports = {
   // ---- Availability generation ----
   start: '2025-11-01',
   end: '2025-12-31',
-  patterns: {
-    Monday: baseSessions,
-    Tuesday: baseSessions,
-    Wednesday: baseSessions,
-    Thursday: baseSessions,
-    Friday: baseSessions
-  },
+  patterns: {},
   
 
   // ---- Bookings generation ----
   bookings: {
-    services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'],
-    statuses: ['scheduled', 'cancelled', 'orphaned'],
-    fillRate: 0,
-    fillRatesByStatus: { scheduled: 0.75, cancelled: 0.20, orphaned: 0.05 }
+    
   }
 };

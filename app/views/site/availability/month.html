@@ -28,9 +28,9 @@
               isCurrent: true
             },
             {
-              text: 'Manage availability',
+              text: 'All availability',
               href: '/site/' ~ site_id ~ '/availability/all'
-            },
+            } if features.allAvailability,
             {
               text: 'Add availability',
               href: '/site/' ~ site_id ~ '/create-availability',

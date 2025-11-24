@@ -256,7 +256,57 @@ router.get('/site/:id/availability/all/:groupId', (req, res) => {
   });
 });
 
+// -----------------------------------------------------------------------------
+// REMOVE GROUP or SESSION
+// -----------------------------------------------------------------------------
+router.get('/site/:id/remove/:itemId', (req, res) => {
+  const itemId = req.params.itemId;
 
+  //get the group (not session) being removed
+  const group = res.locals.availabilityGroups.repeating
+    .find(g => g.id === itemId)
+
+  res.render('site/remove/select-availability', {
+    group,
+    itemId
+  });
+
+});
+
+router.all('/site/:id/remove/:itemId/do-you-want-to-cancel-bookings', (req, res) => {
+  const itemId = req.params.itemId;
+
+  //get the group (not session) being removed
+  const group = res.locals.availabilityGroups.repeating
+    .find(g => g.id === itemId)
+  
+  res.render('site/remove/do-you-want-to-cancel-bookings', {
+    group,
+    itemId
+  });
+});
+
+router.all('/site/:id/remove/:itemId/check-answers', (req, res) => {
+  const itemId = req.params.itemId;
+
+  //get the group (not session) being removed
+  const group = res.locals.availabilityGroups.repeating
+    .find(g => g.id === itemId)
+  
+  res.render('site/remove/check-answers', {
+    group,
+    itemId
+  });
+});
+
+// -----------------------------------------------------------------------------
+// CONFIRM REMOVE
+// -----------------------------------------------------------------------------
+router.get('/site/:id/remove/:itemId/confirm-remove', (req, res) => {
+  res.render('site/remove/confirm-remove', {
+    itemId: req.params.itemId
+  });
+});
 
 // -----------------------------------------------------------------------------
 // CHANGE GROUP

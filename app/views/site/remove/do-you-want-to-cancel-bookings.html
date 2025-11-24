@@ -1,0 +1,47 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = 'Removing these sessions will affect 17 bookings' %}
+
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' ~ site_id ~ '/remove/' ~ itemId,
+  text: 'Back'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      <p>If you choose not to keep these bookings, People will be sent a text message or email confirming their booking has been cancelled.</p>
+      <p>Either way, no further bookings can be made for these sessions.</p>
+      <form action="/site/{{ site_id }}/remove/{{ itemId }}/check-answers" method="post">
+        {{ radios({
+
+          idPrefix: "do-you-want-to-honour-bookings",
+          name: "currentGroup[honour-bookings]",
+          fieldset: {
+            legend: {
+              text: "Do you want to keep the bookings?",
+              classes: "nhsuk-fieldset__legend--m"
+            }
+          },
+          items: [
+            {
+              value: "true",
+              text: "Yes"
+            },
+            {
+              value: "false",
+              text: "No, cancel the bookings"
+            }
+          ]
+        }) }}
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -44,6 +44,42 @@ module.exports = {
     Friday: baseSessions
   },
   overrides: {
+    '2025-12-18': [   // Random day where slots are longer
+      { 
+        from: '10:00', 
+        until: '17:00', 
+        services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'], 
+        slotLength: 20, 
+        capacity: 1
+      }
+    ],
+    '2025-12-15': [   // A random only-for-65s day
+      { 
+        from: '10:00', 
+        until: '17:00', 
+        services: ['FLU:65+'], 
+        slotLength: 5, 
+        capacity: 1
+      }
+    ],
+    '2025-12-20': [  // Random day where slots are longer
+      { 
+        from: '10:00', 
+        until: '17:00', 
+        services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'], 
+        slotLength: 15, 
+        capacity: 1
+      }
+    ],
+    '2025-12-21': [  // Random day where slots are longer
+      { 
+        from: '10:00', 
+        until: '17:00', 
+        services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'], 
+        slotLength: 20, 
+        capacity: 1
+      }
+    ],
     '2025-12-25': [], // Christmas Day closed
     '2025-12-26': []  // Boxing Day closed
   },

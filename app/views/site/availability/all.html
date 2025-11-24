@@ -1,7 +1,7 @@
 {% extends '../../layouts/layout.html' %}
 {% from '../../components/subNavigation/subNavigation.njk' import subNavigation %}
 
-{% set pageName = 'Manage availability' %}
+{% set pageName = 'All availability' %}
 
 {% macro services(service_ids) %}
   {% set servicesCount = service_ids | length %}
@@ -51,7 +51,7 @@
               href: '/site/' ~ site_id ~ '/availability/month'
             },
             {
-              text: 'Manage availability',
+              text: 'All availability',
               href: '/site/' ~ site_id ~ '/availability/all',
               isCurrent: true
             },
@@ -64,95 +64,9 @@
         })
       }}
       <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
-    </div>
-    
-    <div class="nhsuk-grid-column-one-third">
-      <div class="nhsuk-card nhsuk-card--feature app-filters">
-        <div class="nhsuk-card__content nhsuk-card__content--feature">
-          <h3 class="nhsuk-card__heading nhsuk-card__heading--feature">Find availability</h3>
-          <form method="get" action="" novalidate>
-            {# --- Start Date --- #}
-            {% set startDateHtml %}
-              {{ input({
-                label: { text: "Select a start date" },
-                type: "date",
-                id: "from",
-                name: "from",
-                value: data.filters[site_id].from if data.filters[site_id].fromDateGroup == "custom" else ""
-              }) }}
-            {% endset %}
-
-            {{ radios({
-              idPrefix: "fromDateGroup",
-              name: "fromDateGroup",
-              fieldset: {
-                legend: { text: "Start date" }
-              },
-              classes: "nhsuk-radios--small",
-              items: [
-                {
-                  value: "today",
-                  text: "Today",
-                  checked: data.filters[site_id].fromDateGroup == "today" or data.filters[site_id].fromDateGroup is not defined
-                },
-                {
-                  value: "custom",
-                  text: "Another date",
-                  conditional: { html: startDateHtml },
-                  checked: data.filters[site_id].fromDateGroup == "custom"
-                }
-              ]
-            }) }}
-
-            {# --- End Date --- #}
-            {% set endDateHtml %}
-              {{ input({
-                label: { text: "Select an end date" },
-                type: "date",
-                id: "until",
-                name: "until",
-                value: data.filters[site_id].until if data.filters[site_id].untilDateGroup == "custom" else ""
-              }) }}
-            {% endset %}
-
-            {{ radios({
-              idPrefix: "untilDateGroup",
-              name: "untilDateGroup",
-              fieldset: {
-                legend: { text: "End date" }
-              },
-              classes: "nhsuk-radios--small",
-              items: [
-                {
-                  value: "none",
-                  text: "No end date",
-                  checked: data.filters[site_id].untilDateGroup == "none" or data.filters[site_id].untilDateGroup is not defined
-                },
-                {
-                  value: "custom",
-                  text: "Another date",
-                  conditional: { html: endDateHtml },
-                  checked: data.filters[site_id].untilDateGroup == "custom"
-                }
-              ]
-            }) }}
-            
-            {{ button({
-              text: "Update results",
-              type: "submit",
-              classes: "app-button--small nhsuk-u-margin-bottom-0"
-            }) }}
-            <a href="/site/{{ site_id }}/availability/all" class="nhsuk-button nhsuk-button--secondary app-button--small">Clear</a>
-          </form>
-        </div>
-      </div>
-      
-    </div>
-    <div class="nhsuk-grid-column-two-thirds">
 
       {% if availabilityGroups.repeating | length == 0 and availabilityGroups.single | length == 0 %}
-        <h2 class="nhsuk-heading-l">No availability</h2>
-        <p class="nhsuk-body">There is no availability for this site on the dates you selected.</p>
+        <p class="nhsuk-body">There is no availability for this site.</p>
       {% else %}
 
       {% macro editLink(group_id) %}
@@ -174,9 +88,8 @@
         </a>
       {% endmacro %}
 
-      {% if availabilityGroups.repeating | length > 0 %}
+      {% if availabilityGroups.repeating | length > 0 or availabilityGroups.single | length > 0 %}
       <table class="nhsuk-table-responsive" role="table">
-        <caption class="nhsuk-table__caption">Repeating</caption>
         <thead class="nhsuk-table__head" role="rowgroup">
           <tr role="row">
             <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-half" role="columnheader">Dates and times</th>
@@ -189,7 +102,7 @@
           <tr class="nhsuk-table__row" role="row">
             <td class="nhsuk-table__cell" role="cell">
               <span class="nhsuk-table-responsive__heading" aria-hidden="true">Dates and times </span>
-              {{ group.dates[0] | formatDate('d MMM') }} to {{ group.dates[group.dates | length - 1] | formatDate('d MMM yyyy') }}<br>
+              {{ group.dates[0] | formatDate('d MMM yyyy') }} to {{ group.dates[group.dates | length - 1] | formatDate('d MMM yyyy') }}<br>
               {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}
             </td>
             <td class="nhsuk-table__cell" role="cell">
@@ -198,25 +111,10 @@
             </td>
             <td class="nhsuk-table__cell" role="cell">
               <span class="nhsuk-table-responsive__heading" aria-hidden="true">Actions </span>
-              {{ editLink(group.id ) }}
+              <a class="nhsuk-link" href="/site/{{ site_id }}/remove/{{ group.id }}">Remove</a>
             </td>
           </tr>
           {% endfor %}
-        </tbody>
-      </table>
-      {% endif %}
-
-      {% if availabilityGroups.single | length > 0 %}
-      <table class="nhsuk-table-responsive" role="table">
-        <caption class="nhsuk-table__caption">Single day</caption>
-        <thead class="nhsuk-table__head" role="rowgroup">
-          <tr role="row">
-            <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-half" role="columnheader">Date and time</th>
-            <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-half" role="columnheader">Services</th>
-            <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="nhsuk-table__body">
           {% for group in availabilityGroups.single %}
           <tr class="nhsuk-table__row" role="row">
             <td class="nhsuk-table__cell" role="cell">
@@ -229,7 +127,7 @@
               {{ services(group.session.services) }}</td>
             <td class="nhsuk-table__cell" role="cell">
               <span class="nhsuk-table-responsive__heading" aria-hidden="true">Actions </span>
-              <a class="nhsuk-link" href="/site/{{ site_id }}/availability/all/{{ group.id }}">Edit</a>
+              <a class="nhsuk-link" href="/site/{{ site_id }}/change/session/{{ group.id }}/select-matching-availability">Remove</a>
             </td>
           </tr>
           {% endfor %}

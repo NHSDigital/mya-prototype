@@ -28,7 +28,6 @@ router.post('/site/:id/change/:type/:itemId/select-type-of-change', (req, res) =
   if(typeOfChange === 'cancel') {
     //add current daily availability to session data for comparison later
     let currentGroup = null;
-    console.log(req.session.data.daily_availability[site_id]);
     for(const day of Object.values(req.session.data.daily_availability[site_id])) {
       for(session of day.sessions) {
         if(session.id === itemId) {

@@ -1,0 +1,53 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = "Check your answers" %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' ~ site_id ~ '/remove/' ~ itemId ~ '/do-you-want-to-cancel-bookings',
+  text: 'Back'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-full">
+      
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <dl class="nhsuk-summary-list">
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Sessions</dt>
+          <dd class="nhsuk-summary-list__value">
+            <p>From {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }} on:</p>
+            <ol class="nhsuk-list nhsuk-list--bullet">
+              {% for date in data['select-date'] %}
+              <li>{{ date | formatDate('cccc, d MMM yyyy') }}</li>
+              {% endfor %}
+            </ol>
+            <dd class="nhsuk-summary-list__actions"><a href="#">Change</a></dd>
+          </dd>
+        </div>
+
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">Keep affected bookings</dt>
+          <dd class="nhsuk-summary-list__value">{{ 'Yes' if data.currentGroup['honour-bookings'] == 'true' }}{{ 'No' if data.currentGroup['honour-bookings'] == 'false' }}</dd>
+          <dd class="nhsuk-summary-list__actions"><a href="/site/{{ site_id }}/remove/{{ itemId }}/do-you-want-to-cancel-bookings">Change</a></dd>
+        </div>
+      </dl>
+
+      {% if data.currentGroup['honour-bookings'] == 'false' %}
+      {{ button({
+        text: "Save changes and cancel bookings",
+        classes: "nhsuk-button--warning",
+        href: '/site/' ~ site_id ~ '/change/session/' ~ itemId ~ '/success-single'
+      }) }}
+      {% else %}
+      {{ button({
+        text: "Save changes",
+        href: '/site/' ~ site_id ~ '/change/session/' ~ itemId ~ '/success-single'
+      }) }}
+      {% endif %}
+
+    </div>
+{% endblock %}
