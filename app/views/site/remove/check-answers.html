@@ -19,18 +19,25 @@
         <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Sessions</dt>
           <dd class="nhsuk-summary-list__value">
+            {% if data['select-all'][0] == 'true' %}
+              {# {{ data['select-date'] | length }} sessions<br> #}
+              All sessions from {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }}<br>
+              on {{ data['select-date'][0] | formatDate('cccc, d MMMM yyyy') }}<br>
+              to {{ data['select-date'][data['select-date'] | length - 1] | formatDate('cccc, d MMMM yyyy') }}
+            {% else %}
             <p>From {{ group.session.from | nhsTime }} to {{ group.session.until | nhsTime }} on:</p>
             <ol class="nhsuk-list nhsuk-list--bullet">
               {% for date in data['select-date'] %}
               <li>{{ date | formatDate('cccc, d MMM yyyy') }}</li>
               {% endfor %}
             </ol>
+            {% endif %}
             <dd class="nhsuk-summary-list__actions"><a href="#">Change</a></dd>
           </dd>
         </div>
 
         <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Keep affected bookings</dt>
+          <dt class="nhsuk-summary-list__key">Keep bookings</dt>
           <dd class="nhsuk-summary-list__value">{{ 'Yes' if data.currentGroup['honour-bookings'] == 'true' }}{{ 'No' if data.currentGroup['honour-bookings'] == 'false' }}</dd>
           <dd class="nhsuk-summary-list__actions"><a href="/site/{{ site_id }}/remove/{{ itemId }}/do-you-want-to-cancel-bookings">Change</a></dd>
         </div>

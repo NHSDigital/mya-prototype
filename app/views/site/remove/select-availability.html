@@ -90,7 +90,7 @@
             <td class="nhsuk-table__cell">{{ selectCheckBox({
               id: 'select-date'~date,
               name: 'select-date',
-              label: date | formatDate('cccc, d MMMM yyyy'),
+              label: group.session.from | nhsTime  ~ ' to ' ~ group.session.until | nhsTime ~' on ' ~ date | formatDate('cccc d MMMM yyyy'),
               value: date
             }) }}</td>
             <td class="nhsuk-table__cell nhsuk-table__cell--numeric">{{ summaries.daily[date].bookedSlots }}</td>

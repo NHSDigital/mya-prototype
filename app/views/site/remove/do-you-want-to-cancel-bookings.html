@@ -1,6 +1,6 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = 'Removing these sessions will affect 17 existing bookings' %}
+{% set pageName = 'Removing these sessions will affect 17 bookings' %}
 
 
 {% block beforeContent %}
@@ -14,8 +14,8 @@
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
-      <p>If you choose to cancel the bookings, people will be sent a text message or email to confirm</p>
-      <p>Either way, no further bookings can be made for these sessions.</p>
+      <p>If you choose to cancel the bookings, people will be sent a text message or email to confirm.</p>
+      {# <p>Either way, no further bookings can be made for these sessions.</p> #}
       <form action="/site/{{ site_id }}/remove/{{ itemId }}/check-answers" method="post">
         {{ radios({
 
@@ -30,7 +30,7 @@
           items: [
             {
               value: "true",
-              text: "Yes"
+              text: "Yes, keep the bookings"
             },
             {
               value: "false",
