@@ -1,5 +1,5 @@
 {% extends '../../layouts/layout.html' %}
-{% from '../../components/subNavigation/subNavigation.njk' import subNavigation %}
+{% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
 {% from '../../includes/renderServicesTable.njk' import renderServicesTable %}
 
 {% set pageName = week[0] | formatDate('d LLLL') ~ ' to ' ~ week[6] | formatDate('d LLLL yyyy') %}
@@ -10,7 +10,7 @@
 
       
       {{
-        subNavigation({
+        appSecondaryNavigation({
           items: [
             {
               text: 'Day view',
@@ -19,7 +19,7 @@
             {
               text: 'Week view',
               href: '/site/' ~ site_id ~ '/availability/week',
-              isCurrent: true
+              current: true
             },
             {
               text: 'Month view',
@@ -32,7 +32,7 @@
             {
               text: 'Add availability',
               href: '/site/' ~ site_id ~ '/create-availability',
-              isPrimary: true
+              primary: true
             }
           ]
         })

@@ -1,0 +1,28 @@
+{%- from "nhsuk/macros/attributes.njk" import nhsukAttributes -%}
+{% macro appSecondaryNavigation(params) %}
+<nav class="app-secondary-navigation {%- if params.classes %} {{ params.classes }}{% endif -%}" {% if params.labelledBy %}aria-labelledby="{{ params.labelledBy }}"{% else %}aria-label="{{ params.visuallyHiddenTitle or "Secondary menu" }}"{% endif %}
+  {{- nhsukAttributes(params.attributes) }}>
+  <ul class="app-secondary-navigation__list">
+  {% for item in params.items %}
+    {% if item %}
+    {% set linkClass %}
+      {%- if item.primary -%}
+      app-secondary-navigation__button nhsuk-button nhsuk-button--secondary nhsuk-button--small
+      {%- else -%}
+      app-secondary-navigation__link
+      {%- endif -%}
+    {% endset %}
+    <li class="app-secondary-navigation__list-item{{ ' app-secondary-navigation__list-item--primary' if item.primary }}{% if item.classes %} {{ item.classes }}{% endif -%}">
+      <a class="{{ linkClass }}" href="{{ item.href }}" {{ "aria-current=page" if item.current }}>
+      {%- if item.active or item.current -%}
+        <strong class="app-secondary-navigation__current">{{ item.text | safe }}</strong>
+      {%- else -%}
+        {{- item.text | safe -}}
+      {%- endif -%}
+      </a>
+    </li>
+    {% endif %}
+  {% endfor %}
+  </ul>
+</nav>
+{% endmacro %}

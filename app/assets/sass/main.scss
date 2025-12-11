@@ -1,7 +1,9 @@
 @use "sass:color";
+@use "nhsuk-frontend/dist/nhsuk" as *;
 
-// Import NHS.UK frontend library
-@import "nhsuk-frontend/dist/nhsuk";
+@forward "components/secondary-navigation";
+
+
 
 // Add your custom CSS/Sass styles below.
 .nhsuk-feedback-banner {

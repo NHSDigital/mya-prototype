@@ -1,5 +1,5 @@
 {% extends '../../layouts/layout.html' %}
-{% from '../../components/subNavigation/subNavigation.njk' import subNavigation %}
+{% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
 
 {% set currentYear = currentDate | formatDate('yyyy') %}
 {% set currentMonth = currentDate | formatDate('MM') %}
@@ -10,9 +10,8 @@
 
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
-
       {{
-        subNavigation({
+        appSecondaryNavigation({
           items: [
             {
               text: 'Day view',
@@ -25,7 +24,7 @@
             {
               text: 'Month view',
               href: '/site/' ~ site_id ~ '/availability/month',
-              isCurrent: true
+              current: true
             },
             {
               text: 'All availability',
@@ -34,11 +33,12 @@
             {
               text: 'Add availability',
               href: '/site/' ~ site_id ~ '/create-availability',
-              isPrimary: true
+              primary: true
             }
           ]
         })
       }}
+      
 
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
       

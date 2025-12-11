@@ -1,5 +1,5 @@
 {% extends '../../layouts/layout.html' %}
-{% from '../../components/subNavigation/subNavigation.njk' import subNavigation %}
+{% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
 
 {% set pageName = 'All availability' %}
 
@@ -36,7 +36,7 @@
       {% endif %}
 
       {{
-        subNavigation({
+        appSecondaryNavigation({
           items: [
             {
               text: 'Day view',
@@ -53,12 +53,12 @@
             {
               text: 'All availability',
               href: '/site/' ~ site_id ~ '/availability/all',
-              isCurrent: true
-            },
+              current: true
+            } if features.allAvailability,
             {
               text: 'Add availability',
               href: '/site/' ~ site_id ~ '/create-availability',
-              isPrimary: true
+              primary: true
             }
           ]
         })
