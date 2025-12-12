@@ -1,0 +1,85 @@
+{% extends '../../layouts/layout.html' %}
+{% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
+
+{% set pageName = 'Custom components' %}
+
+{% set secondary_navigation_example %}
+<nav class="app-secondary-navigation" aria-label="Secondary menu">
+  <ul class="app-secondary-navigation__list">
+
+    <li class="app-secondary-navigation__list-item">
+      <a class="app-secondary-navigation__link" href="#">Day view</a>
+    </li>
+
+    <li class="app-secondary-navigation__list-item">
+      <a class="app-secondary-navigation__link" href="#">Week view</a>
+    </li>     
+    
+    <li class="app-secondary-navigation__list-item">
+      <a class="app-secondary-navigation__link" href="#">Month view</a>
+    </li>
+    
+    <li class="app-secondary-navigation__list-item">
+      <a class="app-secondary-navigation__link" href="#" aria-current="page"><strong class="app-secondary-navigation__current">All availability</strong></a>
+    </li>
+    
+    <li class="app-secondary-navigation__list-item app-secondary-navigation__list-item--primary">
+      <a class="app-secondary-navigation__button nhsuk-button nhsuk-button--secondary nhsuk-button--small" href="#">Add availability</a>
+    </li>
+    
+  </ul>
+</nav>
+{% endset %}
+
+{% block content %}
+<div class="nhsuk-grid-row">
+  <div class="nhsuk-grid-column-two-thirds">
+    <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
+    <p class="nhsuk-body-l">This service uses some custom components. This page describes how they should be used.</p>
+  </div>
+
+  <div class="nhsuk-grid-column-two-thirds">
+    <h2 class="nhsuk-heading-m">Secondary navigation</h2>
+    <p>NHSUK-frontend doesn’t (yet) contain a secondary navigation. You should use this markup detailed below. There are <a href="https://github.com/NHSDigital/mya-prototype/blob/main/app/assets/sass/components/secondary-navigation.scss" target="_blank">styles for the secondary navigation component</a> in the prototype, which can be copied to the live service.</p>
+  </div>
+
+  <div class="nhsuk-grid-column-full">
+    <div class="app-example">
+      <div class="app-example__preview">
+      {{
+        appSecondaryNavigation({
+          items: [
+            {
+              text: 'Day view',
+              href: '#'
+            },
+            {
+              text: 'Week view',
+              href: '#'
+            },
+            {
+              text: 'Month view',
+              href: '#'
+            },
+            {
+              text: 'All availability',
+              href: '#',
+              current: true
+            } if features.allAvailability,
+            {
+              text: 'Add availability',
+              href: '#',
+              primary: true
+            }
+          ]
+        })
+      }}
+      </div>
+      <div class="app-example__code">
+        <pre>{{ secondary_navigation_example }}</pre>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

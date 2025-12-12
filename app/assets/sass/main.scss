@@ -321,3 +321,29 @@
     color: white;
   }
 }
+
+.app-example {
+  border: 1px solid $nhsuk-border-colour;
+  
+
+  &__preview {
+    @include nhsuk-responsive-padding(4);
+    border-bottom: 1px solid $nhsuk-border-colour;
+  }
+
+  &__code {
+    background-color: white;
+    @include nhsuk-responsive-padding(4);
+  }
+
+  &__code pre {
+    margin: 0;
+    padding: 0;
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    
+    /* Preserve white space exactly as typed, preventing wrapping */
+    white-space: pre-wrap; 
+    word-wrap: break-word;
+}
+
+}
