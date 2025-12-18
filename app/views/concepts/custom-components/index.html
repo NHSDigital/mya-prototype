@@ -31,6 +31,31 @@
 </nav>
 {% endset %}
 
+{% set group_checkbox_example %}
+<div class="nhsuk-form-group">
+  <fieldset class="nhsuk-fieldset">
+    <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--m">
+      <span class="nhsuk-u-visually-hidden">Add </span>Flu services<span class="nhsuk-u-visually-hidden"> to your session</span>
+    </legend>
+    <div class="nhsuk-checkboxes" data-module="nhsuk-checkboxes">
+      <div class="nhsuk-checkboxes__item">
+        <input class="nhsuk-checkboxes__input" id="flu_2_3" name="services" type="checkbox" value="flu_2_3">
+        <label class="nhsuk-label nhsuk-checkboxes__label" for="flu_2_3">Flu 2 to 3</label>
+      </div>
+      <div class="nhsuk-checkboxes__item">
+        <input class="nhsuk-checkboxes__input" id="flu_18_64" name="services" type="checkbox" value="flu_18_64">
+        <label class="nhsuk-label nhsuk-checkboxes__label" for="flu_18_64">Flu 18 to 64</label>
+      </div>
+      <div class="nhsuk-checkboxes__item">
+        <input class="nhsuk-checkboxes__input" id="flu_65_plus" name="services" type="checkbox" value="flu_65_plus">
+        <label class="nhsuk-label nhsuk-checkboxes__label" for="flu_65_plus">Flu 65+</label>
+      </div>
+    </div>
+  </fieldset>
+</div>
+... repeat for each checkbox group
+{% endset %}
+
 {% block content %}
 <div class="nhsuk-grid-row">
   <div class="nhsuk-grid-column-two-thirds">
@@ -81,5 +106,46 @@
     </div>
 
   </div>
-</div>
+
+</div><!-- end of grid -->
+<div class="nhsuk-grid-row">
+
+  <div class="nhsuk-grid-column-two-thirds">
+    <h2 class="nhsuk-heading-m nhsuk-u-margin-top-9">Grouped checkboxes</h2>
+    <p>In MYA, we use grouped checkboxes to display vaccine by type. This does not need any custom CSS but it does need specific markup to ensure accessibility. As the h1 can't be used as the label element, we use visually hidden text to add context to each label.</p>
+  </div>
+
+  <div class="nhsuk-grid-column-full">
+    <div class="app-example">
+      <div class="app-example__preview">
+      {% for groupId, group in data.serviceGroups %}
+        <div class="nhsuk-form-group">
+
+          <fieldset class="nhsuk-fieldset">
+            <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--s">
+            <span class="nhsuk-u-visually-hidden">Add </span> {{ group.title }} <span class="nhsuk-u-visually-hidden"> to your session</span>
+            </legend>
+            <div class="nhsuk-checkboxes" data-module="nhsuk-checkboxes">
+
+              {% for id, service in data.services %}
+              {% if service.group == groupId %}
+              <div class="nhsuk-checkboxes__item">
+                <input class="nhsuk-checkboxes__input" id="service-{{ id }}" name="newSession[services]" type="checkbox" value="{{ id }}" data-checkbox-exclusive-group="services-list" {% if id in (data.newSession.services or []) %}checked{% endif %}>
+                <label class="nhsuk-label nhsuk-checkboxes__label" for="service-{{ id }}">{{ service.name }}</label>
+              </div>
+              {% endif %}
+              {% endfor %}
+            </div>
+          </fieldset>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="app-example__code">
+        <pre>{{ group_checkbox_example }}</pre>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- end of grid -->
 {% endblock %}

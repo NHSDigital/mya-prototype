@@ -82,11 +82,34 @@ const base = {
       colour: 'red'
     } 
   },
+  serviceGroups: {
+    'FLU': {
+      id: 'FLU',
+      title: 'Flu services'
+    },
+    'COVID': {
+      id: 'COVID',
+      title: 'COVID-19 services'
+    },
+    'FLU_AND_COVID': {
+      id: 'FLU_AND_COVID',
+      title: 'Flu and COVID-19 services'
+    },
+    'RSV': {
+      id: 'RSV',
+      title: 'RSV services'
+    },
+    'RSV_AND_COVID': {
+      id: 'RSV_AND_COVID',
+      title: 'RSV and COVID-19 services'
+    }
+  },
   services: {
     'COVID:5-11': {
       id: 'COVID:5-11',
       name: 'COVID 5-11',
       vaccine: 'COVID-19',
+      group: 'COVID',
       cohort: {
         age: '5-11',
         type: 'Child'
@@ -96,6 +119,7 @@ const base = {
       id: 'COVID:12-17',
       name: 'COVID 12-17',
       vaccine: 'COVID-19',
+      group: 'COVID',
       cohort: {
         age: '12-17',
         type: 'Child'
@@ -105,6 +129,7 @@ const base = {
       id: 'COVID:18+',
       name: 'COVID 18+',
       vaccine: 'COVID-19',
+      group: 'COVID',
       cohort: {
         age: '18+',
         type: 'Adult'
@@ -114,6 +139,7 @@ const base = {
       id: 'FLU:2-3',
       name: 'Flu 2-3',
       vaccine: 'Flu',
+      group: 'FLU',
       cohort: {
         age: '2-3',
         type: 'Child'
@@ -123,6 +149,7 @@ const base = {
       id: 'FLU:18-64',
       name: 'Flu 18-64',
       vaccine: 'Flu',
+      group: 'FLU',
       cohort: {
         age: '18-64',
         type: 'Adult'
@@ -132,6 +159,7 @@ const base = {
       id: 'FLU:65+',
       name: 'Flu 65+',
       vaccine: 'Flu',
+      group: 'FLU',
       cohort: {
         age: '65+',
         type: 'Adult'
@@ -139,8 +167,9 @@ const base = {
     },
     'COVID_FLU:18-64': {
       id: 'COVID_FLU:18-64',
-      name: 'COVID & Flu 18-64',
-      vaccine: 'COVID-19 & Flu',
+      name: 'COVID and Flu 18-64',
+      vaccine: 'COVID-19 and Flu',
+      group: 'FLU_AND_COVID',
       cohort: {
         age: '18-64',
         type: 'Adult'
@@ -148,8 +177,9 @@ const base = {
     },
     'COVID_FLU:65+': {
       id: 'COVID_FLU:65+',
-      name: 'COVID & Flu 65+',
-      vaccine: 'COVID-19 & Flu',
+      name: 'COVID and Flu 65+',
+      vaccine: 'COVID-19 and Flu',
+      group: 'FLU_AND_COVID',
       cohort: {
         age: '65+',
         type: 'Adult'
@@ -159,6 +189,27 @@ const base = {
       id: 'RSV:Adult',
       name: 'RSV Adult',
       vaccine: 'RSV',
+      group: 'RSV',
+      cohort: {
+        age: '18+',
+        type: 'Adult'
+      }
+    },
+    'RSV_COVID:12-17': {
+      id: 'RSV_COVID:12-17',
+      name: 'RSV and COVID 12-17',
+      group: 'RSV_AND_COVID',
+      vaccine: 'RSV and COVID',
+      cohort: {
+        age: '12-17',
+        type: 'Child'
+      }
+    },
+    'RSV_COVID:18+': {
+      id: 'RSV_COVID:18+',
+      name: 'RSV and COVID 18+',
+      vaccine: 'RSV and COVID',
+      group: 'RSV_AND_COVID',
       cohort: {
         age: '18+',
         type: 'Adult'
