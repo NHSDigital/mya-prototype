@@ -1,5 +1,5 @@
 {% extends '../../layouts/layout.html' %}
-{% from '../../components/subNavigation/subNavigation.njk' import subNavigation %}
+{% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
 
 {% set pageName = 'All availability' %}
 
@@ -8,7 +8,7 @@
 <div class="nhsuk-grid-row">
   <div class="nhsuk-grid-column-full">
     {{
-      subNavigation({
+      appSecondaryNavigation({
         items: [
           {
             text: 'Day view',
@@ -25,12 +25,12 @@
           {
             text: 'All availability',
             href: '#',
-            isCurrent: true
+            current: true
           },
           {
             text: 'Add availability',
             href: '#',
-            isPrimary: true
+            primary: true
           }
         ]
       })
