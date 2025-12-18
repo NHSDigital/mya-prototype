@@ -139,7 +139,9 @@ router.all('/site/:id/create-availability/time-and-capacity', (req, res) => {
 });
 
 router.all('/site/:id/create-availability/services', (req, res) => {
-  res.render('site/create-availability/services');
+  res.render('site/create-availability/services', {
+    ...req.query
+  });
 });
 
 router.all('/site/:id/create-availability/are-you-assured', (req, res) => {

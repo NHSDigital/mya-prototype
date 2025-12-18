@@ -347,3 +347,7 @@
 }
 
 }
+
+.app-checkbox-group {
+  @include nhsuk-responsive-margin(5, "bottom");
+}

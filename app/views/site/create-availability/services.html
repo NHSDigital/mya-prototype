@@ -13,14 +13,20 @@
 
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Add availability</span>
-      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      
 
       <form action="/site/{{ site_id }}/create-availability/check-answers" method="post">
-        {% for groupId, group in data.serviceGroups %}
-        <div class="nhsuk-form-group">
 
-          <fieldset class="nhsuk-fieldset">
+        <div class="nhsuk-form-group {{ 'nhsuk-form-group--error' if error }}">
+        <span class="nhsuk-caption-l">Add availability</span>
+        <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+        {% if error %}
+        <p id="services-error" class="nhsuk-error-message">
+          <span class="nhsuk-u-visually-hidden">Error:</span> Select a service
+        </p>
+        {% endif %}
+        {% for groupId, group in data.serviceGroups %}
+          <fieldset class="nhsuk-fieldset app-checkbox-group" {% if error %}aria-describedby="services-error"{% endif %}>
             <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--s">
             <span class="nhsuk-u-visually-hidden">Add </span>{{ group.title }}<span class="nhsuk-u-visually-hidden"> to your session</span>
             </legend>
@@ -36,8 +42,8 @@
               {% endfor %}
             </div>
           </fieldset>
-        </div>
         {% endfor %}
+        </div>
 
         {{ button({
           text: "Continue"
