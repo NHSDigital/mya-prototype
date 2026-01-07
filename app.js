@@ -6,7 +6,7 @@ const NHSPrototypeKit = require('nhsuk-prototype-kit')
 const config = require('./app/config')
 const sessionDataDefaults = require('./app/data/session-data-defaults')
 const filters = require('./app/filters')
-const locals = require('./app/locals')
+//const locals = require('./app/locals')
 const routes = require('./app/routes')
 
 const SERVICE_NAME = config.serviceName
@@ -19,7 +19,7 @@ const viewsPath = join(__dirname, 'app/views/')
 const prototype = NHSPrototypeKit.init({
   serviceName: SERVICE_NAME,
   routes: routes,
-  locals: locals,
+  //locals: locals,
   sessionDataDefaults: sessionDataDefaults,
   viewsPath: viewsPath,
   buildOptions: {
