@@ -27,16 +27,6 @@ const prototype = NHSPrototypeKit.init({
   }
 })
 
-//check if prototype.app is available before using it
-if (prototype.app) {
-  prototype.app.use((req, res, next) => {
-    console.log('->', req.method, req.url)
-    next()
-  })
-} else {
-  console.log('No prototype.app found; check kit API for access to express app')
-}
-
 for (const [name, filter] of Object.entries(filters())) {
   prototype.nunjucks.addFilter(name, filter)
 }
