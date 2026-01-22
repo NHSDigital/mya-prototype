@@ -1,6 +1,7 @@
 //place your default flags here
 // eg. featureX: true, featureY: false
 module.exports = {
-  allAvailability: true
+  allAvailability: false,
+  cancelDateRange: true
 }
 
