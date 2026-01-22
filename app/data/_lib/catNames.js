@@ -417,8 +417,6 @@ module.exports = [
   'Marion Curtainrod',
   'Lorna Biscuitjar',
   'Ellen Blanket',
-  'Jon Carpet',
-  'Katie Curtain',
-  'Roo Blanket',
-  'Rootwo Biscuitjar'
+  'Jonny Carpets',
+  'Katie Curtain'
 ];
