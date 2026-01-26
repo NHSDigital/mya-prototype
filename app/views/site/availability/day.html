@@ -35,6 +35,10 @@
           ]
         })
       }}
+
+      {% if features.cancelDateRange %}
+      {% include "../../includes/addCancelButtons.njk" %}
+      {% endif %}
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       {{ pagination({

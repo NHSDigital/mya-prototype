@@ -34,8 +34,8 @@ module.exports = {
   },
 
   // ---- Availability generation ----
-  start: '2025-10-22',
-  end: '2026-01-31',
+  start: '2026-01-01',
+  end: '2026-03-30',
   patterns: {
     Monday: baseSessions,
     Tuesday: baseSessions,
@@ -88,7 +88,7 @@ module.exports = {
   bookings: {
     services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'RSV:Adult'],
     statuses: ['scheduled', 'cancelled', 'orphaned'],
-    fillRate: 1,
+    fillRate: 0.5,
     fillRatesByStatus: { scheduled: 0.99, cancelled: 0.01, orphaned: 0 }
   }
 };

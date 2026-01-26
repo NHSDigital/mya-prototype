@@ -1,0 +1,203 @@
+{% extends '../../layouts/layout.html' %}
+
+{# Get affected sessions #}
+{% set affectedSessions = [] %}
+{% for siteId, day in data.daily_availability %}
+    {% if siteId == site_id %}    
+      {% for date, dayData in day %}
+        {% if date | isDateBetween(startDate, endDate)  %}
+          {% for session in dayData.sessions %}
+            {% set affectedSessions = affectedSessions.concat({
+              date: date,
+              from: session.from,
+              until: session.until,
+              services: session.services,
+              slotLength: session.slotLength
+            }) %}
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+{% endfor %}
+
+
+{# Get affected bookings #}
+{% set affectedBookings = [] %}
+{% for siteId, bookings in data.bookings %}
+    {% if siteId == site_id %}    
+      {% for bookingId, booking in bookings %}
+        {% if booking.datetime | isDateBetween(startDate, endDate)  %}
+          {% set affectedBookings = affectedBookings.concat(booking) %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+{% endfor %}
+
+{% macro totalSlots(from, until, slotLength) %}
+  {# 1. Split the strings into [Hours, Minutes] #}
+  {% set startParts = from.split(':') %}
+  {% set endParts = until.split(':') %}
+
+  {# 2. Convert times to absolute minutes from midnight #}
+  {#    (Hours * 60) + Minutes #}
+  {% set startTotalMins = (startParts[0] | int * 60) + (startParts[1] | int) %}
+  {% set endTotalMins = (endParts[0] | int * 60) + (endParts[1] | int) %}
+
+  {# 3. Calculate duration and divide by slot length #}
+  {% set duration = endTotalMins - startTotalMins %}
+  {% set numberOfSlots = (duration / slotLength) | round(0, "floor") %}
+  {{ numberOfSlots }}
+{% endmacro %}
+
+{% macro sessionsAndBookings(sessions, bookings) %}
+<table class="nhsuk-table-responsive" role="table">
+  <caption class="nhsuk-table__caption">
+    Sessions details
+  </caption>
+  <thead class="nhsuk-table__head" role="rowgroup">
+    <tr class="nhsuk-table__row" role="row">
+      <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Date and time</th>
+      <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Services</th>
+      <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Bookings</th>
+      <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Unbooked</th>
+    </tr>
+  </thead>
+  <tbody class="nhsuk-table__body">
+    {% for session in sessions %}
+    <tr class="nhsuk-table__row" role="row">
+      <td class="nhsuk-table__cell" role="cell">
+        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Date time </span>{{ session.date | nhsDate }}<br>{{ session.from | nhsTime }} to {{ session.until | nhsTime }}
+      </td>
+      <td class="nhsuk-table__cell" role="cell">
+        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Services </span>
+        {% for serviceId in session.services %}
+          {{ data.services[serviceId].name }}{% if not loop.last %}<br>{% endif %}
+        {% endfor %}
+      </td>
+      <td class="nhsuk-table__cell" role="cell">
+        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Bookings </span>
+        {% set bookingCount = 0 %}
+        {% for booking in bookings %}
+          {% if booking.datetime | formatDate('yyyy-MM-dd') == session.date %}
+          {% set bookingCount = bookingCount + 1 %}
+          {% endif %}
+        {% endfor %}
+        {# this is a hack, as we're actually counting the bookings per day, not session #}
+        {{ (bookingCount / 2) | round(0, "floor")  }}
+      </td>
+      <td class="nhsuk-table__cell" role="cell">
+        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Unbooked </span>
+        {{ totalSlots(session.from, session.until, session.slotLength) }}
+        {{ unbookedCount }}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{% macro sessionsTable(sessions) %}
+<table class="nhsuk-table-responsive" role="table">
+  <caption class="nhsuk-table__caption">
+    Sessions details
+  </caption>
+  <thead class="nhsuk-table__head" role="rowgroup">
+    <tr class="nhsuk-table__row" role="row">
+      <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Date and time</th>
+      <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Services</th>
+    </tr>
+  </thead>
+  <tbody class="nhsuk-table__body">
+    {% for session in sessions %}
+    <tr class="nhsuk-table__row" role="row">
+      <td class="nhsuk-table__cell" role="cell">
+        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Date time </span>{{ session.date | nhsDate }}<br>{{ session.from | nhsTime }} to {{ session.until | nhsTime }}
+      </td>
+      <td class="nhsuk-table__cell" role="cell">
+        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Services </span>
+        {% for serviceId in session.services %}
+          {{ data.services[serviceId].name }}{% if not loop.last %}<br>{% endif %}
+        {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{% set pageName = "You are about to cancel " ~affectedSessions|length~ " sessions"%}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/cancel-availability'
+}) }}
+{% endblock %}
+
+{% block content %}
+<div class="nhsuk-grid-row">
+  <div class="nhsuk-grid-column-full">
+    <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+    {% if affectedBookings|length > 0 %}
+    <p class="nhsuk-u-width-two-thirds">There are {{ affectedBookings | length }} bookings for these sessions.</p>
+    <p class="nhsuk-u-width-two-thirds">Any bookings you keep will appear in your scheduled list of appointments.</p>
+      {% if affectedBookings|length > 10 %}
+      {% call details({
+        summaryText: "View sessions and bookings",
+        classes: "nhsuk-expander"
+      }) %}
+        {{ sessionsAndBookings(affectedSessions, affectedBookings) }}
+      {% endcall %}
+      {% else %}
+        {{ sessionsAndBookings(affectedSessions, affectedBookings) }}
+      {% endif %}
+    
+      <form method="post" action="/site/{{ site_id }}/cancel-availability/check-answers" class="nhsuk-u-width-two-thirds">
+        <input type="hidden" name="[cancelAvailability][affectedSessions]" value="{{ affectedSessions | length }}">
+        <input type="hidden" name="[cancelAvailability][affectedBookings]" value="{{ affectedBookings | length }}">
+        {{ radios({
+          idPrefix: "keepOrCancel",
+          name: "[cancelAvailability][keepOrCancelBookings]",
+          fieldset: {
+            legend: {
+              text: "What do you want to do with the "~ affectedBookings|length ~ " bookings?",
+              size: "m"
+            }
+          },
+          items: [
+            {
+              value: "keep",
+              text: "Keep bookings",
+              checked: true if data.cancelAvailability.keepOrCancelBookings == 'keep'
+            },
+            {
+              value: "cancel",
+              text: "Cancel bookings",
+              checked: true if data.cancelAvailability.keepOrCancelBookings == 'cancel'
+            }
+          ]
+        }) }}
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+
+    {% else %}
+      {% if affectedSessions|length > 10 %}
+      {% call details({
+        summaryText: "View sessions",
+        classes: "nhsuk-expander"
+      }) %}
+        {{ sessionsTable(affectedSessions) }}
+      {% endcall %}
+      {% else %}
+        {{ sessionsTable(affectedSessions) }}
+      {% endif %}
+      {{
+        button({
+          text: "Continue",
+          href: "/site/" + site_id + "/cancel-availability/check-answers"
+        })
+      }}
+    {% endif %}
+  </div>
+{% endblock %}

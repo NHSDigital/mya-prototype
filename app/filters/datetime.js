@@ -79,7 +79,7 @@ module.exports = function registerDateTimeFilters(filters = {}) {
   filters.nhsTime = (input, options = {}) => {
     if (!input) return '';
 
-    const dt = DateTime.fromFormat(input.trim(), 'HH:mm');
+    const dt = toDateTime(input);
     if (!dt.isValid) return input;
 
     const hour = dt.hour;
@@ -107,6 +107,41 @@ module.exports = function registerDateTimeFilters(filters = {}) {
       now = toDateTime(comparisonDate, tz);
     }
     return dt < now.startOf('day');
+  }
+
+  //follow the nhs date range logic
+  //https://service-manual.nhs.uk/content/numbers-measurements-dates-time#ranges
+  filters.nhsDateRange = (firstDate, secondDate, tz = DEFAULT_TZ) => {
+
+    const dt1 = toDateTime(firstDate, tz);
+    const dt2 = toDateTime(secondDate, tz);
+
+    if (!dt1.isValid || !dt2.isValid) return '';
+
+    //same day
+    if (dt1.hasSame(dt2, 'day')) {
+      return dt1.toFormat(DEFAULT_FORMAT);
+    }
+
+    //same month and year
+    if (dt1.hasSame(dt2, 'month') && dt1.hasSame(dt2, 'year')) {
+      return `${dt1.toFormat('d')} to ${dt2.toFormat(DEFAULT_FORMAT)}`;
+    }
+
+    //same year
+    if (dt1.hasSame(dt2, 'year')) {
+      return `${dt1.toFormat('d LLLL')} to ${dt2.toFormat(DEFAULT_FORMAT)}`;
+    }
+
+    //different years
+    return `${dt1.toFormat(DEFAULT_FORMAT)} to ${dt2.toFormat(DEFAULT_FORMAT)}`;
+  }
+
+  filters.isDateBetween = (input, startDate, endDate, tz = DEFAULT_TZ) => {
+    const dt = toDateTime(input, tz);
+    const startDt = toDateTime(startDate, tz).startOf('day');
+    const endDt = toDateTime(endDate, tz).endOf('day');
+    return dt >= startDt && dt <= endDt;
   }
 
   filters.isTimeBetween = (input, startTime, endTime, tz = DEFAULT_TZ) => {

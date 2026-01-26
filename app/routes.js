@@ -17,6 +17,7 @@ router.use('/', require('./views/concepts/edit-the-blob/routes'));
 // base router AFTER
 router.use('/', require('./routes/base'));
 router.use('/', require('./routes/change-session'));
+router.use('/', require('./routes/cancel-availability'));
 
 // flags routes
 router.use('/', require('./routes/flags'));

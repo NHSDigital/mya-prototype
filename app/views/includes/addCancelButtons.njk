@@ -1,0 +1,13 @@
+<div class="nhsuk-button-group nhsuk-button-group--small">
+  {{ button({
+    text: "Add availability",
+    classes: "nhsuk-button--small",
+    href: '/site/' ~ site_id ~ '/create-availability'
+  }) }}
+
+  {{ button({
+    text: "Cancel availability",
+    classes: "nhsuk-button--secondary nhsuk-button--small",
+    href: '/site/' ~ site_id ~ '/cancel-availability'
+  }) }}
+</div>
