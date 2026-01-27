@@ -12,6 +12,8 @@ const compareGroups = require('../helpers/compareGroups');
 const removeServicesFromDailyAvailability = require('../helpers/removeDailyAvailability');
 const { every } = require('lodash');
 
+const override_today = '2026-09-28'; //for testing purposes
+
 // -----------------------------------------------------------------------------
 // PARAM HANDLER – capture site_id once for all /site/:id routes
 // -----------------------------------------------------------------------------
@@ -30,7 +32,7 @@ router.use('/site/:id', (req, res, next) => {
   const site_id = String(req.site_id);
   
   //use filters everywhere
-  const today = DateTime.now().toFormat('yyyy-MM-dd');
+  const today = override_today || DateTime.now().toFormat('yyyy-MM-dd');
   const sessionFilters = data.filters?.[site_id] || {};
 
    // --- Prefer query, then session, then default ---
@@ -60,6 +62,8 @@ router.use('/site/:id', (req, res, next) => {
     from: resolvedFrom,
     until: resolvedUntil
   };
+
+  data.today = today; //expose to session data for convenience
 
 
   if (!data?.sites?.[site_id]) {
@@ -187,11 +191,11 @@ router.get('/site/:id/create-availability/process-new-session', (req, res) => {
 // VIEW AVAILABILITY
 // -----------------------------------------------------------------------------
 router.get('/site/:id/availability/day', (req, res) => {
-  const date = req.query.date || DateTime.now().toFormat('yyyy-MM-dd');
+  const date = req.query.date || override_today || DateTime.now().toFormat('yyyy-MM-dd');
 
   res.render('site/availability/day', {
     date,
-    today: DateTime.now().toFormat('yyyy-MM-dd'),
+    today: override_today || DateTime.now().toFormat('yyyy-MM-dd'),
     tomorrow: DateTime.fromISO(date).plus({ days: 1 }).toISODate(),
     yesterday: DateTime.fromISO(date).minus({ days: 1 }).toISODate()
   });

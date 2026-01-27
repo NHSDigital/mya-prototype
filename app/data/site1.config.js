@@ -2,17 +2,10 @@
 const baseSessions = [
   {
     from: '09:30',
-    until: '13:00',
-    services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'],
+    until: '17:00',
+    services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+', 'RSV:Adult'],
     slotLength: 10,
     capacity: 1
-  },
-  {
-    from: '14:00',
-    until: '17:00',
-    services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'],
-    slotLength: 10,
-    capacity: 2
   }
 ];
 
@@ -34,8 +27,8 @@ module.exports = {
   },
 
   // ---- Availability generation ----
-  start: '2026-01-01',
-  end: '2026-03-30',
+  start: '2026-10-01',
+  end: '2026-12-24',
   patterns: {
     Monday: baseSessions,
     Tuesday: baseSessions,
@@ -44,51 +37,14 @@ module.exports = {
     Friday: baseSessions
   },
   overrides: {
-    '2025-12-18': [   // Random day where slots are longer
-      { 
-        from: '10:00', 
-        until: '17:00', 
-        services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'], 
-        slotLength: 20, 
-        capacity: 1
-      }
-    ],
-    '2025-12-15': [   // A random only-for-65s day
-      { 
-        from: '10:00', 
-        until: '17:00', 
-        services: ['FLU:65+'], 
-        slotLength: 5, 
-        capacity: 1
-      }
-    ],
-    '2025-12-20': [  // Random day where slots are longer
-      { 
-        from: '10:00', 
-        until: '17:00', 
-        services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'], 
-        slotLength: 15, 
-        capacity: 1
-      }
-    ],
-    '2025-12-21': [  // Random day where slots are longer
-      { 
-        from: '10:00', 
-        until: '17:00', 
-        services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'COVID_FLU:18-64', 'COVID_FLU:65+'], 
-        slotLength: 20, 
-        capacity: 1
-      }
-    ],
-    '2025-12-25': [], // Christmas Day closed
-    '2025-12-26': []  // Boxing Day closed
+
   },
 
   // ---- Bookings generation ----
   bookings: {
     services: ['COVID:18+', 'FLU:18-64', 'FLU:65+', 'RSV:Adult'],
     statuses: ['scheduled', 'cancelled', 'orphaned'],
-    fillRate: 0.5,
+    fillRate: 0.001, // 0.01% of slots get booked
     fillRatesByStatus: { scheduled: 0.99, cancelled: 0.01, orphaned: 0 }
   }
 };

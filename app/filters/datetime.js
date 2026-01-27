@@ -155,6 +155,17 @@ module.exports = function registerDateTimeFilters(filters = {}) {
     return dt >= startDt && dt <= endDt;
   }
 
+  filters.isTimeBetween = (input, startTime, endTime, tz = DEFAULT_TZ) => {
+    const dt = toDateTime(input, tz);
+    //just compare the time parts
+    const startParts = startTime.split(':').map(Number);
+    const endParts = endTime.split(':').map(Number);
+
+    const startDt = dt.set({ hour: startParts[0], minute: startParts[1] || 0, second: 0, millisecond: 0 });
+    const endDt = dt.set({ hour: endParts[0], minute: endParts[1] || 0, second: 0, millisecond: 0 });
+    return dt >= startDt && dt <= endDt;
+  }
+
   filters.extractTimePart = (input, part = 'hours', tz = DEFAULT_TZ) => {
     const dt = toDateTime(input, tz);
 

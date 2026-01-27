@@ -15,6 +15,11 @@
     <div class="nhsuk-grid-column-two-thirds">
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
+      {% set keepOrCancelText = "No, keep bookings" %}
+      {% if data.cancelAvailability.keepOrCancelBookings == 'cancel' %}
+        {% set keepOrCancelText = "Yes, cancel "~data.cancelAvailability.affectedBookings~" bookings" %}
+      {% endif %}
+
         {{ summaryList({
           rows: [
             {
@@ -35,17 +40,17 @@
               }
             }, {
               key: {
-                text: "Affected sessions"
+                text: "Number of sessions"
               },
               value: {
                 html: data.cancelAvailability.affectedSessions ~ " sessions"
               }
             }, {
               key: {
-                text: "What do you want to do with the bookings?"
+                text: "Cancel bookings?"
               },
               value: {
-                text: data.cancelAvailability.keepOrCancelBookings | title ~" " ~ data.cancelAvailability.affectedBookings ~ " bookings"
+                text: keepOrCancelText
               },
               actions: {
                 items: [

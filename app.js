@@ -14,7 +14,10 @@ const SERVICE_NAME = config.serviceName
 // Set configuration variables
 const port = parseInt(process.env.PORT, 10) || 2000
 
-const viewsPath = join(__dirname, 'app/views/')
+const viewsPath = [
+  join(__dirname, 'app/views/'),
+  join(__dirname, 'app/views/layouts/'),
+]
 
 const prototype = NHSPrototypeKit.init({
   serviceName: SERVICE_NAME,

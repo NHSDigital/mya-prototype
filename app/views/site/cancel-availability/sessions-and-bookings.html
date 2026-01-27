@@ -78,16 +78,19 @@
         <span class="nhsuk-table-responsive__heading" aria-hidden="true">Bookings </span>
         {% set bookingCount = 0 %}
         {% for booking in bookings %}
-          {% if booking.datetime | formatDate('yyyy-MM-dd') == session.date %}
+          {% if booking.datetime | formatDate('yyyy-MM-dd') == session.date and booking.status == "scheduled" and booking.datetime | isTimeBetween(session.from, session.until) %}
           {% set bookingCount = bookingCount + 1 %}
           {% endif %}
         {% endfor %}
-        {# this is a hack, as we're actually counting the bookings per day, not session #}
-        {{ (bookingCount / 2) | round(0, "floor")  }}
+        {{ bookingCount }}
       </td>
       <td class="nhsuk-table__cell" role="cell">
         <span class="nhsuk-table-responsive__heading" aria-hidden="true">Unbooked </span>
-        {{ totalSlots(session.from, session.until, session.slotLength) }}
+        {% set unbookedCount = totalSlots(session.from, session.until, session.slotLength) - bookingCount %}
+        {# bit of a hack, as these numbers are unreliable #}
+        {% if unbookedCount < 0 %}
+          {% set unbookedCount = 0 %}
+        {% endif %}
         {{ unbookedCount }}
       </td>
     </tr>
@@ -140,7 +143,7 @@
     {% if affectedBookings|length > 0 %}
     <p class="nhsuk-u-width-two-thirds">There are {{ affectedBookings | length }} bookings for these sessions.</p>
     <p class="nhsuk-u-width-two-thirds">Any bookings you keep will appear in your scheduled list of appointments.</p>
-      {% if affectedBookings|length > 10 %}
+      {% if affectedSessions|length > 10 %}
       {% call details({
         summaryText: "View sessions and bookings",
         classes: "nhsuk-expander"
@@ -182,6 +185,7 @@
       </form>
 
     {% else %}
+      <p>There are no bookings for these sessions.</p>
       {% if affectedSessions|length > 10 %}
       {% call details({
         summaryText: "View sessions",

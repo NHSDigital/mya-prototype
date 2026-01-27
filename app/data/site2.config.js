@@ -1,4 +1,4 @@
-// app/data/site1.config.js
+// app/data/site2.config.js
 const baseSessions = [
   {
     from: '10:00',

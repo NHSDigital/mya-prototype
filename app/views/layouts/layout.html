@@ -36,10 +36,10 @@
           href: "/",
           text: "Prototype homepage"
         }
-      ],
-      copyright: {
-        text: 'Current depth: ' + siteLevel.depth
-      }
+      ]
+    },
+    copyright: {
+      text: 'Today is ' ~ (data.today | nhsDate)
     }
   }) }}
 {% endblock %}
