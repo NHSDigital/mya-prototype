@@ -136,13 +136,21 @@
 }) }}
 {% endblock %}
 
+{% set secondParagraph = "Any bookings you keep will appear in your scheduled list of appointments." %} 
+{% if content == '2' %}
+  {% set secondParagraph = "By cancelling these sessions, these bookings will be unsupported by a session but they will still appear in your scheduled list of appointments." %} 
+{% endif %}
+{% if content == '3' %}
+  {% set secondParagraph = "Any bookings you keep will appear in your scheduled list of appointments and these bookings will unsupported by a session unless a new session is created." %} 
+{% endif %}
+
 {% block content %}
 <div class="nhsuk-grid-row">
   <div class="nhsuk-grid-column-full">
     <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
     {% if affectedBookings|length > 0 %}
     <p class="nhsuk-u-width-two-thirds">There are {{ affectedBookings | length }} bookings for these sessions.</p>
-    <p class="nhsuk-u-width-two-thirds">Any bookings you keep will appear in your scheduled list of appointments.</p>
+    <p class="nhsuk-u-width-two-thirds">{{ secondParagraph }}</p>
       {% if affectedSessions|length > 10 %}
       {% call details({
         summaryText: "View sessions and bookings",

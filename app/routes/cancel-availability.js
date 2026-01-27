@@ -49,7 +49,11 @@ router.get('/site/:id/cancel-availability', (req, res) => {
 router.all('/site/:id/cancel-availability/sessions-and-bookings', (req, res) => {
   const { startDate, endDate } = getStartAndEndDates(req.session.data);
 
-  res.render(`site/cancel-availability/sessions-and-bookings`, { startDate, endDate });
+  res.render(`site/cancel-availability/sessions-and-bookings`, { 
+    startDate, 
+    endDate,
+    ...req.query //pass through any query params for testing
+  });
 });
 
 router.all('/site/:id/cancel-availability/check-answers', (req, res) => {
