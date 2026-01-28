@@ -204,7 +204,7 @@ router.get('/site/:id/availability/day', (req, res) => {
 router.get('/site/:id/availability/week', (req, res) => {
   const data = req.session.data;
   const site_id = req.site_id;
-  const startFromDate = req.query.date || DateTime.now().toFormat('yyyy-MM-dd');
+  const startFromDate = req.query.date || override_today || DateTime.now().toFormat('yyyy-MM-dd');
   const today = override_today || DateTime.now().toFormat('yyyy-MM-dd');
 
   //return dates for the week containing 'date'
