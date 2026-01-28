@@ -1,0 +1,45 @@
+{% extends '../../layouts/layout.html' %}
+
+{% set pageName = "What do you want to do?" %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/cancel-availability'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <form method="post" action="/site/{{ site_id }}/cancel-availability/cancel-or-edit-choice">
+        {{ radios({
+            idPrefix: "cancel or edit",
+            name: "[cancelAvailability][cancelOrEdit]",
+            fieldset: {
+              legend: {
+                text: pageName,
+                size: "l",
+                isPageHeading: true
+              }
+            },
+            items: [
+              {
+                value: "cancel",
+                text: "Cancel the sessions",
+                checked: true if data.cancelAvailability.cancelOrEdit == 'cancel'
+              },
+              {
+                value: "edit",
+                text: "Edit session details",
+                checked: true if data.cancelAvailability.cancelOrEdit == 'edit'
+              }
+            ]
+          }) }}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

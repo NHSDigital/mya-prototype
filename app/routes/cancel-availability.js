@@ -31,8 +31,6 @@ const getStartAndEndDates = (data) => {
 
   const startDate = DateTime.local(startYear, startMonth, startDay);
   const endDate = DateTime.local(endYear, endMonth, endDay);
-
-  console.log('Parsed startDate:', startDate.toISODate(), 'endDate:', endDate.toISODate());
   return { startDate, endDate };
 
   
@@ -43,6 +41,33 @@ const getStartAndEndDates = (data) => {
 // -----------------------------------------------------------------------------
 router.get('/site/:id/cancel-availability', (req, res) => {
   res.render(`site/cancel-availability/dates`);
+});
+
+router.all('/site/:id/cancel-availability/cancel-or-edit', (req, res) => {
+  const { startDate, endDate } = getStartAndEndDates(req.session.data);
+
+  res.render(`site/cancel-availability/cancel-or-edit`, { 
+    startDate, 
+    endDate
+  });
+});
+
+router.post('/site/:id/cancel-availability/cancel-or-edit-choice', (req, res) => {
+  if (req.session.data['cancelAvailability']['cancelOrEdit'] === 'cancel') {
+    res.redirect(`/site/${req.params.id}/cancel-availability/sessions-and-bookings`);
+  } else {
+    //edit
+    res.redirect(`/site/${req.params.id}/cancel-availability/edit-guidance`);
+  }
+});
+
+router.get('/site/:id/cancel-availability/edit-guidance', (req, res) => {
+  const { startDate, endDate } = getStartAndEndDates(req.session.data);
+
+  res.render(`site/cancel-availability/edit-guidance`, { 
+    startDate, 
+    endDate
+  });
 });
 
 

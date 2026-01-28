@@ -1,6 +1,6 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = "Select dates to cancel" %}
+{% set pageName = "Select dates to change" %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -12,7 +12,7 @@
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
-      <form method="post" action="/site/{{ site_id }}/cancel-availability/sessions-and-bookings">
+      <form method="post" action="/site/{{ site_id }}/cancel-availability/cancel-or-edit">
         {{ dateInput({
           id: "start-date",
           namePrefix: "[cancelAvailability][startDate]",
