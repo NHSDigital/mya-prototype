@@ -22,7 +22,7 @@
     <div class="nhsuk-grid-column-two-thirds">
       {# summary information #}
       {% if data.cancelAvailability.keepOrCancelBookings == 'cancel' %}
-      <h2 class="nhsuk-heading-m">{{ data.cancelAvailability.affectedBookings | int - 3 }} bookings have been cancelled</h2>
+      <h2 class="nhsuk-heading-m">{{ data.cancelAvailability.affectedBookings }} bookings have been cancelled</h2>
       <p>People will be sent a text message or email confirming their bookings has been cancelled.</p>
       <h2 class="nhsuk-heading-m">3 people have not been contacted</h2>
       <p>These people did not provide an email or mobile number, and have not been notified that their bookings were cancelled.</p>
