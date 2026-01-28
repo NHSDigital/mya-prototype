@@ -204,11 +204,12 @@ router.get('/site/:id/availability/day', (req, res) => {
 router.get('/site/:id/availability/week', (req, res) => {
   const data = req.session.data;
   const site_id = req.site_id;
-  const date = req.query.date || DateTime.now().toFormat('yyyy-MM-dd');
+  const startFromDate = req.query.date || DateTime.now().toFormat('yyyy-MM-dd');
+  const today = override_today || DateTime.now().toFormat('yyyy-MM-dd');
 
   //return dates for the week containing 'date'
   const week = [];
-  const dt = DateTime.fromISO(date);
+  const dt = DateTime.fromISO(startFromDate);
   const startOfWeek = dt.startOf('week'); //assuming week starts on Monday
   for (let i = 0; i < 7; i++) {
     week.push(startOfWeek.plus({ days: i }).toISODate());
@@ -226,7 +227,8 @@ router.get('/site/:id/availability/week', (req, res) => {
 
 
   res.render('site/availability/week', {
-    date,
+    date: startFromDate,
+    today,
     week,
     previousWeek,
     nextWeek
