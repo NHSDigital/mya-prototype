@@ -10,6 +10,8 @@
         <input type="hidden" name="next" value="{{ next }}">
         
         {% for key, value in features %}
+        {# Bools #}
+        {% if value | featureType == "boolean" %}
         <div class="nhsuk-form-group">
           <fieldset class="nhsuk-fieldset">
             <legend class="nhsuk-fieldset__legend">Enable <span class="app-monospace">{{ key | splitCamelCase | lower }}</span></legend>
@@ -25,6 +27,23 @@
             </div>
           </fieldset>
         </div>
+        {% endif %}
+        
+        {# Dates #}
+        {% if value | featureType == "date" %}
+        {{ input({
+          label: {
+            html: "Set <span class='app-monospace'>"~key | splitCamelCase | lower~"</span>",
+            size: "s"
+          },
+          id: "{{ key }}",
+          name: "features["~key~"]",
+          type: "date",
+          value: value
+        }) }}
+        {% endif %}
+
+
         {% endfor %}
 
       {{ button({
