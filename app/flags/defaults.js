@@ -2,6 +2,7 @@
 // eg. featureX: true, featureY: false
 module.exports = {
   allAvailability: false,
-  cancelDateRange: true
+  cancelDateRange: true,
+  today: null
 }
 

@@ -4,15 +4,32 @@ const router = express.Router();
 const { DateTime } = require('luxon');
 
 const { availabilityGroups } = require('../helpers/availabilityGroups');
-const { calendar } = require('../helpers/calendar');
 const updateDailyAvailability = require('../helpers/updateDailyAvailability');
 const enhanceData = require('../helpers/enhanceData');
 const summarise = require('../helpers/summaries');
 const compareGroups = require('../helpers/compareGroups');
-const removeServicesFromDailyAvailability = require('../helpers/removeDailyAvailability');
-const { every } = require('lodash');
 
-const override_today = '2026-09-28'; //for testing purposes
+// -----------------------------------------------------------------------------
+// TODAY OVERRIDE
+// -----------------------------------------------------------------------------
+function resolveToday(req) {
+  const override = req.features?.today;
+  const realToday = DateTime.now().toFormat("yyyy-MM-dd");
+
+  if (override) {
+    const dt = DateTime.fromISO(String(override), { zone: "utc" });
+    if (dt.isValid) return dt.toFormat("yyyy-MM-dd");
+  }
+
+  return realToday;
+}
+
+router.use((req, res, next) => {
+  //make 'today' available globally
+  override_today = resolveToday(req);
+  res.locals.today = override_today;
+  next();
+});
 
 // -----------------------------------------------------------------------------
 // PARAM HANDLER – capture site_id once for all /site/:id routes
@@ -30,9 +47,10 @@ router.param('id', (req, res, next, id) => {
 router.use('/site/:id', (req, res, next) => {
   const data = req.session.data;
   const site_id = String(req.site_id);
+  const today = resolveToday(req);
   
+  // Maybe: Remove this filters stuff as we're not doing any filtering in this prototype?
   //use filters everywhere
-  const today = override_today || DateTime.now().toFormat('yyyy-MM-dd');
   const sessionFilters = data.filters?.[site_id] || {};
 
    // --- Prefer query, then session, then default ---
@@ -62,8 +80,6 @@ router.use('/site/:id', (req, res, next) => {
     from: resolvedFrom,
     until: resolvedUntil
   };
-
-  data.today = today; //expose to session data for convenience
 
 
   if (!data?.sites?.[site_id]) {
@@ -101,7 +117,7 @@ router.use('/site/:id', (req, res, next) => {
 router.post('/set-filters', (req, res) => {
   const filters = { ...req.body.filters }
 
-  req.session.data.filters = filters;
+  req.session.filters = filters;
 
   res.redirect(req.body.next);
 });
@@ -191,21 +207,18 @@ router.get('/site/:id/create-availability/process-new-session', (req, res) => {
 // VIEW AVAILABILITY
 // -----------------------------------------------------------------------------
 router.get('/site/:id/availability/day', (req, res) => {
-  const date = req.query.date || override_today || DateTime.now().toFormat('yyyy-MM-dd');
+  const startFromDate = req.query.date || resolveToday(req);
 
   res.render('site/availability/day', {
-    date,
-    today: override_today || DateTime.now().toFormat('yyyy-MM-dd'),
-    tomorrow: DateTime.fromISO(date).plus({ days: 1 }).toISODate(),
-    yesterday: DateTime.fromISO(date).minus({ days: 1 }).toISODate()
+    date: startFromDate,
+    tomorrow: DateTime.fromISO(startFromDate).plus({ days: 1 }).toISODate(),
+    yesterday: DateTime.fromISO(startFromDate).minus({ days: 1 }).toISODate()
   });
 });
 
 router.get('/site/:id/availability/week', (req, res) => {
-  const data = req.session.data;
-  const site_id = req.site_id;
-  const startFromDate = req.query.date || override_today || DateTime.now().toFormat('yyyy-MM-dd');
-  const today = override_today || DateTime.now().toFormat('yyyy-MM-dd');
+  const startFromDate = req.query.date || resolveToday(req);
+  const today = resolveToday(req);
 
   //return dates for the week containing 'date'
   const week = [];

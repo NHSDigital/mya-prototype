@@ -2,6 +2,8 @@
  * @param {Environment} env
  */
 
+const { DateTime } = require("luxon");
+
 const registerDateTimeFilters = require("./filters/datetime")
 const util = require("util")
 
@@ -53,6 +55,28 @@ module.exports = function (env) {
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
+
+  filters.featureType = (value) => {
+    if (value === null || value === undefined) return "empty";
+
+    if (Array.isArray(value)) return "json";
+
+    const t = typeof value;
+
+    if (t === "boolean") return "boolean";
+    if (t === "number") return Number.isInteger(value) ? "int" : "number";
+    if (t === "object") return "json";
+
+    if (t === "string") {
+      // ISO date heuristic: yyyy-mm-dd
+      const dt = DateTime.fromISO(value, { zone: "utc" });
+      if (dt.isValid && value.length === 10) return "date";
+      return "string";
+    }
+
+    return "string";
+  }
+
 
   return filters
 }
