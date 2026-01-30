@@ -93,7 +93,7 @@ const base = {
     },
     'FLU_AND_COVID': {
       id: 'FLU_AND_COVID',
-      title: 'Flu and COVID-19 services'
+      title: 'Flu and COVID-19 co-admin services'
     },
     'RSV': {
       id: 'RSV',
@@ -101,7 +101,7 @@ const base = {
     },
     'RSV_AND_COVID': {
       id: 'RSV_AND_COVID',
-      title: 'RSV and COVID-19 services'
+      title: 'RSV and COVID-19 co-admin services'
     }
   },
   services: {

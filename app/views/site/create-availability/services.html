@@ -25,6 +25,7 @@
           <span class="nhsuk-u-visually-hidden">Error:</span> Select a service
         </p>
         {% endif %}
+        <p class="nhsuk-body">Co-admin appointments can only be booked by people eligible for both vaccinations.</p>
         {% for groupId, group in data.serviceGroups %}
           <fieldset class="nhsuk-fieldset app-checkbox-group" {% if error %}aria-describedby="services-error"{% endif %}>
             <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--s">
