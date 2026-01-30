@@ -35,6 +35,7 @@
 <div class="nhsuk-form-group">
   <span class="nhsuk-caption-l">Add availability</span>
   <h1 class="nhsuk-heading-l">Add services to your session</h1>
+  <p>Co-admin appointments can only be booked by people eligible for both vaccinations.</p>
   <fieldset class="nhsuk-fieldset app-checkbox-group">
     <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--m">
       <span class="nhsuk-u-visually-hidden">Add </span>Flu services<span class="nhsuk-u-visually-hidden"> to your session</span>
@@ -65,6 +66,7 @@
   <p id="services-error" class="nhsuk-error-message">
     <span class="nhsuk-u-visually-hidden">Error:</span> Select a service
   </p>
+  <p>Co-admin appointments can only be booked by people eligible for both vaccinations.</p>
   <fieldset class="nhsuk-fieldset app-checkbox-group">
     <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--m">
       <span class="nhsuk-u-visually-hidden">Add </span>Flu services<span class="nhsuk-u-visually-hidden"> to your session</span>
@@ -161,6 +163,7 @@
         <div class="nhsuk-form-group">
         <span class="nhsuk-caption-l">Add availability</span>
         <h1 class="nhsuk-heading-l">Add services to your session</h1>
+        <p>Co-admin appointments can only be booked by people eligible for both vaccinations.</p>
         {% for groupId, group in data.serviceGroups %}
           <fieldset class="nhsuk-fieldset app-checkbox-group">
             <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--s">
@@ -193,7 +196,7 @@
 <div class="nhsuk-grid-row">
 
   <div class="nhsuk-grid-column-two-thirds">
-    <h2 class="nhsuk-heading-m nhsuk-u-margin-top-9" id="grouped-checkboxs">Grouped checkboxes error state</h2>
+    <h2 class="nhsuk-heading-m nhsuk-u-margin-top-9" id="grouped-checkboxs-error">Grouped checkboxes error state</h2>
     <p>The error state of grouped checkboxes also needs some custom markup.</p>
     <p><a href="/site/1/create-availability/services?error=true">See this in action on the add availability page</a>.</p>
   </div>
@@ -207,6 +210,7 @@
         <p id="services-error" class="nhsuk-error-message">
           <span class="nhsuk-u-visually-hidden">Error:</span> Select a service
         </p>
+        <p>Co-admin appointments can only be booked by people eligible for both vaccinations.</p>
         {% for groupId, group in data.serviceGroups %}
           <fieldset class="nhsuk-fieldset app-checkbox-group">
             <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--s">
