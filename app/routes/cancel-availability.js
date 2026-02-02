@@ -40,16 +40,11 @@ const getStartAndEndDates = (data) => {
 // Cancel availability for a date range
 // -----------------------------------------------------------------------------
 router.get('/site/:id/cancel-availability', (req, res) => {
-  res.render(`site/cancel-availability/dates`);
+  res.render(`site/cancel-availability/edit-guidance`);
 });
 
-router.all('/site/:id/cancel-availability/cancel-or-edit', (req, res) => {
-  const { startDate, endDate } = getStartAndEndDates(req.session.data);
-
-  res.render(`site/cancel-availability/cancel-or-edit`, { 
-    startDate, 
-    endDate
-  });
+router.get('/site/:id/cancel-availability/dates', (req, res) => {
+  res.render(`site/cancel-availability/dates`);
 });
 
 router.post('/site/:id/cancel-availability/cancel-or-edit-choice', (req, res) => {

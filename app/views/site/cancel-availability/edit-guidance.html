@@ -1,6 +1,6 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = "What to do next" %}
+{% set pageName = "Before you continue" %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -22,7 +22,7 @@
 
       {{ button({
         text: "Continue",
-        href: '/site/' + site_id + '/cancel-availability/sessions-and-bookings'
+        href: '/site/' + site_id + '/cancel-availability/dates'
       }) }}
     </div>
   </div>
