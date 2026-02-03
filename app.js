@@ -1,37 +1,36 @@
-const { join } = require('node:path')
-
 const NHSPrototypeKit = require('nhsuk-prototype-kit')
 
 // Local dependencies
 const config = require('./app/config')
 const sessionDataDefaults = require('./app/data/session-data-defaults')
 const filters = require('./app/filters')
-//const locals = require('./app/locals')
+const locals = require('./app/locals')
 const routes = require('./app/routes')
 
-const SERVICE_NAME = config.serviceName
-
-// Set configuration variables
-const port = parseInt(process.env.PORT, 10) || 2000
-
 const viewsPath = [
-  join(__dirname, 'app/views/'),
-  join(__dirname, 'app/views/layouts/'),
+  'app/views/',
+  'app/views/layouts/',
 ]
 
-const prototype = NHSPrototypeKit.init({
-  serviceName: SERVICE_NAME,
-  routes: routes,
-  //locals: locals,
-  sessionDataDefaults: sessionDataDefaults,
-  viewsPath: viewsPath,
-  buildOptions: {
-    entryPoints: ['app/assets/sass/main.scss']
-  }
-})
+const entryPoints = [
+  'app/assets/sass/main.scss',
+  'app/assets/javascript/*.js'
+]
 
-for (const [name, filter] of Object.entries(filters())) {
-  prototype.nunjucks.addFilter(name, filter)
+async function init() {
+  const prototype = await NHSPrototypeKit.init({
+    serviceName: config.serviceName,
+    buildOptions: {
+      entryPoints
+    },
+    viewsPath,
+    routes,
+    locals,
+    filters,
+    sessionDataDefaults
+  })
+
+  prototype.start(config.port)
 }
 
-prototype.start(port)
+init()
