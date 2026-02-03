@@ -28,9 +28,12 @@
       <p>These people did not provide an email or mobile number, and have not been notified that their bookings were cancelled.</p>
       <p><a href="#">View the list of people who have not been notified.</a></p>
       {% else %}
-      <p>No bookings were affected by this change.</p>
+      <p>No bookings were affected by this change. They will stay in your appointments list.</p>
       <h2 class="nhsuk-heading-m">What to do next</h2>
-      <p><a href="/site/{{ site_id }}/availability/day">Go back to availability</a></p>
+      <ul class="nhsuk-list nhsuk-list--bullet">
+        <li><a href="/site/{{ site_id }}/create-availability?start={{ startDate }}&end={{ endDate }}">Create availability between {{ startDate | nhsDateRange(endDate, 'and') }}</a></li>
+        <li><a href="/site/{{ site_id }}/availability/day">Go back to availability</a></li>
+      </ul>
       {% endif %}
 
       

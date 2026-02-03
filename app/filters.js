@@ -54,6 +54,15 @@ module.exports = function (env) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
+  filters.plural = (word, count, append = 's', prepend = '') => {
+    if (count === 1) {
+      return word;
+    } else {
+      // Simple pluralisation by adding 's'
+      return prepend + word + append;
+    }
+  }
+
   return filters
 }
 

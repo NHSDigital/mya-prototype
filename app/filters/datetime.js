@@ -111,7 +111,7 @@ module.exports = function registerDateTimeFilters(filters = {}) {
 
   //follow the nhs date range logic
   //https://service-manual.nhs.uk/content/numbers-measurements-dates-time#ranges
-  filters.nhsDateRange = (firstDate, secondDate, tz = DEFAULT_TZ) => {
+  filters.nhsDateRange = (firstDate, secondDate, linkWord = 'to', tz = DEFAULT_TZ) => {
 
     const dt1 = toDateTime(firstDate, tz);
     const dt2 = toDateTime(secondDate, tz);
@@ -125,16 +125,16 @@ module.exports = function registerDateTimeFilters(filters = {}) {
 
     //same month and year
     if (dt1.hasSame(dt2, 'month') && dt1.hasSame(dt2, 'year')) {
-      return `${dt1.toFormat('d')} to ${dt2.toFormat(DEFAULT_FORMAT)}`;
+      return `${dt1.toFormat('d')} ${linkWord} ${dt2.toFormat(DEFAULT_FORMAT)}`;
     }
 
     //same year
     if (dt1.hasSame(dt2, 'year')) {
-      return `${dt1.toFormat('d LLLL')} to ${dt2.toFormat(DEFAULT_FORMAT)}`;
+      return `${dt1.toFormat('d LLLL')} ${linkWord} ${dt2.toFormat(DEFAULT_FORMAT)}`;
     }
 
     //different years
-    return `${dt1.toFormat(DEFAULT_FORMAT)} to ${dt2.toFormat(DEFAULT_FORMAT)}`;
+    return `${dt1.toFormat(DEFAULT_FORMAT)} ${linkWord} ${dt2.toFormat(DEFAULT_FORMAT)}`;
   }
 
   filters.isDateBetween = (input, startDate, endDate, tz = DEFAULT_TZ) => {

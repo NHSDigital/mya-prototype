@@ -68,21 +68,24 @@
       <td class="nhsuk-table__cell" role="cell">
         <span class="nhsuk-table-responsive__heading" aria-hidden="true">Date time </span>{{ session.date | nhsDate }}<br>{{ session.from | nhsTime }} to {{ session.until | nhsTime }}
       </td>
-      <td class="nhsuk-table__cell" role="cell">
-        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Services </span>
-        {% for serviceId in session.services %}
-          {{ data.services[serviceId].name }}{% if not loop.last %}<br>{% endif %}
-        {% endfor %}
-      </td>
-      <td class="nhsuk-table__cell" role="cell">
-        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Bookings </span>
+      <td class="nhsuk-table__cell" role="cell" colspan="2">
+        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Services and bookings </span>
         {% set bookingCount = 0 %}
         {% for booking in bookings %}
           {% if booking.datetime | formatDate('yyyy-MM-dd') == session.date and booking.status == "scheduled" and booking.datetime | isTimeBetween(session.from, session.until) %}
           {% set bookingCount = bookingCount + 1 %}
           {% endif %}
         {% endfor %}
-        {{ bookingCount }}
+        {% set displayBookings = 1 %}
+        <ul class="nhsuk-list">
+        {% for serviceId in session.services %}
+          <li>
+            {{ data.services[serviceId].name }}
+            {{ displayBookings }}
+          </li>
+        {% endfor %}
+        {% if bookingCount > displayBookings %}{{ displayBookings - 1 }}{% endif %}
+        </ul>
       </td>
       <td class="nhsuk-table__cell" role="cell">
         <span class="nhsuk-table-responsive__heading" aria-hidden="true">Unbooked </span>
@@ -99,36 +102,7 @@
 </table>
 {% endmacro %}
 
-{% macro sessionsTable(sessions) %}
-<table class="nhsuk-table-responsive" role="table">
-  <caption class="nhsuk-table__caption">
-    Sessions details
-  </caption>
-  <thead class="nhsuk-table__head" role="rowgroup">
-    <tr class="nhsuk-table__row" role="row">
-      <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Date and time</th>
-      <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Services</th>
-    </tr>
-  </thead>
-  <tbody class="nhsuk-table__body">
-    {% for session in sessions %}
-    <tr class="nhsuk-table__row" role="row">
-      <td class="nhsuk-table__cell" role="cell">
-        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Date time </span>{{ session.date | nhsDate }}<br>{{ session.from | nhsTime }} to {{ session.until | nhsTime }}
-      </td>
-      <td class="nhsuk-table__cell" role="cell">
-        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Services </span>
-        {% for serviceId in session.services %}
-          {{ data.services[serviceId].name }}{% if not loop.last %}<br>{% endif %}
-        {% endfor %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% endmacro %}
-
-{% set pageName = "You are about to cancel " ~affectedSessions|length~ " sessions"%}
+{% set pageName = "You are about to cancel " ~affectedSessions|length~ " "~ 'session' | plural(affectedSessions | length) %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -136,31 +110,19 @@
 }) }}
 {% endblock %}
 
-{% set secondParagraph = "Bookings you keep appear in your appointments list. We automatically move them into new sessions when you add matching availability." %} 
-{% if content == '2' %}
-  {% set secondParagraph = "By cancelling these sessions, these bookings will be unsupported by a session but they will still appear in your scheduled list of appointments." %} 
-{% endif %}
-{% if content == '3' %}
-  {% set secondParagraph = "Any bookings you keep will appear in your scheduled list of appointments and these bookings will unsupported by a session unless a new session is created." %} 
-{% endif %}
-
 {% block content %}
 <div class="nhsuk-grid-row">
   <div class="nhsuk-grid-column-full">
     <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
     {% if affectedBookings|length > 0 %}
-    <p class="nhsuk-u-width-two-thirds">There are {{ affectedBookings | length }} bookings for these sessions.</p>
-    <p class="nhsuk-u-width-two-thirds">{{ secondParagraph }}</p>
-      {% if affectedSessions|length > 10 %}
-      {% call details({
-        summaryText: "View sessions and bookings",
-        classes: "nhsuk-expander"
-      }) %}
-        {{ sessionsAndBookings(affectedSessions, affectedBookings) }}
-      {% endcall %}
-      {% else %}
-        {{ sessionsAndBookings(affectedSessions, affectedBookings) }}
-      {% endif %}
+    <p class="nhsuk-u-width-two-thirds">There are {{ affectedBookings | length }} bookings for these {{ 'session' | plural(affectedSessions | length) }}</p>
+
+    {% call details({
+      summaryText: "View sessions and bookings",
+      classes: "nhsuk-expander"
+    }) %}
+      {{ sessionsAndBookings(affectedSessions, affectedBookings) }}
+    {% endcall %}
     
       <form method="post" action="/site/{{ site_id }}/cancel-availability/check-answers" class="nhsuk-u-width-two-thirds">
         <input type="hidden" name="[cancelAvailability][affectedSessions]" value="{{ affectedSessions | length }}">
@@ -178,12 +140,18 @@
             {
               value: "keep",
               text: "Keep bookings",
-              checked: true if data.cancelAvailability.keepOrCancelBookings == 'keep'
+              checked: true if data.cancelAvailability.keepOrCancelBookings == 'keep',
+              hint: {
+                text: "These will stay in your appointments list"
+              }
             },
             {
               value: "cancel",
               text: "Cancel bookings",
-              checked: true if data.cancelAvailability.keepOrCancelBookings == 'cancel'
+              checked: true if data.cancelAvailability.keepOrCancelBookings == 'cancel',
+              hint: {
+                text: "We will email or text them to confirm the cancellation"
+              }
             }
           ]
         }) }}
@@ -193,17 +161,14 @@
       </form>
 
     {% else %}
+
       <p>There are no bookings for these sessions.</p>
-      {% if affectedSessions|length > 10 %}
       {% call details({
         summaryText: "View sessions",
         classes: "nhsuk-expander"
       }) %}
-        {{ sessionsTable(affectedSessions) }}
+        {{ sessionsAndBookings(affectedSessions, affectedBookings) }}
       {% endcall %}
-      {% else %}
-        {{ sessionsTable(affectedSessions) }}
-      {% endif %}
       {{
         button({
           text: "Continue",
