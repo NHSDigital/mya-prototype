@@ -98,14 +98,14 @@ const base = {
     ],
     site: [
       {
-        text: 'Home',
-        hideCard: true,
-        hrefTemplate: '/site/:id'
-      },
-      {
-        text: 'Availability',
+        text: 'View availability',
         description: 'View and manage available appointments for your site',
         hrefTemplate: '/site/:id/availability/day'
+      },
+      {
+        text: 'Create availability',
+        description: 'Create new availability and review recently created sessions',
+        hrefTemplate: '/site/:id/create-availability'
       },
       {
         text: 'Change site details',

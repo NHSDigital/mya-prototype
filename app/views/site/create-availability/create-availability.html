@@ -1,6 +1,46 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = "Add availability for " + data.sites[site_id].name + " - " %}
+{% set pageName = "Create availability" %}
+
+{% macro services(service_ids) %}
+  {% set serviceTypes = [] %}
+
+  {% for service_id in service_ids %}
+    {% set vaccineShortcode = data.services[service_id].cohort.type ~ " " ~ data.services[service_id].vaccine %}
+    {% if vaccineShortcode not in serviceTypes %}
+      {% set serviceTypes = serviceTypes.concat([vaccineShortcode]) %}
+    {% endif %}
+  {% endfor %}
+
+  {{ serviceTypes | join(', ') }}
+{% endmacro %}
+
+{% macro daysLabel(group) %}
+  {% if group.type == 'single' %}
+    {{ group.dates[0] | formatDate('ccc') }}
+  {% else %}
+    {% set days = [] %}
+    {% for day, count in group.weekdaySummary %}
+      {% if count > 0 %}
+        {% set days = days.concat([day]) %}
+      {% endif %}
+    {% endfor %}
+
+    {% if days | length == 7 %}
+      All
+    {% else %}
+      {{ days | join(', ') }}
+    {% endif %}
+  {% endif %}
+{% endmacro %}
+
+{% macro dateRangeLabel(group) %}
+  {% if group.type == 'single' %}
+    {{ group.dates[0] | formatDate('d MMM yyyy') }}
+  {% else %}
+    {{ group.dates[0] | formatDate('d MMM yyyy') }} to {{ group.dates[group.dates | length - 1] | formatDate('d MMM yyyy') }}
+  {% endif %}
+{% endmacro %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -11,62 +51,70 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
-      
       <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
-      <h1 class="nhsuk-heading-l">Add availability</h1>
-      <p>You can add availability with multiple days and repeating sessions, to accurately reflect your site’s capacity.</p>
-
-      <table class="nhsuk-table">
-        <thead class="nhsuk-table__head">
-          <tr>
-            <th scope="col" class="nhsuk-table__header">Dates</th>
-            <th scope="col" class="nhsuk-table__header">Days</th>
-            <th scope="col" class="nhsuk-table__header">Services</th>
-            <th scope="col" class="nhsuk-table__header">Session type</th>
-          </tr>
-        </thead>
-        <tbody class="nhsuk-table__body">
-          {% for session in data.availability %}
-          {% if session.site_id == site_id %}
-
-          {% set shortDayNames = [] %}
-          {% for day in session.days %}
-            {% set shortDayNames = shortDayNames.concat(day.slice(0, 3)) %}
-          {% endfor %}
-
-          {% set niceDayName = shortDayNames | list %}
-          {% if shortDayNames | length == 7 %}{% set niceDayName = 'All' %}{% endif %}
-
-          {% set niceServiceNames = [] %}
-          {% for serviceId in session.services %}
-            {% set niceServiceNames = niceServiceNames.concat(data.services[serviceId].name) %}
-          {% endfor %}
-
-          {% set displayDate -%}
-            {% if session.singleDate %}
-              {{ session.singleDate | daysAhead | formatDate('d LLL yyyy') }}
-            {% elif session.startDate and session.endDate %}
-               {{ session.startDate | formatDate('d LLL yyyy') }} to {{ session.endDate | formatDate('d LLL yyyy') }}
-            {% else %}
-              {{ session.startDaysAgo | daysAgo | formatDate('d LLL yyyy') }} to {{ session.endDaysAhead | daysAhead | formatDate('d LLL yyyy') }}
-            {% endif %}
-          {%- endset %}
-
-          <tr class="nhsuk-table__row">
-            <td class="nhsuk-table__cell">{{ displayDate }}</td>
-            <td class="nhsuk-table__cell">{{ niceDayName }}</td>
-            <td class="nhsuk-table__cell">{{ niceServiceNames | list }}</td>
-            <td class="nhsuk-table__cell">{{ session.type }}</td>
-          </tr>
-          {% endif %}
-          {% endfor %}
-        </tbody>
-      </table>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       {{ button({
-        text: "Add availability",
+        text: "Create new availability",
         href: "/site/" + site_id + "/create-availability/type-of-session"
       }) }}
+
+      {{ button({
+        text: "Change availability",
+        href: "/site/" + site_id + "/availability/all",
+        classes: "nhsuk-button--secondary"
+      }) }}
+
+      <h2 class="nhsuk-heading-m">History of sessions you created</h2>
+      <p class="nhsuk-body">If you cancel a session, it will still show here. To see what people can book, check <a class="nhsuk-link" href="/site/{{ site_id }}/availability/day">View availability</a>.</p>
+      <p class="nhsuk-body">Any sessions that ended in the past are hidden.</p>
+
+      {% set sessionHistory = availabilityGroups.repeating.concat(availabilityGroups.single) %}
+
+      {% if sessionHistory | length == 0 %}
+        {{ insetText({
+          text: "No sessions have been created yet."
+        }) }}
+      {% endif %}
+
+      {% for group in sessionHistory %}
+        {{ summaryList({
+          rows: [
+            {
+              key: {
+                text: "Dates"
+              },
+              value: {
+                text: dateRangeLabel(group)
+              }
+            },
+            {
+              key: {
+                text: "Days"
+              },
+              value: {
+                text: daysLabel(group)
+              }
+            },
+            {
+              key: {
+                text: "Services"
+              },
+              value: {
+                text: services(group.session.services)
+              }
+            },
+            {
+              key: {
+                text: "Session type"
+              },
+              value: {
+                text: "Weekly repeating" if group.type == 'repeating' else "Single date"
+              }
+            }
+          ]
+        }) }}
+      {% endfor %}
 
     </div>
   </div>

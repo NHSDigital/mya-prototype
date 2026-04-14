@@ -226,7 +226,12 @@ router.get('/site/:id', (req, res) => {
 // -----------------------------------------------------------------------------
 router.get('/site/:id/create-availability', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/create-availability/dates');
+  res.render('site/create-availability/create-availability');
+});
+
+router.all('/site/:id/create-availability/type-of-session', (req, res) => {
+  ensureCreateSession(req.session.data);
+  res.render('site/create-availability/type-of-session');
 });
 
 router.all('/site/:id/create-availability/dates', (req, res) => {
