@@ -1,6 +1,10 @@
 const { DateTime } = require('luxon');
 const generateGroupId = require('./groupId');
 
+function bookingKeyFromISO(datetime, timezone) {
+  return DateTime.fromISO(datetime, { zone: timezone }).toFormat("yyyy-MM-dd'T'HH:mm");
+}
+
 /**
  * Build slot structures for each site and date.
  * - Expands all sessions into time slots.
@@ -15,14 +19,16 @@ const generateGroupId = require('./groupId');
 function enhanceData({ daily_availability, bookings, timezone = 'Europe/London' }) {
   const slots = {};
 
-  for (const [site_id, availability] of Object.entries(daily_availability)) {
+  for (const [site_id, availability] of Object.entries(daily_availability || {})) {
     slots[site_id] = {};
 
-    // Normalise bookings once into UTC millis for fast lookup
-    const bookingMap = new Map();
-    for (const [id, b] of Object.entries(bookings[site_id] || {})) {
-      const dt = DateTime.fromISO(b.datetime, { zone: timezone });
-      bookingMap.set(dt.toMillis(), { id, ...b });
+    const bookingBuckets = new Map();
+    for (const [id, b] of Object.entries(bookings?.[site_id] || {})) {
+      if (!b?.datetime) continue;
+      const key = bookingKeyFromISO(b.datetime, timezone);
+      const existing = bookingBuckets.get(key) || [];
+      existing.push({ id, ...b });
+      bookingBuckets.set(key, existing);
     }
 
     for (const [date, day] of Object.entries(availability)) {
@@ -36,11 +42,12 @@ function enhanceData({ daily_availability, bookings, timezone = 'Europe/London' 
         const capacity = session.capacity || 1;
 
         for (let dt = start; dt < end; dt = dt.plus({ minutes: slotLength })) {
+          const key = dt.toFormat("yyyy-MM-dd'T'HH:mm");
+          const bucket = bookingBuckets.get(key) || [];
+
           for (let c = 0; c < capacity; c++) {
             const datetime = dt.toISO({ suppressSeconds: true, suppressMilliseconds: true });
-            const key = dt.toMillis(); // normalised comparison key
-
-            const booking = bookingMap.get(key) || null;
+            const booking = bucket.length > 0 ? bucket.shift() : null;
 
             slots[site_id][date].push({
               datetime,

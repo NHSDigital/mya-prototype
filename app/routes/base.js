@@ -4,15 +4,108 @@ const router = express.Router();
 const { DateTime } = require('luxon');
 
 const { availabilityGroups } = require('../helpers/availabilityGroups');
-const { calendar } = require('../helpers/calendar');
 const updateDailyAvailability = require('../helpers/updateDailyAvailability');
 const enhanceData = require('../helpers/enhanceData');
 const summarise = require('../helpers/summaries');
 const compareGroups = require('../helpers/compareGroups');
-const removeServicesFromDailyAvailability = require('../helpers/removeDailyAvailability');
-const { every } = require('lodash');
 
-const override_today = '2026-09-28'; //for testing purposes
+const override_today = process.env.OVERRIDE_TODAY || null;
+
+function getToday() {
+  return override_today || DateTime.now().toFormat('yyyy-MM-dd');
+}
+
+function asArray(value) {
+  if (Array.isArray(value)) return value;
+  if (value === undefined || value === null || value === '') return [];
+  return [value];
+}
+
+function ensureCreateSession(data) {
+  const current = data.newSession || {};
+
+  const session = {
+    type: current.type || 'Weekly session',
+    startDate: {
+      day: current.startDate?.day || '',
+      month: current.startDate?.month || '',
+      year: current.startDate?.year || ''
+    },
+    endDate: {
+      day: current.endDate?.day || '',
+      month: current.endDate?.month || '',
+      year: current.endDate?.year || ''
+    },
+    singleDate: {
+      day: current.singleDate?.day || '',
+      month: current.singleDate?.month || '',
+      year: current.singleDate?.year || ''
+    },
+    days: asArray(current.days),
+    startTime: {
+      hour: current.startTime?.hour || '09',
+      minute: current.startTime?.minute || '00'
+    },
+    endTime: {
+      hour: current.endTime?.hour || '17',
+      minute: current.endTime?.minute || '00'
+    },
+    capacity: current.capacity || '1',
+    duration: current.duration || '10',
+    services: asArray(current.services),
+    areYouAssured: current.areYouAssured || ''
+  };
+
+  data.newSession = session;
+  return session;
+}
+
+function toDateObject(dateInput) {
+  return {
+    day: String(dateInput?.day || ''),
+    month: String(dateInput?.month || ''),
+    year: String(dateInput?.year || '')
+  };
+}
+
+function toTimeString(timeInput) {
+  const hour = String(timeInput?.hour || '00').padStart(2, '0');
+  const minute = String(timeInput?.minute || '00').padStart(2, '0');
+  return `${hour}:${minute}`;
+}
+
+function buildPersistableSession(newSession) {
+  const mode = newSession.type || 'Weekly session';
+  const isSingleDate = mode === 'Single date';
+  const startDate = isSingleDate ? toDateObject(newSession.singleDate) : toDateObject(newSession.startDate);
+  const endDate = isSingleDate ? toDateObject(newSession.singleDate) : toDateObject(newSession.endDate);
+  const startTime = toTimeString(newSession.startTime);
+  const endTime = toTimeString(newSession.endTime);
+
+  let days = asArray(newSession.days);
+  if (isSingleDate) {
+    const iso = `${startDate.year}-${String(startDate.month).padStart(2, '0')}-${String(startDate.day).padStart(2, '0')}`;
+    const dt = DateTime.fromISO(iso);
+    days = dt.isValid ? [dt.toFormat('cccc')] : [];
+  }
+
+  return {
+    startDate,
+    endDate,
+    days,
+    startTime: {
+      hour: startTime.split(':')[0],
+      minute: startTime.split(':')[1]
+    },
+    endTime: {
+      hour: endTime.split(':')[0],
+      minute: endTime.split(':')[1]
+    },
+    services: asArray(newSession.services),
+    capacity: Number(newSession.capacity) || 1,
+    duration: Number(newSession.duration) || 10
+  };
+}
 
 // -----------------------------------------------------------------------------
 // PARAM HANDLER – capture site_id once for all /site/:id routes
@@ -30,40 +123,20 @@ router.param('id', (req, res, next, id) => {
 router.use('/site/:id', (req, res, next) => {
   const data = req.session.data;
   const site_id = String(req.site_id);
-  
-  //use filters everywhere
-  const today = override_today || DateTime.now().toFormat('yyyy-MM-dd');
+
+  const today = getToday();
   const sessionFilters = data.filters?.[site_id] || {};
+  const from = req.query.from ?? sessionFilters.from ?? null;
+  const until = req.query.until ?? sessionFilters.until ?? null;
 
-   // --- Prefer query, then session, then default ---
-  const fromDateGroup =
-    req.query.fromDateGroup || sessionFilters.fromDateGroup || 'today';
-  const untilDateGroup =
-    req.query.untilDateGroup || sessionFilters.untilDateGroup || 'none';
-
-  const from =
-    req.query.from ||
-    sessionFilters.from ||
-    (fromDateGroup === 'today' ? today : null);
-  const until =
-    req.query.until ||
-    sessionFilters.until ||
-    (untilDateGroup === 'none' ? null : null);
-
-  // --- Normalise: if radio says "today", force from = today, etc. ---
-  const resolvedFrom = fromDateGroup === 'today' ? today : from;
-  const resolvedUntil = untilDateGroup === 'none' ? null : until;
-
-  // --- Persist back to session ---
+  // Keep filter state intentionally small in baseline mode.
   data.filters = data.filters || {};
   data.filters[site_id] = {
-    fromDateGroup,
-    untilDateGroup,
-    from: resolvedFrom,
-    until: resolvedUntil
+    from,
+    until
   };
 
-  data.today = today; //expose to session data for convenience
+  data.today = today;
 
 
   if (!data?.sites?.[site_id]) {
@@ -71,20 +144,23 @@ router.use('/site/:id', (req, res, next) => {
     return res.status(404).send('Site not found');
   }
 
+  const siteDailyAvailability = data.daily_availability?.[site_id] || {};
+  const siteBookings = data.bookings?.[site_id] || {};
+
   // Generate slots data for this site
   const slots = enhanceData({
-    daily_availability: { [site_id]: data.daily_availability[site_id] },
-    bookings: { [site_id]: data.bookings[site_id] }
+    daily_availability: { [site_id]: siteDailyAvailability },
+    bookings: { [site_id]: siteBookings }
   });
 
   //generate groups for this site
-  const groupsForThisSite = availabilityGroups(data.daily_availability[site_id], from, until)
+  const groupsForThisSite = availabilityGroups(siteDailyAvailability, from, until)
   res.locals.availabilityGroups = groupsForThisSite;
 
   //generate summaries for this site
   const summaries = summarise({
-    bookings: data.bookings[site_id],
-    availability: data.daily_availability[site_id],
+    bookings: siteBookings,
+    availability: siteDailyAvailability,
     groups: groupsForThisSite.repeating.concat(groupsForThisSite.single)
   });
   res.locals.summaries = summaries;
@@ -99,18 +175,40 @@ router.use('/site/:id', (req, res, next) => {
 // SET FILTERS
 // -----------------------------------------------------------------------------
 router.post('/set-filters', (req, res) => {
-  const filters = { ...req.body.filters }
+  const next = req.body.next || '/sites';
+  const site_id = req.body.site_id || req.body.id || req.query.site_id;
+  const incomingFilters = req.body.filters || {};
 
-  req.session.data.filters = filters;
+  req.session.data.filters = req.session.data.filters || {};
 
-  res.redirect(req.body.next);
+  if (site_id) {
+    req.session.data.filters[String(site_id)] = {
+      ...(req.session.data.filters[String(site_id)] || {}),
+      from: incomingFilters.from || null,
+      until: incomingFilters.until || null
+    };
+  }
+
+  res.redirect(next);
 });
 
 // -----------------------------------------------------------------------------
 // All sites (reset any site-specific data)
 // -----------------------------------------------------------------------------
 router.get('/sites', (req, res) => {
-  req.session.data = {};
+  const transientKeys = [
+    'newSession',
+    'currentGroup',
+    'changeComparison',
+    'cancelAvailability',
+    'select-date',
+    'filters'
+  ];
+
+  transientKeys.forEach((key) => {
+    delete req.session.data[key];
+  });
+
   res.render('sites');
 });
 
@@ -127,33 +225,40 @@ router.get('/site/:id', (req, res) => {
 // CREATE AVAILABILITY
 // -----------------------------------------------------------------------------
 router.get('/site/:id/create-availability', (req, res) => {
+  ensureCreateSession(req.session.data);
   res.render('site/create-availability/dates');
 });
 
 router.all('/site/:id/create-availability/dates', (req, res) => {
+  ensureCreateSession(req.session.data);
   res.render('site/create-availability/dates');
 });
 
 router.all('/site/:id/create-availability/days', (req, res) => {
+  ensureCreateSession(req.session.data);
   res.render('site/create-availability/days');
 });
 
 router.all('/site/:id/create-availability/time-and-capacity', (req, res) => {
+  ensureCreateSession(req.session.data);
   res.render('site/create-availability/time-and-capacity');
 });
 
 router.all('/site/:id/create-availability/services', (req, res) => {
+  ensureCreateSession(req.session.data);
   res.render('site/create-availability/services', {
     ...req.query
   });
 });
 
 router.all('/site/:id/create-availability/are-you-assured', (req, res) => {
+  ensureCreateSession(req.session.data);
   res.render('site/create-availability/are-you-assured');
 });
 
 router.post('/site/:id/create-availability/check-assurance', (req, res) => {
-  const assured = req.body['newSession']['areYouAssured'];
+  ensureCreateSession(req.session.data);
+  const assured = req.body?.newSession?.areYouAssured || req.session.data.newSession.areYouAssured;
 
   if (assured === 'yes') {
     return res.redirect(`/site/${req.site_id}/create-availability/check-answers`);
@@ -163,24 +268,32 @@ router.post('/site/:id/create-availability/check-assurance', (req, res) => {
 });
 
 router.all('/site/:id/create-availability/not-assured', (req, res) => {
+  ensureCreateSession(req.session.data);
   res.render('site/create-availability/not-assured');
 })
 
 router.all('/site/:id/create-availability/check-answers', (req, res) => {
+  ensureCreateSession(req.session.data);
   res.render('site/create-availability/check-answers');
 });
 
 router.get('/site/:id/create-availability/process-new-session', (req, res) => {
   const data = req.session.data;
   const site_id = req.site_id;
-  const newSession = data.newSession;
+  const newSession = ensureCreateSession(data);
 
   if (!newSession) {
     return res.redirect(`/site/${site_id}/create-availability?new-session=false`);
   }
 
+  const persistableSession = buildPersistableSession(newSession);
+
+  if (!persistableSession.startDate.year || !persistableSession.endDate.year) {
+    return res.redirect(`/site/${site_id}/create-availability/dates`);
+  }
+
   // Update daily availability for this site
-  data.daily_availability = updateDailyAvailability(newSession, data.daily_availability, site_id);
+  data.daily_availability = updateDailyAvailability(persistableSession, data.daily_availability, site_id);
   delete data.newSession;
 
   res.redirect(`/site/${site_id}/availability/all?new-session=true`);
@@ -191,11 +304,11 @@ router.get('/site/:id/create-availability/process-new-session', (req, res) => {
 // VIEW AVAILABILITY
 // -----------------------------------------------------------------------------
 router.get('/site/:id/availability/day', (req, res) => {
-  const date = req.query.date || override_today || DateTime.now().toFormat('yyyy-MM-dd');
+  const date = req.query.date || getToday();
 
   res.render('site/availability/day', {
     date,
-    today: override_today || DateTime.now().toFormat('yyyy-MM-dd'),
+    today: getToday(),
     tomorrow: DateTime.fromISO(date).plus({ days: 1 }).toISODate(),
     yesterday: DateTime.fromISO(date).minus({ days: 1 }).toISODate()
   });
@@ -204,8 +317,8 @@ router.get('/site/:id/availability/day', (req, res) => {
 router.get('/site/:id/availability/week', (req, res) => {
   const data = req.session.data;
   const site_id = req.site_id;
-  const startFromDate = req.query.date || override_today || DateTime.now().toFormat('yyyy-MM-dd');
-  const today = override_today || DateTime.now().toFormat('yyyy-MM-dd');
+  const startFromDate = req.query.date || getToday();
+  const today = getToday();
 
   //return dates for the week containing 'date'
   const week = [];

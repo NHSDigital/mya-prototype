@@ -62,7 +62,7 @@
         {% if data.newSession.type == "Single date" %}
           {% set dateTitle = "Date" %}
           {% set singleDate -%}
-            {{ data.newSession.singleDate.year }}-{{ data.newSession.singleDate.month }}-{{ data.singleDate.endDate.day }}
+            {{ data.newSession.singleDate.year }}-{{ data.newSession.singleDate.month }}-{{ data.newSession.singleDate.day }}
           {%- endset %}
           {% set displayDate = singleDate | formatDate %}
         {% endif %}

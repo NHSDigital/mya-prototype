@@ -42,18 +42,13 @@ function generateBookings({
   let id = 1;
   const usedNames = new Set();
 
-  console.log('    → generateBookings: received', slots.length, 'slots')
-  let processed = 0;
-
   for (const slot of slots) {
-    if (++processed % 500 === 0) console.log('      processed', processed, 'slots');
     if (Math.random() > fillRate) continue;
 
     // Support both plain ISO strings and objects
     const dtISO = typeof slot === 'string' ? slot : slot.datetimeISO;
     const dt = DateTime.fromISO(dtISO, { zone: timezone });
     if (!dt.isValid) {
-      console.warn('⚠️ invalid date', dtISO);
       continue;
     }
 
@@ -61,13 +56,11 @@ function generateBookings({
       (slot.services && slot.services.length > 0 ? slot.services : services) || [];
 
     if (allowedServices.length === 0) {
-      console.warn('⚠️ no services for slot', dtISO);
       continue;
     }
 
     const service = randomItem(allowedServices);
     if (!service) {
-      console.warn('⚠️ failed to pick service', allowedServices);
       continue;
     }
 
@@ -92,7 +85,7 @@ function generateBookings({
     };
     id++;
   }
-  console.log('    → finished generateBookings', Object.keys(bookings).length);
+
   return bookings;
 }
 

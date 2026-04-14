@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { DateTime } = require("luxon");
 
+router.param('id', (req, res, next, id) => {
+  req.site_id = id;
+  res.locals.site_id = id;
+  next();
+});
+
 // -----------------------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------------------
