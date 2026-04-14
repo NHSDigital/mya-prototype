@@ -51,18 +51,11 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
-      <span class="nhsuk-caption-l">{{ data.sites[site_id].name }}</span>
-      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
 
       {{ button({
         text: "Create new availability",
         href: "/site/" + site_id + "/create-availability/type-of-session"
-      }) }}
-
-      {{ button({
-        text: "Change availability",
-        href: "/site/" + site_id + "/availability/all",
-        classes: "nhsuk-button--secondary"
       }) }}
 
       <h2 class="nhsuk-heading-m">History of sessions you created</h2>

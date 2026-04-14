@@ -361,27 +361,11 @@ router.get('/site/:id/availability/month', (req, res) => {
 });
 
 router.get('/site/:id/availability/all', (req, res) => { 
-  res.render('site/availability/all', {
-    startDateGroup: req.query.startDateGroup || null,
-    endDateGroup: req.query.endDateGroup || null,
-    newSession: req.query['new-session'] === 'true'
-  });
+  res.redirect(`/site/${req.site_id}/create-availability`);
 });
 
 router.get('/site/:id/availability/all/:groupId', (req, res) => {
-
-  //This is where we start editing journeys
-  //So we need to copy the selected group into session data
-  //That way, we always have access to the session we're editing
-  //without relying on query params or similar
-  const currentGroup = res.locals.availabilityGroups.repeating.concat(res.locals.availabilityGroups.single)
-    .find(g => g.id === req.params.groupId);
-
-  req.session.data.currentGroup = JSON.parse(JSON.stringify(currentGroup));
-
-  res.render('site/availability/group-details', {
-    group: currentGroup
-  });
+  res.redirect(`/site/${req.site_id}/create-availability`);
 });
 
 // -----------------------------------------------------------------------------

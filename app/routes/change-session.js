@@ -57,7 +57,7 @@ router.post('/site/:id/change/:type/:itemId/select-type-of-change', (req, res) =
     const currentGroup = findSessionSnapshot(req.session.data, site_id, itemId);
 
     if (!currentGroup) {
-      return res.redirect(`/site/${site_id}/availability/all`);
+      return res.redirect(`/site/${site_id}/create-availability`);
     }
 
     req.session.data.currentGroup = JSON.parse(JSON.stringify(currentGroup));

@@ -2,7 +2,7 @@
 
 {% block beforeContent %}
 {{ backLink({
-  href: '/site/' ~ site_id ~ '/availability/all/'~ itemId ~'?from='~ data.currentGroup.dates[0] ~'&until='~ data.currentGroup.dates[data.currentGroup.dates | length -1],
+  href: '/site/' ~ site_id ~ '/create-availability',
   text: 'Back'
 }) }}
 {% endblock %}
