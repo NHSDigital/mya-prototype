@@ -15,31 +15,8 @@
   {{ serviceTypes | join(', ') }}
 {% endmacro %}
 
-{% macro daysLabel(group) %}
-  {% if group.type == 'single' %}
-    {{ group.dates[0] | formatDate('ccc') }}
-  {% else %}
-    {% set days = [] %}
-    {% for day, count in group.weekdaySummary %}
-      {% if count > 0 %}
-        {% set days = days.concat([day]) %}
-      {% endif %}
-    {% endfor %}
-
-    {% if days | length == 7 %}
-      All
-    {% else %}
-      {{ days | join(', ') }}
-    {% endif %}
-  {% endif %}
-{% endmacro %}
-
-{% macro dateRangeLabel(group) %}
-  {% if group.type == 'single' %}
-    {{ group.dates[0] | formatDate('d MMM yyyy') }}
-  {% else %}
-    {{ group.dates[0] | formatDate('d MMM yyyy') }} to {{ group.dates[group.dates | length - 1] | formatDate('d MMM yyyy') }}
-  {% endif %}
+{% macro timeLabel(session) %}
+  {{ session.from | nhsTime }} to {{ session.until | nhsTime }}
 {% endmacro %}
 
 {% block beforeContent %}
@@ -62,7 +39,7 @@
       <p class="nhsuk-body">If you cancel a session, it will still show here. To see what people can book, check <a class="nhsuk-link" href="/site/{{ site_id }}/availability/day">View availability</a>.</p>
       <p class="nhsuk-body">Any sessions that ended in the past are hidden.</p>
 
-      {% set sessionHistory = availabilityGroups.repeating.concat(availabilityGroups.single) %}
+      {% set sessionHistory = sessionHistory or [] %}
 
       {% if sessionHistory | length == 0 %}
         {{ insetText({
@@ -70,23 +47,23 @@
         }) }}
       {% endif %}
 
-      {% for group in sessionHistory %}
+      {% for session in sessionHistory %}
         {{ summaryList({
           rows: [
             {
               key: {
-                text: "Dates"
+                text: "Date"
               },
               value: {
-                text: dateRangeLabel(group)
+                text: session.date | formatDate('d MMM yyyy')
               }
             },
             {
               key: {
-                text: "Days"
+                text: "Time"
               },
               value: {
-                text: daysLabel(group)
+                text: timeLabel(session)
               }
             },
             {
@@ -94,15 +71,15 @@
                 text: "Services"
               },
               value: {
-                text: services(group.session.services)
+                text: services(session.services)
               }
             },
             {
               key: {
-                text: "Session type"
+                text: "Capacity"
               },
               value: {
-                text: "Weekly repeating" if group.type == 'repeating' else "Single date"
+                text: session.capacity
               }
             }
           ]

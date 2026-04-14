@@ -1,11 +1,7 @@
 {% extends '../../layouts/layout.html' %}
 
 {% set startDate = data.currentGroup.dates[0] %}
-{% if data.currentGroup['change-matching-availability'] == 'true' %}
-  {% set pageName = startDate | formatDate('d LLLL yyyy')  ~ " and matching sessions" %}
-{% else %}  
-  {% set pageName = startDate | formatDate('d LLLL yyyy') %}
-{% endif %}
+{% set pageName = startDate | formatDate('d LLLL yyyy') %}
 
 
 {% block beforeContent %}

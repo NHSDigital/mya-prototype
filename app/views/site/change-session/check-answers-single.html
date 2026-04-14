@@ -22,29 +22,6 @@
           <dd class="nhsuk-summary-list__value">{{ data.currentGroup.from | nhsTime }} to {{ data.currentGroup.until | nhsTime }} on {{ data.currentGroup.dates[0] | formatDate('cccc, d MMMM yyyy') }}</dd>
         </div>
         <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Cancel multiple sessions</dt>
-          <dd class="nhsuk-summary-list__value">{{ 'Yes' if data['change-matching-availability'] == 'true' }}{{ 'No' if data['change-matching-availability'] == 'false' }}</dd>
-          <dd class="nhsuk-summary-list__actions"><a href="#">Change</a></dd>
-        </div>
-        {% if data['select-date'] is defined %}
-        <div class="nhsuk-summary-list__row">
-          <dt class="nhsuk-summary-list__key">Other sessions that will be cancelled</dt>
-          <dd class="nhsuk-summary-list__value">
-            {% if data['select-all'][0] == 'true' %}
-              {# {{ data['select-date'] | length }} sessions<br> #}
-              {{ data.currentGroup.from | nhsTime }} to {{ data.currentGroup.until | nhsTime }}<br>
-              from {{ data['select-date'][0] | formatDate('cccc, d MMMM yyyy') }}<br>
-              to {{ data['select-date'][data['select-date'] | length - 1] | formatDate('cccc, d MMMM yyyy') }}
-            {% else %}
-            {% for date in data['select-date'] %}
-              {{ data.currentGroup.from | nhsTime }} to {{ data.currentGroup.until | nhsTime }} on {{ date | formatDate('cccc, d MMM yyyy') }}{% if not loop.last %}<br>{% endif %}
-            {% endfor %}
-            {% endif %}
-          </dd>
-          <dd class="nhsuk-summary-list__actions"><a href="#">Change</a></dd>
-        </div>
-        {% endif %}
-        <div class="nhsuk-summary-list__row">
           <dt class="nhsuk-summary-list__key">Cancel affected bookings</dt>
           <dd class="nhsuk-summary-list__value">{{ 'Yes' if data.currentGroup['cancel-bookings'] == 'true' }}{{ 'No' if data.currentGroup['cancel-bookings'] == 'false' }}</dd>
           <dd class="nhsuk-summary-list__actions"><a href="#">Change</a></dd>

@@ -3,11 +3,8 @@ const express = require('express');
 const router = express.Router();
 const { DateTime } = require('luxon');
 
-const { availabilityGroups } = require('../helpers/availabilityGroups');
 const updateDailyAvailability = require('../helpers/updateDailyAvailability');
 const enhanceData = require('../helpers/enhanceData');
-const summarise = require('../helpers/summaries');
-const compareGroups = require('../helpers/compareGroups');
 
 const override_today = process.env.OVERRIDE_TODAY || null;
 
@@ -109,6 +106,36 @@ function buildPersistableSession(newSession) {
   };
 }
 
+function buildSessionHistory(siteDailyAvailability, startDate = null, endDate = null, today = null) {
+  const rows = [];
+
+  for (const day of Object.values(siteDailyAvailability || {})) {
+    const date = day?.date;
+    if (!date) continue;
+    if (today && date < today) continue;
+    if (startDate && date < startDate) continue;
+    if (endDate && date > endDate) continue;
+
+    for (const session of (day.sessions || [])) {
+      rows.push({
+        date,
+        from: session.from,
+        until: session.until,
+        services: session.services || [],
+        capacity: Number(session.capacity) || 0,
+        slotLength: Number(session.slotLength) || 0
+      });
+    }
+  }
+
+  return rows.sort((a, b) => {
+    if (a.date === b.date) {
+      return (a.from || '').localeCompare(b.from || '');
+    }
+    return b.date.localeCompare(a.date);
+  });
+}
+
 // -----------------------------------------------------------------------------
 // PARAM HANDLER – capture site_id once for all /site/:id routes
 // -----------------------------------------------------------------------------
@@ -155,20 +182,9 @@ router.use('/site/:id', (req, res, next) => {
     bookings: { [site_id]: siteBookings }
   });
 
-  //generate groups for this site
-  const groupsForThisSite = availabilityGroups(siteDailyAvailability, from, until)
-  res.locals.availabilityGroups = groupsForThisSite;
-
-  //generate summaries for this site
-  const summaries = summarise({
-    bookings: siteBookings,
-    availability: siteDailyAvailability,
-    groups: groupsForThisSite.repeating.concat(groupsForThisSite.single)
-  });
-  res.locals.summaries = summaries;
-
   // Expose to templates
   res.locals.slots = slots[site_id];
+  res.locals.sessionHistory = buildSessionHistory(siteDailyAvailability, from, until, today);
 
   next();
 });
@@ -371,143 +387,35 @@ router.get('/site/:id/availability/all/:groupId', (req, res) => {
 // -----------------------------------------------------------------------------
 // REMOVE GROUP or SESSION
 // -----------------------------------------------------------------------------
-router.get('/site/:id/remove/:itemId', (req, res) => {
-  const itemId = req.params.itemId;
-
-  //get the group (not session) being removed
-  const group = res.locals.availabilityGroups.repeating
-    .find(g => g.id === itemId)
-
-  res.render('site/remove/select-availability', {
-    group,
-    itemId
-  });
-
+router.all('/site/:id/remove/:itemId', (req, res) => {
+  res.redirect(`/site/${req.site_id}/create-availability`);
 });
 
 router.all('/site/:id/remove/:itemId/do-you-want-to-cancel-bookings', (req, res) => {
-  const itemId = req.params.itemId;
-
-  //get the group (not session) being removed
-  const group = res.locals.availabilityGroups.repeating
-    .find(g => g.id === itemId)
-  
-  res.render('site/remove/do-you-want-to-cancel-bookings', {
-    group,
-    itemId
-  });
+  res.redirect(`/site/${req.site_id}/create-availability`);
 });
 
 router.all('/site/:id/remove/:itemId/check-answers', (req, res) => {
-  const itemId = req.params.itemId;
-
-  //get the group (not session) being removed
-  const group = res.locals.availabilityGroups.repeating
-    .find(g => g.id === itemId)
-  
-  res.render('site/remove/check-answers', {
-    group,
-    itemId
-  });
+  res.redirect(`/site/${req.site_id}/create-availability`);
 });
 
 router.all('/site/:id/remove/:itemId/success', (req, res) => {
-  const itemId = req.params.itemId;
-
-  //remove all matched dates from session
-  const data = req.session.data;
-  data['select-date'] = {};
-
-  res.render('site/remove/success', {
-    itemId
-  });
+  res.redirect(`/site/${req.site_id}/create-availability`);
 });
 
 // -----------------------------------------------------------------------------
 // CONFIRM REMOVE
 // -----------------------------------------------------------------------------
 router.get('/site/:id/remove/:itemId/confirm-remove', (req, res) => {
-  res.render('site/remove/confirm-remove', {
-    itemId: req.params.itemId
-  });
+  res.redirect(`/site/${req.site_id}/create-availability`);
 });
 
 // -----------------------------------------------------------------------------
 // CHANGE GROUP
 // -----------------------------------------------------------------------------
 
-router.get('/site/:id/change/:type/:itemId/time-or-capacity', (req, res) => {
-  res.render('site/change/time-or-capacity', {
-    type: req.params.type,
-    itemId: req.params.itemId
-  });
-});
-
-router.get('/site/:id/change/:type/:itemId/services', (req, res) => {
-  res.render('site/change/services', {
-    type: req.params.type,
-    itemId: req.params.itemId
-  });
-});
-
-router.post('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (req, res) => {
-
-  //compare groups and identify affected bookings
-  const data = req.session.data;
-  const site_id = req.site_id;
-  const editedGroup = data.currentGroup;
-  const originalGroup = res.locals.availabilityGroups.repeating.concat(res.locals.availabilityGroups.single)
-    .find(g => g.id === req.params.itemId);
-
-  const differences = compareGroups(originalGroup, editedGroup, data.bookings[site_id] || []);
-
-  //store comparison results in session data for later steps
-  data.changeComparison = differences;
-  req.session.data = data; //persist back to session
-
-  if(differences.counts.totalAffected === 0) {
-    //no affected bookings – skip to check answers
-    return res.redirect(`/site/${site_id}/change/${req.params.type}/${req.params.itemId}/check-answers`);
-  } 
-
-  //redirect to do-you-want-to-cancel-bookings page
-  res.redirect(`/site/${site_id}/change/${req.params.type}/${req.params.itemId}/do-you-want-to-cancel-bookings`);
-});
-
-router.get('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (req, res) => {
-    const type = req.params.type;
-    const itemId = req.params.itemId;
-
-    res.render('site/change/do-you-want-to-cancel-bookings', {
-      type,
-      itemId
-    });
-  }
-);
-
-//GET route for do-you-want-to-cancel-bookings to allow users to go back and change their answer
-router.get('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings', (req, res) => {
-  res.render('site/change/do-you-want-to-cancel-bookings', {
-    type: req.params.type,
-    itemId: req.params.itemId
-  });
-});
-
-router.all('/site/:id/change/:type/:itemId/check-answers', (req, res) => {
-  console.log('Route hit!', req.params);
-  res.render('site/change/check-answers', {
-    type: req.params.type,
-    itemId: req.params.itemId
-
-  });
-});
-
-router.post('/site/:id/change/:type/:itemId/confirm-change', (req, res) => {
-  res.redirect(`/site/${req.params.id}/change/${req.params.type}/${req.params.itemId}/success`);
-});
-
-router.get('/site/:id/change/:type/:itemId/success', (req, res) => {
-  res.render('site/change/success');
+router.all('/site/:id/change/group/:itemId/:step?', (req, res) => {
+  res.redirect(`/site/${req.site_id}/create-availability`);
 });
 
 // -----------------------------------------------------------------------------

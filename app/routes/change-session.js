@@ -1,10 +1,6 @@
 const express = require('express');
 const router = express.Router();
 
-function getRepeatingGroups(res) {
-  return res.locals.availabilityGroups?.repeating || [];
-}
-
 function findSessionSnapshot(data, siteId, itemId) {
   const siteAvailability = data?.daily_availability?.[siteId] || {};
 
@@ -61,31 +57,18 @@ router.post('/site/:id/change/:type/:itemId/select-type-of-change', (req, res) =
     }
 
     req.session.data.currentGroup = JSON.parse(JSON.stringify(currentGroup));
-    return res.redirect(`/site/${site_id}/change/${type}/${itemId}/is-this-part-of-a-group`);
+    return res.redirect(`/site/${site_id}/change/${type}/${itemId}/do-you-want-to-cancel-bookings-single`);
   }
 
   return res.redirect(`/site/${site_id}/change/${type}/${itemId}`);
 });
 
 router.get('/site/:id/change/:type/:itemId/is-this-part-of-a-group', (req, res) => {
-  const site_id = req.site_id;
-  const itemId = req.params.itemId;
-
-  const isPartOfGroup = getRepeatingGroups(res)
-    .some((g) => g.sessionIds.includes(itemId));
-
-  if (isPartOfGroup) {
-    return res.redirect(`/site/${site_id}/change/${req.params.type}/${itemId}/matching-availability`);
-  }
-
-  return res.redirect(`/site/${site_id}/change/${req.params.type}/${itemId}/do-you-want-to-cancel-bookings-single`);
+  return res.redirect(`/site/${req.site_id}/change/${req.params.type}/${req.params.itemId}/do-you-want-to-cancel-bookings-single`);
 });
 
 router.get('/site/:id/change/:type/:itemId/matching-availability', (req, res) => {
-  res.render('site/change-session/matching-availability', {
-    type: req.params.type,
-    itemId: req.params.itemId
-  });
+  res.redirect(`/site/${req.site_id}/change/${req.params.type}/${req.params.itemId}/do-you-want-to-cancel-bookings-single`);
 });
 
 router.get('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings-single', (req, res) => {
@@ -96,24 +79,11 @@ router.get('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings-single
 });
 
 router.post('/site/:id/change/:type/:itemId/change-matching-availability', (req, res) => {
-  const changeMatchingAvailability = req.body['change-matching-availability'];
-
-  if (changeMatchingAvailability === 'true' || changeMatchingAvailability === true) {
-    return res.redirect(`/site/${req.site_id}/change/${req.params.type}/${req.params.itemId}/select-matching-availability`);
-  }
-
   return res.redirect(`/site/${req.site_id}/change/${req.params.type}/${req.params.itemId}/do-you-want-to-cancel-bookings-single`);
 });
 
 router.get('/site/:id/change/:type/:itemId/select-matching-availability', (req, res) => {
-  const group = getRepeatingGroups(res)
-    .find((g) => g.sessionIds.includes(req.params.itemId));
-
-  res.render('site/change-session/select-matching-availability', {
-    type: req.params.type,
-    itemId: req.params.itemId,
-    group
-  });
+  res.redirect(`/site/${req.site_id}/change/${req.params.type}/${req.params.itemId}/do-you-want-to-cancel-bookings-single`);
 });
 
 router.get('/site/:id/change/:type/:itemId/check-answers-single', (req, res) => {
