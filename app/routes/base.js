@@ -61,10 +61,12 @@ function ensureCreateSession(data) {
 }
 
 function toDateObject(dateInput) {
+  const fallback = DateTime.now();
+
   return {
-    day: String(dateInput?.day || ''),
-    month: String(dateInput?.month || ''),
-    year: String(dateInput?.year || '')
+    day: String(dateInput?.day || fallback.day),
+    month: String(dateInput?.month || fallback.month),
+    year: String(dateInput?.year || fallback.year)
   };
 }
 
@@ -282,7 +284,7 @@ router.all('/site/:id/create-availability/check-answers', (req, res) => {
   res.render('site/create-availability/check-answers');
 });
 
-router.get('/site/:id/create-availability/process-new-session', (req, res) => {
+router.all('/site/:id/create-availability/process-new-session', (req, res) => {
   const data = req.session.data;
   const site_id = req.site_id;
   const newSession = ensureCreateSession(data);
@@ -293,15 +295,15 @@ router.get('/site/:id/create-availability/process-new-session', (req, res) => {
 
   const persistableSession = buildPersistableSession(newSession);
 
-  if (!persistableSession.startDate.year || !persistableSession.endDate.year) {
-    return res.redirect(`/site/${site_id}/create-availability/dates`);
-  }
-
   // Update daily availability for this site
   data.daily_availability = updateDailyAvailability(persistableSession, data.daily_availability, site_id);
   delete data.newSession;
 
-  res.redirect(`/site/${site_id}/availability/all?new-session=true`);
+  res.redirect(`/site/${site_id}/create-availability/success`);
+});
+
+router.get('/site/:id/create-availability/success', (req, res) => {
+  res.render('site/create-availability/success');
 });
 
 
