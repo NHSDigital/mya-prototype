@@ -1,10 +1,10 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = "Select days to add to your weekly session" %}
+{% set pageName = "Select days to add to your clinic series" %}
 
 {% block beforeContent %}
 {{ backLink({
-  href: '/site/' + site_id + '/create-availability/dates'
+  href: '/site/' + site_id + '/clinics/dates'
 }) }}
 {% endblock %}
 
@@ -13,9 +13,9 @@
 
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Add availability</span>
+      <span class="nhsuk-caption-l">Clinics</span>
 
-      <form action="/site/{{ site_id }}/create-availability/time-and-capacity" method="post">
+      <form action="/site/{{ site_id }}/clinics/time-and-capacity" method="post">
 
         {{ checkboxes({
           idPrefix: "days",

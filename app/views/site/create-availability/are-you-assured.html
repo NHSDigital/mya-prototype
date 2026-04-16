@@ -4,7 +4,7 @@
 
 {% block beforeContent %}
 {{ backLink({
-  href: '/site/' + site_id + '/create-availability/services'
+  href: '/site/' + site_id + '/clinics/services'
 }) }}
 {% endblock %}
 
@@ -13,9 +13,9 @@
 
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Add availability</span>
+      <span class="nhsuk-caption-l">Clinics</span>
 
-      <form action="/site/{{ site_id }}/create-availability/check-assurance" method="post">
+      <form action="/site/{{ site_id }}/clinics/check-assurance" method="post">
         <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
         <p>You have added the following services:</p>

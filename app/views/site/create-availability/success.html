@@ -1,6 +1,6 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = 'Availability created' %}
+{% set pageName = 'Clinic created' %}
 
 {% block content %}
   <div class="nhsuk-grid-row">
@@ -10,15 +10,15 @@
       }) }}
 
       <h2 class="nhsuk-heading-m">What happens next</h2>
-      <p>You can review and change this availability from the availability screens.</p>
+      <p>You can review and change this clinic from the availability screens.</p>
 
       {{ insetText({
-        text: 'People will now be able to book appointments in this availability.'
+        text: 'People will now be able to book appointments in this clinic.'
       }) }}
 
       <ul class="nhsuk-list nhsuk-list--bullet">
         <li><a href="/site/{{ site_id }}/availability/day">View availability</a></li>
-        <li><a href="/site/{{ site_id }}/create-availability">Create more availability</a></li>
+        <li><a href="/site/{{ site_id }}/clinics">Create more clinics</a></li>
       </ul>
     </div>
   </div>

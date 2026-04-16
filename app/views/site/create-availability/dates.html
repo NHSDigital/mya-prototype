@@ -1,7 +1,7 @@
 {% extends '../../layouts/layout.html' %}
 
 {% set pageName = "Add start and end dates" %}
-{% if data.newSession.type == "Single date" %}{% set pageName = "Add a date for your session" %}{% endif %}
+{% if data.newSession.type == "Single clinic" %}{% set pageName = "Add a date for your clinic" %}{% endif %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -14,21 +14,21 @@
 
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Add availability</span>
+      <span class="nhsuk-caption-l">Clinics</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
-      {% set next = "/site/"+ site_id +"/create-availability/days" %}
-      {% if data.newSession.type == "Single date" %}{% set next = "/site/"+ site_id +"/create-availability/time-and-capacity" %}{% endif %}
+      {% set next = "/site/"+ site_id +"/clinics/days" %}
+      {% if data.newSession.type == "Single clinic" %}{% set next = "/site/"+ site_id +"/clinics/time-and-capacity" %}{% endif %}
 
       <form action="{{ next }}" method="post">
 
-        {% if data.newSession.type == "Single date" %}
+        {% if data.newSession.type == "Single clinic" %}
           {{ dateInput({
             id: "single-date",
             namePrefix: "newSession[singleDate]",
             fieldset: {
               legend: {
-                text: "Session date",
+                text: "Clinic date",
                 classes: "nhsuk-label--m"
               }
             },

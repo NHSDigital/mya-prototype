@@ -19,11 +19,18 @@ function asArray(value) {
   return [value];
 }
 
+function normalizeSessionType(type) {
+  if (type === 'Single date') return 'Single clinic';
+  if (type === 'Weekly session' || type === 'Weekly sessions' || type === 'Weekly repeating') return 'Clinic series';
+  return type || 'Clinic series';
+}
+
 function ensureCreateSession(data) {
   const current = data.newSession || {};
+  const sessionType = normalizeSessionType(current.type);
 
   const session = {
-    type: current.type || 'Weekly session',
+    type: sessionType,
     startDate: {
       day: current.startDate?.day || '',
       month: current.startDate?.month || '',
@@ -75,8 +82,8 @@ function toTimeString(timeInput) {
 }
 
 function buildPersistableSession(newSession) {
-  const mode = newSession.type || 'Weekly session';
-  const isSingleDate = mode === 'Single date';
+  const mode = normalizeSessionType(newSession.type);
+  const isSingleDate = mode === 'Single clinic';
   const startDate = isSingleDate ? toDateObject(newSession.singleDate) : toDateObject(newSession.startDate);
   const endDate = isSingleDate ? toDateObject(newSession.singleDate) : toDateObject(newSession.endDate);
   const startTime = toTimeString(newSession.startTime);
@@ -116,8 +123,8 @@ function toIsoDate(dateParts) {
 }
 
 function toByDay(newSession, startDateISO) {
-  const mode = newSession.type || 'Weekly session';
-  if (mode === 'Single date') {
+  const mode = normalizeSessionType(newSession.type);
+  if (mode === 'Single clinic') {
     const day = DateTime.fromISO(startDateISO).toFormat('cccc');
     return [day];
   }
@@ -126,13 +133,13 @@ function toByDay(newSession, startDateISO) {
 }
 
 function buildSessionLabel(byDay, fromTime) {
-  if (!byDay || byDay.length === 0) return `Session ${fromTime}`;
-  return `${byDay.join(', ')} session ${fromTime}`;
+  if (!byDay || byDay.length === 0) return `Clinic series ${fromTime}`;
+  return `${byDay.join(', ')} clinic series ${fromTime}`;
 }
 
 function buildRecurringSessionModel(newSession) {
-  const mode = newSession.type || 'Weekly session';
-  const isSingleDate = mode === 'Single date';
+  const mode = normalizeSessionType(newSession.type);
+  const isSingleDate = mode === 'Single clinic';
 
   const startDateISO = isSingleDate ? toIsoDate(newSession.singleDate) : toIsoDate(newSession.startDate);
   const endDateISO = isSingleDate ? toIsoDate(newSession.singleDate) : toIsoDate(newSession.endDate);
@@ -312,85 +319,99 @@ router.get('/site/:id', (req, res) => {
 
 
 // -----------------------------------------------------------------------------
-// CREATE AVAILABILITY
+// CLINICS
 // -----------------------------------------------------------------------------
-router.get('/site/:id/create-availability', (req, res) => {
+router.get('/site/:id/clinics', (req, res) => {
   ensureCreateSession(req.session.data);
   res.render('site/create-availability/create-availability');
 });
 
-router.all('/site/:id/create-availability/type-of-session', (req, res) => {
+router.all('/site/:id/clinics/type-of-session', (req, res) => {
   ensureCreateSession(req.session.data);
   res.render('site/create-availability/type-of-session');
 });
 
-router.all('/site/:id/create-availability/dates', (req, res) => {
+router.all('/site/:id/clinics/dates', (req, res) => {
   ensureCreateSession(req.session.data);
   res.render('site/create-availability/dates');
 });
 
-router.all('/site/:id/create-availability/days', (req, res) => {
+router.all('/site/:id/clinics/days', (req, res) => {
   ensureCreateSession(req.session.data);
   res.render('site/create-availability/days');
 });
 
-router.all('/site/:id/create-availability/time-and-capacity', (req, res) => {
+router.all('/site/:id/clinics/time-and-capacity', (req, res) => {
   ensureCreateSession(req.session.data);
   res.render('site/create-availability/time-and-capacity');
 });
 
-router.all('/site/:id/create-availability/services', (req, res) => {
+router.all('/site/:id/clinics/services', (req, res) => {
   ensureCreateSession(req.session.data);
   res.render('site/create-availability/services', {
     ...req.query
   });
 });
 
-router.all('/site/:id/create-availability/are-you-assured', (req, res) => {
+router.all('/site/:id/clinics/are-you-assured', (req, res) => {
   ensureCreateSession(req.session.data);
   res.render('site/create-availability/are-you-assured');
 });
 
-router.post('/site/:id/create-availability/check-assurance', (req, res) => {
+router.post('/site/:id/clinics/check-assurance', (req, res) => {
   ensureCreateSession(req.session.data);
   const assured = req.body?.newSession?.areYouAssured || req.session.data.newSession.areYouAssured;
 
   if (assured === 'yes') {
-    return res.redirect(`/site/${req.site_id}/create-availability/check-answers`);
+    return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
   } else {
-    return res.redirect(`/site/${req.site_id}/create-availability/not-assured`);
+    return res.redirect(`/site/${req.site_id}/clinics/not-assured`);
   }
 });
 
-router.all('/site/:id/create-availability/not-assured', (req, res) => {
+router.all('/site/:id/clinics/not-assured', (req, res) => {
   ensureCreateSession(req.session.data);
   res.render('site/create-availability/not-assured');
 })
 
-router.all('/site/:id/create-availability/check-answers', (req, res) => {
+router.all('/site/:id/clinics/check-answers', (req, res) => {
   ensureCreateSession(req.session.data);
   res.render('site/create-availability/check-answers');
 });
 
-router.all('/site/:id/create-availability/process-new-session', (req, res) => {
+router.all('/site/:id/clinics/process-new-session', (req, res) => {
   const data = req.session.data;
   const site_id = req.site_id;
   const newSession = ensureCreateSession(data);
 
   if (!newSession) {
-    return res.redirect(`/site/${site_id}/create-availability?new-session=false`);
+    return res.redirect(`/site/${site_id}/clinics?new-session=false`);
   }
 
   const recurringSession = buildRecurringSessionModel(newSession);
   persistRecurringSession(data, site_id, recurringSession);
   delete data.newSession;
 
-  res.redirect(`/site/${site_id}/create-availability/success`);
+  res.redirect(`/site/${site_id}/clinics/success`);
 });
 
-router.get('/site/:id/create-availability/success', (req, res) => {
+router.get('/site/:id/clinics/success', (req, res) => {
   res.render('site/create-availability/success');
 });
+
+// Legacy create-availability URLs
+router.get('/site/:id/create-availability', (req, res) => res.redirect(`/site/${req.site_id}/clinics`));
+router.all('/site/:id/create-availability/type-of-session', (req, res) => res.redirect(`/site/${req.site_id}/clinics/type-of-session`));
+router.all('/site/:id/create-availability/dates', (req, res) => res.redirect(`/site/${req.site_id}/clinics/dates`));
+router.all('/site/:id/create-availability/days', (req, res) => res.redirect(`/site/${req.site_id}/clinics/days`));
+router.all('/site/:id/create-availability/time-and-capacity', (req, res) => res.redirect(`/site/${req.site_id}/clinics/time-and-capacity`));
+router.all('/site/:id/create-availability/services', (req, res) => res.redirect(`/site/${req.site_id}/clinics/services`));
+router.all('/site/:id/create-availability/are-you-assured', (req, res) => res.redirect(`/site/${req.site_id}/clinics/are-you-assured`));
+router.all('/site/:id/create-availability/check-answers', (req, res) => res.redirect(`/site/${req.site_id}/clinics/check-answers`));
+router.all('/site/:id/create-availability/not-assured', (req, res) => res.redirect(`/site/${req.site_id}/clinics/not-assured`));
+router.post('/site/:id/create-availability/check-assurance', (req, res) => res.redirect(`/site/${req.site_id}/clinics/check-assurance`));
+router.all('/site/:id/create-availability/process-new-session', (req, res) => res.redirect(`/site/${req.site_id}/clinics/process-new-session`));
+router.get('/site/:id/create-availability/success', (req, res) => res.redirect(`/site/${req.site_id}/clinics/success`));
 
 router.get('/site/:id/debug/recurring-expansion', (req, res) => {
   const data = req.session.data;

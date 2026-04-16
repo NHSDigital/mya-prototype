@@ -4,8 +4,8 @@
 
 {% block beforeContent %}
 {{ backLink({
-  href: '/site/' ~ site_id ~ '/create-availability',
-  text: 'Back to create availability'
+  href: '/site/' ~ site_id ~ '/clinics',
+  text: 'Back to clinics'
 }) }}
 {% endblock %}
 
@@ -36,7 +36,7 @@
       {% if not selected %}
         {{ warningCallout({
           heading: 'No recurring session found',
-          text: 'Create availability first, then return to this debug page.'
+          text: 'Clinics first, then return to this debug page.'
         }) }}
       {% else %}
         <h2 class="nhsuk-heading-m">Expanded dates</h2>

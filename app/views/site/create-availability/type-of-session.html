@@ -1,46 +1,46 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = "What type of session do you want to create?" %}
+{% set pageName = "What type of clinic do you want to create?" %}
 
 {% block beforeContent %}
 {{ backLink({
-  href: '/site/' + site_id + '/create-availability'
+  href: '/site/' + site_id + '/clinics'
 }) }}
 {% endblock %}
 
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Add availability</span>
+      <span class="nhsuk-caption-l">Clinics</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
-      <p>You can create weekly or single date sessions, to cover:</p>
+      <p>You can create a clinic series or a single clinic, to cover:</p>
       <ul class="nhsuk-list nhsuk-list--bullet">
         <li>Vaccinator availability</li>
         <li>Type of vaccine available</li>
       </ul>
 
-      <form action="/site/{{ site_id }}/create-availability/dates" method="post">
+      <form action="/site/{{ site_id }}/clinics/dates" method="post">
 
         {{ radios({
           idPrefix: "type-of-session",
           name: "newSession[type]",
           items: [
             {
-              value: "Weekly repeating",
-              text: "Weekly sessions",
+              value: "Clinic series",
+              text: "Clinic series",
               hint: {
-                text: "Sessions that run at the same times every week"
+                text: "Clinics that run at the same times every week"
               },
-              checked: true if data.newSession.type == 'Weekly sessions'
+              checked: true if data.newSession.type == 'Clinic series'
 
             },
             {
-              value: "Single date",
-              text: "Single date session",
+              value: "Single clinic",
+              text: "Single clinic",
               hint: {
-                text: "Sessions that run on one day and don't repeat"
+                text: "A clinic that runs on one day and does not repeat"
               },
-              checked: true if data.newSession.type == 'Single date'
+              checked: true if data.newSession.type == 'Single clinic'
             }
           ]
         }) }}

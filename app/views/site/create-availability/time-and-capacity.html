@@ -1,9 +1,9 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = "Set time and capacity for your session" %}
+{% set pageName = "Set time and capacity for your clinic" %}
 
-{% set backUrl = '/site/' + site_id + '/create-availability/days' %}
-{% if data.newSession.type == "Single date" %}{% set backUrl = '/site/' + site_id + '/create-availability/dates' %}{% endif %}
+{% set backUrl = '/site/' + site_id + '/clinics/days' %}
+{% if data.newSession.type == "Single clinic" %}{% set backUrl = '/site/' + site_id + '/clinics/dates' %}{% endif %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -16,10 +16,10 @@
 
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Add availability</span>
+      <span class="nhsuk-caption-l">Clinics</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
-      <form action="/site/{{ site_id }}/create-availability/services" method="post">
+      <form action="/site/{{ site_id }}/clinics/services" method="post">
         {{ dateInput({
             id: "start-time",
             namePrefix: "newSession[startTime]",

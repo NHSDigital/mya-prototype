@@ -104,9 +104,9 @@ const base = {
         hrefTemplate: '/site/:id/availability/day'
       },
       {
-        text: 'Create availability',
-        description: 'Create new availability and review recently created sessions',
-        hrefTemplate: '/site/:id/create-availability'
+        text: 'Manage clinics',
+        description: 'Create clinics and review recently created clinic series',
+        hrefTemplate: '/site/:id/clinics'
       },
       {
         text: 'Change site details',
@@ -180,7 +180,7 @@ function buildRecurringDefaults({ site_id, start, end, patterns = {} }) {
     const id = stableId(`${site_id}-${start}-${end}-${record.from}-${record.until}-${record.services.join('|')}-${record.capacity}-${record.slotLength}`);
     output[id] = {
       id,
-      label: `${record.byDay.join(', ')} session ${record.from}`,
+      label: `${record.byDay.join(', ')} clinic series ${record.from}`,
       startDate: start,
       endDate: end,
       recurrencePattern: {

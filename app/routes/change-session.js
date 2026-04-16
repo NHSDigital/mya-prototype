@@ -25,7 +25,7 @@ router.param('id', (req, res, next, id) => {
 });
 
 // -----------------------------------------------------------------------------
-// CHANGE SINGLE SESSION
+// CHANGE SINGLE CLINIC
 // -----------------------------------------------------------------------------
 router.get('/site/:id/change/:type/:itemId', (req, res) => {
   res.render(`site/change-${req.params.type}/index`, {
@@ -53,7 +53,7 @@ router.post('/site/:id/change/:type/:itemId/select-type-of-change', (req, res) =
     const currentGroup = findSessionSnapshot(req.session.data, site_id, itemId);
 
     if (!currentGroup) {
-      return res.redirect(`/site/${site_id}/create-availability`);
+      return res.redirect(`/site/${site_id}/clinics`);
     }
 
     req.session.data.currentGroup = JSON.parse(JSON.stringify(currentGroup));

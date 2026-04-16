@@ -1,6 +1,6 @@
 {% extends '../../layouts/layout.html' %}
 
-{% set pageName = "Create availability" %}
+{% set pageName = "Clinics" %}
 
 {% macro services(service_ids) %}
   {% set serviceTypes = [] %}
@@ -39,19 +39,19 @@
       <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
 
       {{ button({
-        text: "Create new availability",
-        href: "/site/" + site_id + "/create-availability/type-of-session"
+        text: "Create new clinic",
+        href: "/site/" + site_id + "/clinics/type-of-session"
       }) }}
 
-      <h2 class="nhsuk-heading-m">History of sessions you created</h2>
-      <p class="nhsuk-body">If you cancel a session, it will still show here. To see what people can book, check <a class="nhsuk-link" href="/site/{{ site_id }}/availability/day">View availability</a>.</p>
-      <p class="nhsuk-body">Any sessions that ended in the past are hidden.</p>
+      <h2 class="nhsuk-heading-m">History of clinics you created</h2>
+      <p class="nhsuk-body">If you cancel a clinic, it will still show here. To see what people can book, check <a class="nhsuk-link" href="/site/{{ site_id }}/availability/day">View availability</a>.</p>
+      <p class="nhsuk-body">Any clinics that ended in the past are hidden.</p>
 
       {% set sessionHistory = sessionHistory or [] %}
 
       {% if sessionHistory | length == 0 %}
         {{ insetText({
-          text: "No sessions have been created yet."
+          text: "No clinics have been created yet."
         }) }}
       {% endif %}
 
