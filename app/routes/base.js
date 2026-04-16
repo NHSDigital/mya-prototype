@@ -2,9 +2,10 @@
 const express = require('express');
 const router = express.Router();
 const { DateTime } = require('luxon');
+const { randomUUID } = require('crypto');
 
-const updateDailyAvailability = require('../helpers/updateDailyAvailability');
 const enhanceData = require('../helpers/enhanceData');
+const mergeDailyAvailability = require('../helpers/recurringToDailyAvailability');
 
 const override_today = process.env.OVERRIDE_TODAY || null;
 
@@ -106,26 +107,94 @@ function buildPersistableSession(newSession) {
   };
 }
 
-function buildSessionHistory(siteDailyAvailability, startDate = null, endDate = null, today = null) {
+function toIsoDate(dateParts) {
+  return DateTime.fromObject({
+    day: +dateParts.day,
+    month: +dateParts.month,
+    year: +dateParts.year
+  }).toISODate();
+}
+
+function toByDay(newSession, startDateISO) {
+  const mode = newSession.type || 'Weekly session';
+  if (mode === 'Single date') {
+    const day = DateTime.fromISO(startDateISO).toFormat('cccc');
+    return [day];
+  }
+
+  return asArray(newSession.days);
+}
+
+function buildSessionLabel(byDay, fromTime) {
+  if (!byDay || byDay.length === 0) return `Session ${fromTime}`;
+  return `${byDay.join(', ')} session ${fromTime}`;
+}
+
+function buildRecurringSessionModel(newSession) {
+  const mode = newSession.type || 'Weekly session';
+  const isSingleDate = mode === 'Single date';
+
+  const startDateISO = isSingleDate ? toIsoDate(newSession.singleDate) : toIsoDate(newSession.startDate);
+  const endDateISO = isSingleDate ? toIsoDate(newSession.singleDate) : toIsoDate(newSession.endDate);
+  const byDay = toByDay(newSession, startDateISO);
+
+  const from = toTimeString(newSession.startTime);
+  const until = toTimeString(newSession.endTime);
+  const slotLength = Number(newSession.duration) || 10;
+  const capacity = Number(newSession.capacity) || 1;
+  const services = asArray(newSession.services);
+
+  return {
+    id: randomUUID().split('-')[0],
+    label: buildSessionLabel(byDay, from),
+    startDate: startDateISO,
+    endDate: endDateISO,
+    recurrencePattern: {
+      frequency: 'Weekly',
+      interval: 1,
+      byDay
+    },
+    from,
+    until,
+    slotLength,
+    services,
+    capacity,
+    exclusionTimes: [],
+    exclusionDateRanges: [],
+    overrideDates: []
+  };
+}
+
+function persistRecurringSession(data, site_id, model) {
+  data.recurring_sessions = data.recurring_sessions || {};
+  data.recurring_sessions[site_id] = data.recurring_sessions[site_id] || {};
+  data.recurring_sessions[site_id][model.id] = model;
+}
+
+function buildSessionHistory(siteRecurringSessions, startDate = null, endDate = null, today = null) {
   const rows = [];
 
-  for (const day of Object.values(siteDailyAvailability || {})) {
-    const date = day?.date;
-    if (!date) continue;
-    if (today && date < today) continue;
-    if (startDate && date < startDate) continue;
-    if (endDate && date > endDate) continue;
+  for (const session of Object.values(siteRecurringSessions || {})) {
+    const sessionStart = session?.startDate;
+    const sessionEnd = session?.endDate || sessionStart;
+    if (!sessionStart || !sessionEnd) continue;
 
-    for (const session of (day.sessions || [])) {
-      rows.push({
-        date,
-        from: session.from,
-        until: session.until,
-        services: session.services || [],
-        capacity: Number(session.capacity) || 0,
-        slotLength: Number(session.slotLength) || 0
-      });
-    }
+    // Keep recurring sessions visible while they are still active.
+    if (today && sessionEnd < today) continue;
+
+    // Keep sessions that overlap the requested filter window.
+    if (startDate && sessionEnd < startDate) continue;
+    if (endDate && sessionStart > endDate) continue;
+
+    rows.push({
+      date: sessionStart,
+      endDate: sessionEnd,
+      from: session.from,
+      until: session.until,
+      services: session.services || [],
+      capacity: Number(session.capacity) || 0,
+      slotLength: Number(session.slotLength) || 0
+    });
   }
 
   return rows.sort((a, b) => {
@@ -174,17 +243,20 @@ router.use('/site/:id', (req, res, next) => {
   }
 
   const siteDailyAvailability = data.daily_availability?.[site_id] || {};
+  const siteRecurringSessions = data.recurring_sessions?.[site_id] || {};
   const siteBookings = data.bookings?.[site_id] || {};
+  const effectiveDailyAvailability = mergeDailyAvailability(siteDailyAvailability, site_id, siteRecurringSessions);
 
   // Generate slots data for this site
   const slots = enhanceData({
-    daily_availability: { [site_id]: siteDailyAvailability },
+    daily_availability: { [site_id]: effectiveDailyAvailability },
     bookings: { [site_id]: siteBookings }
   });
 
   // Expose to templates
   res.locals.slots = slots[site_id];
-  res.locals.sessionHistory = buildSessionHistory(siteDailyAvailability, from, until, today);
+  res.locals.dailyAvailability = effectiveDailyAvailability;
+  res.locals.sessionHistory = buildSessionHistory(siteRecurringSessions, from, until, today);
 
   next();
 });
@@ -309,10 +381,8 @@ router.all('/site/:id/create-availability/process-new-session', (req, res) => {
     return res.redirect(`/site/${site_id}/create-availability?new-session=false`);
   }
 
-  const persistableSession = buildPersistableSession(newSession);
-
-  // Update daily availability for this site
-  data.daily_availability = updateDailyAvailability(persistableSession, data.daily_availability, site_id);
+  const recurringSession = buildRecurringSessionModel(newSession);
+  persistRecurringSession(data, site_id, recurringSession);
   delete data.newSession;
 
   res.redirect(`/site/${site_id}/create-availability/success`);
@@ -320,6 +390,33 @@ router.all('/site/:id/create-availability/process-new-session', (req, res) => {
 
 router.get('/site/:id/create-availability/success', (req, res) => {
   res.render('site/create-availability/success');
+});
+
+router.get('/site/:id/debug/recurring-expansion', (req, res) => {
+  const data = req.session.data;
+  const site_id = req.site_id;
+  const recurringSessions = data?.recurring_sessions?.[site_id] || {};
+  const records = Object.values(recurringSessions);
+
+  const requestedId = req.query.id;
+  const selected = records.find((session) => session.id === requestedId) || records[0] || null;
+  const expandedDates = [];
+
+  if (selected) {
+    for (const [date, day] of Object.entries(res.locals.dailyAvailability || {})) {
+      const hasMatch = (day.sessions || []).some((session) => session.recurringId === selected.id);
+      if (hasMatch) expandedDates.push(date);
+    }
+  }
+
+  expandedDates.sort();
+
+  res.render('site/debug/recurring-expansion', {
+    sessionCount: records.length,
+    selected,
+    expandedDates,
+    selectedJson: selected ? JSON.stringify(selected, null, 2) : ''
+  });
 });
 
 
@@ -414,7 +511,11 @@ router.get('/site/:id/remove/:itemId/confirm-remove', (req, res) => {
 // CHANGE GROUP
 // -----------------------------------------------------------------------------
 
-router.all('/site/:id/change/group/:itemId/:step?', (req, res) => {
+router.all('/site/:id/change/group/:itemId', (req, res) => {
+  res.redirect(`/site/${req.site_id}/create-availability`);
+});
+
+router.all('/site/:id/change/group/:itemId/:step', (req, res) => {
   res.redirect(`/site/${req.site_id}/create-availability`);
 });
 

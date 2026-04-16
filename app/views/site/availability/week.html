@@ -59,10 +59,10 @@
 
     <div class="nhsuk-table__panel-with-heading-tab {% if inThePast %} app-table__panel-with-heading-tab--past{% endif %}">
       <h2 class="nhsuk-table__heading-tab">{% if inThePast %}<span class="nhsuk-u-visually-hidden">Date in the past: </span>{% endif %}{{ day | formatDate('cccc, d LLLL') }}{% if day == today %} (today){% endif %}</h2>
-      {% if data.daily_availability[site_id][day] %}
+        {% if dailyAvailability[day] %}
        {{ renderServicesTable({
           date: day, 
-          sessions: data.daily_availability[site_id][day].sessions,
+          sessions: dailyAvailability[day].sessions,
           slots: slots,
           site_id: site_id,
           data: data,

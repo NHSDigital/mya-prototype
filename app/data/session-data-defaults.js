@@ -1,6 +1,7 @@
 const generateAvailability = require('./_lib/generateAvailability');
 const generateSlots = require('./_lib/generateSlots');
 const generateBookings = require('./_lib/generateBookings');
+const { stableId } = require('./_lib/utils');
 const catNames = require('./_lib/catNames');
 const site1Config = require('./site1.config');
 
@@ -144,6 +145,62 @@ const sitesConfig = [site1Config];
 const daily_availability = {};
 const bookings = {};
 const sites = {};
+const recurring_sessions = {};
+
+function buildRecurringDefaults({ site_id, start, end, patterns = {} }) {
+  const grouped = new Map();
+
+  for (const [dayName, sessions] of Object.entries(patterns)) {
+    for (const session of (sessions || [])) {
+      const normalized = {
+        from: session.from,
+        until: session.until,
+        slotLength: Number(session.slotLength) || 10,
+        services: session.services || [],
+        capacity: Number(session.capacity) || 1
+      };
+
+      const signature = JSON.stringify(normalized);
+      if (!grouped.has(signature)) {
+        grouped.set(signature, {
+          ...normalized,
+          byDay: []
+        });
+      }
+
+      const bucket = grouped.get(signature);
+      if (!bucket.byDay.includes(dayName)) {
+        bucket.byDay.push(dayName);
+      }
+    }
+  }
+
+  const output = {};
+  for (const record of grouped.values()) {
+    const id = stableId(`${site_id}-${start}-${end}-${record.from}-${record.until}-${record.services.join('|')}-${record.capacity}-${record.slotLength}`);
+    output[id] = {
+      id,
+      label: `${record.byDay.join(', ')} session ${record.from}`,
+      startDate: start,
+      endDate: end,
+      recurrencePattern: {
+        frequency: 'Weekly',
+        interval: 1,
+        byDay: record.byDay
+      },
+      from: record.from,
+      until: record.until,
+      slotLength: record.slotLength,
+      services: record.services,
+      capacity: record.capacity,
+      exclusionTimes: [],
+      exclusionDateRanges: [],
+      overrideDates: []
+    };
+  }
+
+  return output;
+}
 
 for (const cfg of sitesConfig) {
   const { site, start, end, patterns, overrides, bookings: bookingConfig } = cfg;
@@ -163,6 +220,7 @@ for (const cfg of sitesConfig) {
   daily_availability[site_id] = availability;
   bookings[site_id] = bookingData;
   sites[site_id] = site;
+  recurring_sessions[site_id] = buildRecurringDefaults({ site_id, start, end, patterns });
 }
 
 
@@ -170,5 +228,6 @@ module.exports = {
   ...base,
   sites,
   daily_availability,
-  bookings
+  bookings,
+  recurring_sessions
 };

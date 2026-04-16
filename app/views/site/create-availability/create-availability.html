@@ -19,6 +19,14 @@
   {{ session.from | nhsTime }} to {{ session.until | nhsTime }}
 {% endmacro %}
 
+{% macro dateLabel(session) %}
+  {% if session.endDate and session.endDate != session.date %}
+    {{ session.date | formatDate('d MMM yyyy') }} to {{ session.endDate | formatDate('d MMM yyyy') }}
+  {% else %}
+    {{ session.date | formatDate('d MMM yyyy') }}
+  {% endif %}
+{% endmacro %}
+
 {% block beforeContent %}
 {{ backLink({
   href: '/site/' + site_id
@@ -52,10 +60,10 @@
           rows: [
             {
               key: {
-                text: "Date"
+                text: "Dates"
               },
               value: {
-                text: session.date | formatDate('d MMM yyyy')
+                text: dateLabel(session)
               }
             },
             {
