@@ -1,0 +1,168 @@
+{% extends '../../../layouts/layout.html' %}
+
+{% set pageName = "Check your answers" %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/clinics/services'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Create clinic series</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <form action="/site/{{ site_id }}/clinics/process-new-session" method="post">
+        {% set startDate -%}
+          {{ data.newSession.startDate.year }}-{{ data.newSession.startDate.month }}-{{ data.newSession.startDate.day }}
+        {%- endset %}
+        {% set endDate -%}
+          {{ data.newSession.endDate.year }}-{{ data.newSession.endDate.month }}-{{ data.newSession.endDate.day }}
+        {%- endset %}
+        {% set displayDate -%}
+          {{ startDate | formatDate }} to {{ endDate | formatDate }}
+        {%- endset %}
+
+        {% set displayDays = data.newSession.days or [] | join(", ") %}
+
+        {% set startTime -%}
+          {{ data.newSession.startTime.hour }}:{{ data.newSession.startTime.minute | default("00") }}
+        {%- endset %}
+        {% set endTime -%}
+          {{ data.newSession.endTime.hour }}:{{ data.newSession.endTime.minute | default("00") }}
+        {%- endset %}
+        {% set displayTime = startTime + " to " + endTime %}
+
+        {% set servicesAvailable = [] %}
+        {% set selectedServices = data.newSession.services or [] %}
+        {% if selectedServices is string %}
+          {% set selectedServices = [selectedServices] %}
+        {% endif %}
+
+        {% if "All" in selectedServices %}
+          {% for id, service in data.services %}
+            {% set servicesAvailable = servicesAvailable.concat(service.name) %}
+          {% endfor %}
+        {% else %}
+          {% for id in selectedServices %}
+            {% set service = data.services[id] %}
+            {% if service %}
+              {% set servicesAvailable = servicesAvailable.concat(service.name) %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+
+        {{ summaryList({
+          rows: [
+            {
+              key: {
+                text: "Dates"
+              },
+              value: {
+                text: displayDate
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/clinics/dates",
+                    text: "Change",
+                    visuallyHiddenText: " dates"
+                  }
+                ]
+              }
+            }, {
+              key: {
+                text: "Days"
+              },
+              value: {
+                text: displayDays
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/clinics/days",
+                    text: "Change",
+                    visuallyHiddenText: " days"
+                  }
+                ]
+              }
+            }, {
+              key: {
+                text: "Time"
+              },
+              value: {
+                text: displayTime
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/clinics/time-and-capacity",
+                    text: "Change",
+                    visuallyHiddenText: " time"
+                  }
+                ]
+              }
+            }, {
+              key: {
+                text: "Vaccinators or vaccination spaces available"
+              },
+              value: {
+                text: data.newSession.capacity
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/clinics/time-and-capacity",
+                    text: "Change",
+                    visuallyHiddenText: " vaccinators or vaccination spaces available"
+                  }
+                ]
+              }
+            }, {
+              key: {
+                text: "Appointment length"
+              },
+              value: {
+                text: data.newSession.duration
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/clinics/time-and-capacity",
+                    text: "Change",
+                    visuallyHiddenText: " appointment length"
+                  }
+                ]
+              }
+            }, {
+              key: {
+                text: "Services available"
+              },
+              value: {
+                text: servicesAvailable or [] | join(", ")
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/clinics/services",
+                    text: "Change",
+                    visuallyHiddenText: " services available"
+                  }
+                ]
+              }
+            }
+          ]
+        }) }}
+
+        <h2 class="nhsuk-heading-m nhsuk-u-margin-top-6">Before you continue</h2>
+        <p class="nhsuk-body">Review your answers and publish this clinic when you are ready.</p>
+
+        {{ button({
+          text: "Save and publish clinic"
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

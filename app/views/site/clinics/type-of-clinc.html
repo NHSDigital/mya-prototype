@@ -11,25 +11,19 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Clinics</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
-      <p>You can create a clinic series or a single clinic, to cover:</p>
-      <ul class="nhsuk-list nhsuk-list--bullet">
-        <li>Vaccinator availability</li>
-        <li>Type of vaccine available</li>
-      </ul>
 
       <form action="/site/{{ site_id }}/clinics/dates" method="post">
 
         {{ radios({
-          idPrefix: "type-of-session",
+          idPrefix: "type-of-clinc",
           name: "newSession[type]",
           items: [
             {
               value: "Clinic series",
               text: "Clinic series",
               hint: {
-                text: "Clinics that run at the same times every week"
+                text: "A repeating schedule that runs at the same times every week."
               },
               checked: true if data.newSession.type == 'Clinic series'
 

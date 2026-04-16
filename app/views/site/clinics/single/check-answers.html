@@ -1,4 +1,4 @@
-{% extends '../../layouts/layout.html' %}
+{% extends '../../../layouts/layout.html' %}
 
 {% set pageName = "Check your answers" %}
 
@@ -9,34 +9,16 @@
 {% endblock %}
 
 {% block content %}
-
-
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Clinics</span>
+      <span class="nhsuk-caption-l">Create a single clinic</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
-
       <form action="/site/{{ site_id }}/clinics/process-new-session" method="post">
-        
-        {# Multi-week values #}
-        {% set dateTitle = "Dates" %}
-        {% set startDate -%}
-          {{ data.newSession.startDate.year }}-{{ data.newSession.startDate.month }}-{{ data.newSession.startDate.day }}
+        {% set singleDate -%}
+          {{ data.newSession.singleDate.year }}-{{ data.newSession.singleDate.month }}-{{ data.newSession.singleDate.day }}
         {%- endset %}
-        {% set endDate -%}
-          {{ data.newSession.endDate.year }}-{{ data.newSession.endDate.month }}-{{ data.newSession.endDate.day }}
-        {%- endset %}
-        {% set displayDate -%}
-          {{ startDate | formatDate }} to {{ endDate | formatDate }}
-        {%- endset %}
-
-        {% set allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] %}
-        {% if "All" in (data.newSession.days or []) %}
-          {% set displayDays = allDays or [] | join(", ") %}
-        {% else %}
-          {% set displayDays = data.newSession.days or [] | join(", ") %}
-        {% endif %}
+        {% set displayDate = singleDate | formatDate %}
 
         {% set startTime -%}
           {{ data.newSession.startTime.hour }}:{{ data.newSession.startTime.minute | default("00") }}
@@ -65,50 +47,25 @@
           {% endfor %}
         {% endif %}
 
-        {# Single values #}
-        {% if data.newSession.type == "Single clinic" %}
-          {% set dateTitle = "Date" %}
-          {% set singleDate -%}
-            {{ data.newSession.singleDate.year }}-{{ data.newSession.singleDate.month }}-{{ data.newSession.singleDate.day }}
-          {%- endset %}
-          {% set displayDate = singleDate | formatDate %}
-        {% endif %}
-
         {{ summaryList({
           rows: [
             {
               key: {
-                text: dateTitle
+                text: "Date"
               },
               value: {
                 text: displayDate
               },
               actions: {
-                  text: (servicesAvailable or []) | join(", ")
+                items: [
                   {
                     href: "/site/" + site_id + "/clinics/dates",
                     text: "Change",
-                    visuallyHiddenText: " " + datesTitle | lower
+                    visuallyHiddenText: " date"
                   }
                 ]
               }
             }, {
-              key: {
-                text: "Days"
-              },
-              value: {
-                text: displayDays
-              },
-              actions: {
-                items: [
-                  {
-                    href: "/site/" + site_id + "/clinics/days",
-                    text: "Change",
-                    visuallyHiddenText: " days"
-                  }
-                ]
-              }
-            } if data.newSession.type != "Single clinic", {
               key: {
                 text: "Time"
               },
@@ -177,13 +134,12 @@
         }) }}
 
         <h2 class="nhsuk-heading-m nhsuk-u-margin-top-6">Before you continue</h2>
-        <p class="nhsuk-body">By publishing this clinic, you confirm that your site is assured to deliver the services you have selected.</p>
-        
+        <p class="nhsuk-body">Review your answers and publish this clinic when you are ready.</p>
+
         {{ button({
           text: "Save and publish clinic"
         }) }}
       </form>
-
     </div>
   </div>
 {% endblock %}

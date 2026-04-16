@@ -1,9 +1,8 @@
-{% extends '../../layouts/layout.html' %}
+{% extends '../../../layouts/layout.html' %}
 
 {% set pageName = "Set time and capacity for your clinic" %}
 
-{% set backUrl = '/site/' + site_id + '/clinics/days' %}
-{% if data.newSession.type == "Single clinic" %}{% set backUrl = '/site/' + site_id + '/clinics/dates' %}{% endif %}
+{% set backUrl = '/site/' + site_id + '/clinics/dates' %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -16,7 +15,7 @@
 
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Clinics</span>
+      <span class="nhsuk-caption-l">Create a single clinic</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       <form action="/site/{{ site_id }}/clinics/services" method="post">

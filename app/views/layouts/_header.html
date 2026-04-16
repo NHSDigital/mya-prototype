@@ -48,7 +48,7 @@
   </div>
 
   {# Navigation #}
-  {% if navigationItems | length > 0 %}
+  {% if navigationItems | length > 0 and not hideMainNav %}
   <nav class="nhsuk-header__navigation" aria-label="Menu">
     <div class="nhsuk-header__navigation-container nhsuk-width-container">
       <ul class="nhsuk-header__navigation-list">

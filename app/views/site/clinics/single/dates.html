@@ -1,0 +1,56 @@
+{% extends '../../../layouts/layout.html' %}
+
+{% set pageName = "Clinic details" %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: 'javascript:history.back();'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Create a single clinic</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <form action="/site/{{ site_id }}/clinics/time-and-capacity" method="post">
+        {{ dateInput({
+          id: "single-date",
+          namePrefix: "newSession[singleDate]",
+          fieldset: {
+            legend: {
+              text: "Clinic date",
+              classes: "nhsuk-label--m"
+            }
+          },
+          hint: {
+            text: "For example, 15 3 " + 'now' | formatDate('yyyy')
+          },
+          items: [
+            {
+              name: "day",
+              classes: "nhsuk-input--width-2",
+              value: data.newSession.singleDate.day
+            },
+            {
+              name: "month",
+              classes: "nhsuk-input--width-2",
+              value: data.newSession.singleDate.month
+            },
+            {
+              name: "year",
+              classes: "nhsuk-input--width-4",
+              value: data.newSession.singleDate.year
+            }
+          ]
+        }) }}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

@@ -25,6 +25,13 @@ function normalizeSessionType(type) {
   return type;
 }
 
+function clinicFlowType(data) {
+  const type = normalizeSessionType(data?.newSession?.type);
+  if (type === 'Single clinic') return 'single';
+  if (type === 'Clinic series') return 'series';
+  return null;
+}
+
 function ensureCreateSession(data) {
   const current = data.newSession || {};
   const sessionType = normalizeSessionType(current.type);
@@ -57,8 +64,7 @@ function ensureCreateSession(data) {
     },
     capacity: current.capacity || '',
     duration: current.duration || '',
-    services: asArray(current.services),
-    areYouAssured: current.areYouAssured || ''
+    services: asArray(current.services)
   };
 
   data.newSession = session;
@@ -265,6 +271,10 @@ router.param('id', (req, res, next, id) => {
 router.use('/site/:id', (req, res, next) => {
   const data = req.session.data;
   const site_id = String(req.site_id);
+  const isClinicsCreateFlowPath = /^\/clinics\/(type-of-clinc|dates|days|time-and-capacity|services|check-answers|success)$/.test(req.path);
+
+  // Hide top-level navigation on create flow pages to reduce context switching.
+  res.locals.hideMainNav = isClinicsCreateFlowPath;
 
   const today = getToday();
   const sessionFilters = data.filters?.[site_id] || {};
@@ -365,60 +375,78 @@ router.get('/site/:id/clinics', (req, res) => {
 });
 
 router.all('/site/:id/clinics/type-of-session', (req, res) => {
+  const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  return res.redirect(`/site/${req.site_id}/clinics/type-of-clinc${query}`);
+});
+
+router.all('/site/:id/clinics/type-of-clinc', (req, res) => {
   if (req.method === 'GET' && req.query.new === '1') {
     delete req.session.data.newSession;
   }
 
   ensureCreateSession(req.session.data);
-  res.render('site/clinics/type-of-session');
+  res.render('site/clinics/type-of-clinc');
 });
 
 router.all('/site/:id/clinics/dates', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/clinics/dates');
+
+  const flowType = clinicFlowType(req.session.data);
+  if (!flowType) {
+    return res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`);
+  }
+
+  return res.render(`site/clinics/${flowType}/dates`);
 });
 
 router.all('/site/:id/clinics/days', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/clinics/days');
+  const flowType = clinicFlowType(req.session.data);
+
+  if (!flowType) {
+    return res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`);
+  }
+
+  if (flowType === 'single') {
+    return res.redirect(`/site/${req.site_id}/clinics/time-and-capacity`);
+  }
+
+  return res.render('site/clinics/series/days');
 });
 
 router.all('/site/:id/clinics/time-and-capacity', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/clinics/time-and-capacity');
+  const flowType = clinicFlowType(req.session.data);
+
+  if (!flowType) {
+    return res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`);
+  }
+
+  return res.render(`site/clinics/${flowType}/time-and-capacity`);
 });
 
 router.all('/site/:id/clinics/services', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/clinics/services', {
+  const flowType = clinicFlowType(req.session.data);
+
+  if (!flowType) {
+    return res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`);
+  }
+
+  res.render(`site/clinics/${flowType}/services`, {
     ...req.query
   });
 });
 
-router.all('/site/:id/clinics/are-you-assured', (req, res) => {
-  ensureCreateSession(req.session.data);
-  res.render('site/clinics/are-you-assured');
-});
-
-router.post('/site/:id/clinics/check-assurance', (req, res) => {
-  ensureCreateSession(req.session.data);
-  const assured = req.body?.newSession?.areYouAssured || req.session.data.newSession.areYouAssured;
-
-  if (assured === 'yes') {
-    return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
-  } else {
-    return res.redirect(`/site/${req.site_id}/clinics/not-assured`);
-  }
-});
-
-router.all('/site/:id/clinics/not-assured', (req, res) => {
-  ensureCreateSession(req.session.data);
-  res.render('site/clinics/not-assured');
-})
-
 router.all('/site/:id/clinics/check-answers', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/clinics/check-answers');
+  const flowType = clinicFlowType(req.session.data);
+
+  if (!flowType) {
+    return res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`);
+  }
+
+  res.render(`site/clinics/${flowType}/check-answers`);
 });
 
 router.all('/site/:id/clinics/process-new-session', (req, res) => {
@@ -438,20 +466,23 @@ router.all('/site/:id/clinics/process-new-session', (req, res) => {
 });
 
 router.get('/site/:id/clinics/success', (req, res) => {
-  res.render('site/clinics/success');
+  const flowType = clinicFlowType(req.session.data);
+
+  if (!flowType) {
+    return res.render('site/clinics/series/success');
+  }
+
+  res.render(`site/clinics/${flowType}/success`);
 });
 
 // Legacy create-availability URLs
 router.get('/site/:id/create-availability', (req, res) => res.redirect(`/site/${req.site_id}/clinics`));
-router.all('/site/:id/create-availability/type-of-session', (req, res) => res.redirect(`/site/${req.site_id}/clinics/type-of-session`));
+router.all('/site/:id/create-availability/type-of-session', (req, res) => res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`));
 router.all('/site/:id/create-availability/dates', (req, res) => res.redirect(`/site/${req.site_id}/clinics/dates`));
 router.all('/site/:id/create-availability/days', (req, res) => res.redirect(`/site/${req.site_id}/clinics/days`));
 router.all('/site/:id/create-availability/time-and-capacity', (req, res) => res.redirect(`/site/${req.site_id}/clinics/time-and-capacity`));
 router.all('/site/:id/create-availability/services', (req, res) => res.redirect(`/site/${req.site_id}/clinics/services`));
-router.all('/site/:id/create-availability/are-you-assured', (req, res) => res.redirect(`/site/${req.site_id}/clinics/are-you-assured`));
 router.all('/site/:id/create-availability/check-answers', (req, res) => res.redirect(`/site/${req.site_id}/clinics/check-answers`));
-router.all('/site/:id/create-availability/not-assured', (req, res) => res.redirect(`/site/${req.site_id}/clinics/not-assured`));
-router.post('/site/:id/create-availability/check-assurance', (req, res) => res.redirect(`/site/${req.site_id}/clinics/check-assurance`));
 router.all('/site/:id/create-availability/process-new-session', (req, res) => res.redirect(`/site/${req.site_id}/clinics/process-new-session`));
 router.get('/site/:id/create-availability/success', (req, res) => res.redirect(`/site/${req.site_id}/clinics/success`));
 
