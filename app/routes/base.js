@@ -323,39 +323,39 @@ router.get('/site/:id', (req, res) => {
 // -----------------------------------------------------------------------------
 router.get('/site/:id/clinics', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/create-availability/create-availability');
+  res.render('site/clinics/clinics');
 });
 
 router.all('/site/:id/clinics/type-of-session', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/create-availability/type-of-session');
+  res.render('site/clinics/type-of-session');
 });
 
 router.all('/site/:id/clinics/dates', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/create-availability/dates');
+  res.render('site/clinics/dates');
 });
 
 router.all('/site/:id/clinics/days', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/create-availability/days');
+  res.render('site/clinics/days');
 });
 
 router.all('/site/:id/clinics/time-and-capacity', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/create-availability/time-and-capacity');
+  res.render('site/clinics/time-and-capacity');
 });
 
 router.all('/site/:id/clinics/services', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/create-availability/services', {
+  res.render('site/clinics/services', {
     ...req.query
   });
 });
 
 router.all('/site/:id/clinics/are-you-assured', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/create-availability/are-you-assured');
+  res.render('site/clinics/are-you-assured');
 });
 
 router.post('/site/:id/clinics/check-assurance', (req, res) => {
@@ -371,12 +371,12 @@ router.post('/site/:id/clinics/check-assurance', (req, res) => {
 
 router.all('/site/:id/clinics/not-assured', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/create-availability/not-assured');
+  res.render('site/clinics/not-assured');
 })
 
 router.all('/site/:id/clinics/check-answers', (req, res) => {
   ensureCreateSession(req.session.data);
-  res.render('site/create-availability/check-answers');
+  res.render('site/clinics/check-answers');
 });
 
 router.all('/site/:id/clinics/process-new-session', (req, res) => {
@@ -396,7 +396,7 @@ router.all('/site/:id/clinics/process-new-session', (req, res) => {
 });
 
 router.get('/site/:id/clinics/success', (req, res) => {
-  res.render('site/create-availability/success');
+  res.render('site/clinics/success');
 });
 
 // Legacy create-availability URLs
