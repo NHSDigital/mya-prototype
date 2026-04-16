@@ -47,14 +47,21 @@
         {% set displayTime = startTime + " to " + endTime %}
 
         {% set servicesAvailable = [] %}
-        {% if "All" in (data.newSession.services or []) %}
+        {% set selectedServices = data.newSession.services or [] %}
+        {% if selectedServices is string %}
+          {% set selectedServices = [selectedServices] %}
+        {% endif %}
+
+        {% if "All" in selectedServices %}
           {% for id, service in data.services %}
             {% set servicesAvailable = servicesAvailable.concat(service.name) %}
           {% endfor %}
         {% else %}
-          {% for id in (data.newSession.services or []) %}
+          {% for id in selectedServices %}
             {% set service = data.services[id] %}
-            {% set servicesAvailable = servicesAvailable.concat(service.name) %}
+            {% if service %}
+              {% set servicesAvailable = servicesAvailable.concat(service.name) %}
+            {% endif %}
           {% endfor %}
         {% endif %}
 
@@ -77,7 +84,7 @@
                 text: displayDate
               },
               actions: {
-                items: [
+                  text: (servicesAvailable or []) | join(", ")
                   {
                     href: "/site/" + site_id + "/clinics/dates",
                     text: "Change",

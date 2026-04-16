@@ -22,7 +22,7 @@ function asArray(value) {
 function normalizeSessionType(type) {
   if (type === 'Single date') return 'Single clinic';
   if (type === 'Weekly session' || type === 'Weekly sessions' || type === 'Weekly repeating') return 'Clinic series';
-  return type || 'Clinic series';
+  return type;
 }
 
 function ensureCreateSession(data) {
@@ -30,7 +30,7 @@ function ensureCreateSession(data) {
   const sessionType = normalizeSessionType(current.type);
 
   const session = {
-    type: sessionType,
+    type: sessionType || '',
     startDate: {
       day: current.startDate?.day || '',
       month: current.startDate?.month || '',
@@ -48,15 +48,15 @@ function ensureCreateSession(data) {
     },
     days: asArray(current.days),
     startTime: {
-      hour: current.startTime?.hour || '09',
-      minute: current.startTime?.minute || '00'
+      hour: current.startTime?.hour || '',
+      minute: current.startTime?.minute || ''
     },
     endTime: {
-      hour: current.endTime?.hour || '17',
-      minute: current.endTime?.minute || '00'
+      hour: current.endTime?.hour || '',
+      minute: current.endTime?.minute || ''
     },
-    capacity: current.capacity || '1',
-    duration: current.duration || '10',
+    capacity: current.capacity || '',
+    duration: current.duration || '',
     services: asArray(current.services),
     areYouAssured: current.areYouAssured || ''
   };
@@ -82,7 +82,7 @@ function toTimeString(timeInput) {
 }
 
 function buildPersistableSession(newSession) {
-  const mode = normalizeSessionType(newSession.type);
+  const mode = normalizeSessionType(newSession.type) || 'Clinic series';
   const isSingleDate = mode === 'Single clinic';
   const startDate = isSingleDate ? toDateObject(newSession.singleDate) : toDateObject(newSession.startDate);
   const endDate = isSingleDate ? toDateObject(newSession.singleDate) : toDateObject(newSession.endDate);
@@ -123,7 +123,7 @@ function toIsoDate(dateParts) {
 }
 
 function toByDay(newSession, startDateISO) {
-  const mode = normalizeSessionType(newSession.type);
+  const mode = normalizeSessionType(newSession.type) || 'Clinic series';
   if (mode === 'Single clinic') {
     const day = DateTime.fromISO(startDateISO).toFormat('cccc');
     return [day];
@@ -138,7 +138,7 @@ function buildSessionLabel(byDay, fromTime) {
 }
 
 function buildRecurringSessionModel(newSession) {
-  const mode = normalizeSessionType(newSession.type);
+  const mode = normalizeSessionType(newSession.type) || 'Clinic series';
   const isSingleDate = mode === 'Single clinic';
 
   const startDateISO = isSingleDate ? toIsoDate(newSession.singleDate) : toIsoDate(newSession.startDate);
@@ -327,6 +327,10 @@ router.get('/site/:id/clinics', (req, res) => {
 });
 
 router.all('/site/:id/clinics/type-of-session', (req, res) => {
+  if (req.method === 'GET' && req.query.new === '1') {
+    delete req.session.data.newSession;
+  }
+
   ensureCreateSession(req.session.data);
   res.render('site/clinics/type-of-session');
 });
