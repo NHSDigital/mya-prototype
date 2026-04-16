@@ -202,8 +202,59 @@ function buildRecurringDefaults({ site_id, start, end, patterns = {} }) {
   return output;
 }
 
+function buildSeedRecurringDefaults(site_id, seedRecurringClinics = []) {
+  const output = {};
+
+  for (const clinic of seedRecurringClinics) {
+    const stableSignature = [
+      site_id,
+      clinic.startDate,
+      clinic.endDate,
+      clinic.from,
+      clinic.until,
+      (clinic.services || []).join('|'),
+      clinic.capacity,
+      clinic.slotLength,
+      ((clinic.recurrencePattern && clinic.recurrencePattern.byDay) || []).join('|')
+    ].join('-');
+
+    const id = clinic.id || stableId(stableSignature);
+    output[id] = {
+      id,
+      label: clinic.label || `Clinic ${clinic.from || ''}`.trim(),
+      startDate: clinic.startDate,
+      endDate: clinic.endDate || clinic.startDate,
+      recurrencePattern: clinic.recurrencePattern || {
+        frequency: 'Weekly',
+        interval: 1,
+        byDay: []
+      },
+      from: clinic.from,
+      until: clinic.until,
+      slotLength: Number(clinic.slotLength) || 10,
+      services: clinic.services || [],
+      capacity: Number(clinic.capacity) || 1,
+      exclusionTimes: clinic.exclusionTimes || [],
+      exclusionDateRanges: clinic.exclusionDateRanges || [],
+      overrideDates: clinic.overrideDates || []
+    };
+  }
+
+  return output;
+}
+
 for (const cfg of sitesConfig) {
-  const { site, start, end, patterns, overrides, bookings: bookingConfig } = cfg;
+  const {
+    site,
+    start,
+    end,
+    patterns,
+    overrides,
+    bookings: bookingConfig,
+    seedClinics,
+    seedRecurringClinics = []
+  } = cfg;
+  const configuredSeedClinics = seedClinics || seedRecurringClinics;
   const site_id = site.id;
 
   const availability = generateAvailability({ site_id, start, end, patterns, overrides });
@@ -220,7 +271,10 @@ for (const cfg of sitesConfig) {
   daily_availability[site_id] = availability;
   bookings[site_id] = bookingData;
   sites[site_id] = site;
-  recurring_sessions[site_id] = buildRecurringDefaults({ site_id, start, end, patterns });
+  recurring_sessions[site_id] = {
+    ...buildRecurringDefaults({ site_id, start, end, patterns }),
+    ...buildSeedRecurringDefaults(site_id, configuredSeedClinics)
+  };
 }
 
 

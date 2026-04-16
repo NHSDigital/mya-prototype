@@ -214,6 +214,41 @@ function buildSessionHistory(siteRecurringSessions, startDate = null, endDate = 
   });
 }
 
+function buildPastSessionHistory(siteRecurringSessions, startDate = null, endDate = null, today = null) {
+  const rows = [];
+
+  for (const session of Object.values(siteRecurringSessions || {})) {
+    const sessionStart = session?.startDate;
+    const sessionEnd = session?.endDate || sessionStart;
+    if (!sessionStart || !sessionEnd) continue;
+
+    // Keep only sessions that have ended.
+    if (!today || sessionEnd >= today) continue;
+
+    if (startDate && sessionEnd < startDate) continue;
+    if (endDate && sessionStart > endDate) continue;
+
+    rows.push({
+      label: session.label,
+      date: sessionStart,
+      endDate: sessionEnd,
+      days: session.recurrencePattern?.byDay || [],
+      from: session.from,
+      until: session.until,
+      services: session.services || [],
+      capacity: Number(session.capacity) || 0,
+      slotLength: Number(session.slotLength) || 0
+    });
+  }
+
+  return rows.sort((a, b) => {
+    if (a.endDate === b.endDate) {
+      return (a.from || '').localeCompare(b.from || '');
+    }
+    return b.endDate.localeCompare(a.endDate);
+  });
+}
+
 // -----------------------------------------------------------------------------
 // PARAM HANDLER – capture site_id once for all /site/:id routes
 // -----------------------------------------------------------------------------
@@ -266,6 +301,7 @@ router.use('/site/:id', (req, res, next) => {
   res.locals.slots = slots[site_id];
   res.locals.dailyAvailability = effectiveDailyAvailability;
   res.locals.sessionHistory = buildSessionHistory(siteRecurringSessions, from, until, today);
+  res.locals.pastSessionHistory = buildPastSessionHistory(siteRecurringSessions, from, until, today);
 
   next();
 });

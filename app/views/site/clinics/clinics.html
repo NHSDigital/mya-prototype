@@ -24,7 +24,7 @@
     Single
   {% elif session.type == 'Clinic series' %}
     Series
-  {% elif session.startDate and session.endDate and session.startDate == session.endDate %}
+  {% elif session.date and session.endDate and session.date == session.endDate %}
     Single
   {% else %}
     Series
@@ -91,6 +91,45 @@
           </thead>
           <tbody class="nhsuk-table__body" role="rowgroup">
             {% for session in sessionHistory %}
+              <tr class="nhsuk-table__row" role="row">
+                <td class="nhsuk-table__cell" role="cell">{{ session.label or 'Clinic' }}</td>
+                <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) }}</td>
+                <td class="nhsuk-table__cell" role="cell">{{ dateLabel(session) }}</td>
+                <td class="nhsuk-table__cell" role="cell">{{ daysLabel(session) }}</td>
+                <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
+                <td class="nhsuk-table__cell" role="cell">{{ session.slotLength or session.duration }} minutes</td>
+                <td class="nhsuk-table__cell" role="cell"><a href="/not-in-this-prototype">Edit</a>, <a href="/not-in-this-prototype">Remove</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+
+      <h2 class="nhsuk-heading-m nhsuk-u-margin-top-6">Past clinics</h2>
+
+      {% set pastSessionHistory = pastSessionHistory or [] %}
+
+      {% if pastSessionHistory | length == 0 %}
+        {{ insetText({
+          text: "No past clinics to show."
+        }) }}
+      {% endif %}
+
+      {% if pastSessionHistory | length > 0 %}
+        <table class="nhsuk-table-responsive" role="table">
+          <thead class="nhsuk-table__head" role="rowgroup">
+            <tr role="row">
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Name</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Type</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Date(s)</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Days</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Appointment length</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="nhsuk-table__body" role="rowgroup">
+            {% for session in pastSessionHistory %}
               <tr class="nhsuk-table__row" role="row">
                 <td class="nhsuk-table__cell" role="cell">{{ session.label or 'Clinic' }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) }}</td>
