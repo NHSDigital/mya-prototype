@@ -194,8 +194,10 @@ function buildSessionHistory(siteRecurringSessions, startDate = null, endDate = 
     if (endDate && sessionStart > endDate) continue;
 
     rows.push({
+      label: session.label,
       date: sessionStart,
       endDate: sessionEnd,
+      days: session.recurrencePattern?.byDay || [],
       from: session.from,
       until: session.until,
       services: session.services || [],

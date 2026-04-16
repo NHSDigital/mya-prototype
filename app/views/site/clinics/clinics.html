@@ -19,19 +19,41 @@
   {{ session.from | nhsTime }} to {{ session.until | nhsTime }}
 {% endmacro %}
 
-{% macro dateLabel(session) %}
-  {% if session.endDate and session.endDate != session.date %}
-    {{ session.date | formatDate('d MMM yyyy') }} to {{ session.endDate | formatDate('d MMM yyyy') }}
+{% macro typeLabel(session) %}
+  {% if session.type == 'Single clinic' %}
+    Single
+  {% elif session.type == 'Clinic series' %}
+    Series
+  {% elif session.startDate and session.endDate and session.startDate == session.endDate %}
+    Single
   {% else %}
-    {{ session.date | formatDate('d MMM yyyy') }}
+    Series
   {% endif %}
 {% endmacro %}
 
-{% block beforeContent %}
-{{ backLink({
-  href: '/site/' + site_id
-}) }}
-{% endblock %}
+{% macro daysLabel(session) %}
+  {{ (session.days or session.recurrencePattern.byDay or []) | shortWeekdays }}
+{% endmacro %}
+
+{% macro dateLabel(session) %}
+  {% set isSingle = false %}
+  {% if session.type == 'Single clinic' %}
+    {% set isSingle = true %}
+  {% elif session.startDate and session.endDate and session.startDate == session.endDate %}
+    {% set isSingle = true %}
+  {% endif %}
+
+  {% if session.endDate and session.endDate != session.date %}
+    {% if isSingle %}
+      Date: {{ session.date | formatDate('d MMM yyyy') }}
+    {% else %}
+      Dates: {{ session.date | formatDate('d MMM yyyy') }} to {{ session.endDate | formatDate('d MMM yyyy') }}
+    {% endif %}
+  {% else %}
+    Date: {{ session.date | formatDate('d MMM yyyy') }}
+  {% endif %}
+  | Time: {{ timeLabel(session) }}
+{% endmacro %}
 
 {% block content %}
   <div class="nhsuk-grid-row">
@@ -40,12 +62,11 @@
 
       {{ button({
         text: "Create new clinic",
+        classes: "nhsuk-button--secondary nhsuk-button--small",
         href: "/site/" + site_id + "/clinics/type-of-session?new=1"
       }) }}
 
-      <h2 class="nhsuk-heading-m">History of clinics you created</h2>
-      <p class="nhsuk-body">If you cancel a clinic, it will still show here. To see what people can book, check <a class="nhsuk-link" href="/site/{{ site_id }}/availability/day">View availability</a>.</p>
-      <p class="nhsuk-body">Any clinics that ended in the past are hidden.</p>
+      <h2 class="nhsuk-heading-m">Active clinics</h2>
 
       {% set sessionHistory = sessionHistory or [] %}
 
@@ -55,44 +76,34 @@
         }) }}
       {% endif %}
 
-      {% for session in sessionHistory %}
-        {{ summaryList({
-          rows: [
-            {
-              key: {
-                text: "Dates"
-              },
-              value: {
-                text: dateLabel(session)
-              }
-            },
-            {
-              key: {
-                text: "Time"
-              },
-              value: {
-                text: timeLabel(session)
-              }
-            },
-            {
-              key: {
-                text: "Services"
-              },
-              value: {
-                text: services(session.services)
-              }
-            },
-            {
-              key: {
-                text: "Capacity"
-              },
-              value: {
-                text: session.capacity
-              }
-            }
-          ]
-        }) }}
-      {% endfor %}
+      {% if sessionHistory | length > 0 %}
+        <table class="nhsuk-table-responsive" role="table">
+          <thead class="nhsuk-table__head" role="rowgroup">
+            <tr role="row">
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Name</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Type</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Date(s)</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Days</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Appointment length</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="nhsuk-table__body" role="rowgroup">
+            {% for session in sessionHistory %}
+              <tr class="nhsuk-table__row" role="row">
+                <td class="nhsuk-table__cell" role="cell">{{ session.label or 'Clinic' }}</td>
+                <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) }}</td>
+                <td class="nhsuk-table__cell" role="cell">{{ dateLabel(session) }}</td>
+                <td class="nhsuk-table__cell" role="cell">{{ daysLabel(session) }}</td>
+                <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
+                <td class="nhsuk-table__cell" role="cell">{{ session.slotLength or session.duration }} minutes</td>
+                <td class="nhsuk-table__cell" role="cell"><a href="/not-in-this-prototype">Edit</a>, <a href="/not-in-this-prototype">Remove</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
 
     </div>
   </div>

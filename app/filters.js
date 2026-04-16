@@ -48,6 +48,22 @@ module.exports = function (env) {
     return String(str).replace(/([a-z])([A-Z])/g, '$1 $2');
   }
 
+  // Convert weekday names to short labels, e.g. ['Monday', 'Tuesday'] -> 'Mon, Tue'
+  filters.shortWeekdays = (value) => {
+    const days = Array.isArray(value) ? value : (value ? [value] : []);
+    const map = {
+      Monday: 'Mon',
+      Tuesday: 'Tue',
+      Wednesday: 'Wed',
+      Thursday: 'Thu',
+      Friday: 'Fri',
+      Saturday: 'Sat',
+      Sunday: 'Sun'
+    };
+
+    return days.map((day) => map[day] || day).join(', ');
+  }
+
   filters.randomNumber = (min, max) => {
     min = Math.ceil(min);
     max = Math.floor(max);
