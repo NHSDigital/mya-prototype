@@ -29,30 +29,30 @@ const SERVICE_GROUPS = {
 };
 
 const serviceDefinitions = [
-  ['COVID:5-11', 'COVID 5-11', 'COVID-19', 'COVID', '5-11', 'Child'],
-  ['COVID:12-17', 'COVID 12-17', 'COVID-19', 'COVID', '12-17', 'Child'],
-  ['COVID:18+', 'COVID 18+', 'COVID-19', 'COVID', '18+', 'Adult'],
-  ['FLU:2-3', 'Flu 2-3', 'Flu', 'FLU', '2-3', 'Child'],
-  ['FLU:18-64', 'Flu 18-64', 'Flu', 'FLU', '18-64', 'Adult'],
-  ['FLU:65+', 'Flu 65+', 'Flu', 'FLU', '65+', 'Adult'],
-  ['COVID_FLU:18-64', 'COVID and Flu 18-64', 'COVID-19 and Flu', 'FLU_AND_COVID', '18-64', 'Adult'],
-  ['COVID_FLU:65+', 'COVID and Flu 65+', 'COVID-19 and Flu', 'FLU_AND_COVID', '65+', 'Adult'],
-  ['RSV:Adult', 'RSV Adult', 'RSV', 'RSV', '18+', 'Adult'],
-  ['RSV_COVID:12-17', 'RSV and COVID 12-17', 'RSV and COVID', 'RSV_AND_COVID', '12-17', 'Child'],
-  ['RSV_COVID:18+', 'RSV and COVID 18+', 'RSV and COVID', 'RSV_AND_COVID', '18+', 'Adult']
+  { id: 'COVID:5-11', name: 'COVID 5-11', vaccine: 'COVID-19', group: 'COVID', age: '5-11', type: 'Child' },
+  { id: 'COVID:12-17', name: 'COVID 12-17', vaccine: 'COVID-19', group: 'COVID', age: '12-17', type: 'Child' },
+  { id: 'COVID:18+', name: 'COVID 18+', vaccine: 'COVID-19', group: 'COVID', age: '18+', type: 'Adult' },
+  { id: 'FLU:2-3', name: 'Flu 2-3', vaccine: 'Flu', group: 'FLU', age: '2-3', type: 'Child' },
+  { id: 'FLU:18-64', name: 'Flu 18-64', vaccine: 'Flu', group: 'FLU', age: '18-64', type: 'Adult' },
+  { id: 'FLU:65+', name: 'Flu 65+', vaccine: 'Flu', group: 'FLU', age: '65+', type: 'Adult' },
+  { id: 'COVID_FLU:18-64', name: 'COVID and Flu 18-64', vaccine: 'COVID-19 and Flu', group: 'FLU_AND_COVID', age: '18-64', type: 'Adult' },
+  { id: 'COVID_FLU:65+', name: 'COVID and Flu 65+', vaccine: 'COVID-19 and Flu', group: 'FLU_AND_COVID', age: '65+', type: 'Adult' },
+  { id: 'RSV:Adult', name: 'RSV Adult', vaccine: 'RSV', group: 'RSV', age: '18+', type: 'Adult' },
+  { id: 'RSV_COVID:12-17', name: 'RSV and COVID 12-17', vaccine: 'RSV and COVID', group: 'RSV_AND_COVID', age: '12-17', type: 'Child' },
+  { id: 'RSV_COVID:18+', name: 'RSV and COVID 18+', vaccine: 'RSV and COVID', group: 'RSV_AND_COVID', age: '18+', type: 'Adult' }
 ];
 
 const SERVICES = Object.fromEntries(
-  serviceDefinitions.map(([id, name, vaccine, group, age, type]) => [
-    id,
+  serviceDefinitions.map((definition) => [
+    definition.id,
     {
-      id,
-      name,
-      vaccine,
-      group,
+      id: definition.id,
+      name: definition.name,
+      vaccine: definition.vaccine,
+      group: definition.group,
       cohort: {
-        age,
-        type
+        age: definition.age,
+        type: definition.type
       }
     }
   ])
