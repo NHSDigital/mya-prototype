@@ -1,6 +1,6 @@
 {% extends '../../../layouts/layout.html' %}
 
-{% set pageName = "Select days to add to your clinic series" %}
+{% set pageName = "Which days will these clinics run on?" %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -20,6 +20,9 @@
         {{ checkboxes({
           idPrefix: "days",
           name: "newSession[days]",
+          hint: {
+            text: "Select all that apply"
+          },
           fieldset: {
             legend: {
               text: pageName,
