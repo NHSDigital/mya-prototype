@@ -1,0 +1,53 @@
+{% extends '../../../layouts/layout.html' %}
+
+{% set pageName = "Appointments calculator" %}
+
+{% set backUrl = '/site/' + site_id + '/clinics/clinic-times' %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: backUrl
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Create a single clinic</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <form action="/site/{{ site_id }}/clinics/services" method="post">
+        {{ input({
+          label: {
+            text: "How many vaccinators or vaccination spaces do you have?",
+            classes: "nhsuk-label--m"
+          },
+          id: "capacity",
+          name: "newSession[capacity]",
+          classes: "nhsuk-input--width-2",
+          value: data.newSession.capacity
+        }) }}
+
+        {{ input({
+          label: {
+            text: "How long are your appointments?",
+            classes: "nhsuk-label--m"
+          },
+          hint: {
+            text: "Appointment length must be a maximum of 60 minutes"
+          },
+          id: "duration",
+          name: "newSession[duration]",
+          classes: "nhsuk-input--width-2",
+          suffix: "minutes",
+          value: data.newSession.duration
+        }) }}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

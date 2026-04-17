@@ -350,7 +350,7 @@ router.param('id', (req, res, next, id) => {
 router.use('/site/:id', (req, res, next) => {
   const data = req.session.data;
   const site_id = String(req.site_id);
-  const isClinicsCreateFlowPath = /^\/clinics\/(type-of-clinc|details|dates|days|time-and-capacity|services|clinic-closures(?:\/.*)?|check-answers|success)$/.test(req.path);
+  const isClinicsCreateFlowPath = /^\/clinics\/(type-of-clinc|details|dates|days|time-and-capacity|clinic-times|appointments-calculator|services|clinic-closures(?:\/.*)?|check-answers|success)$/.test(req.path);
 
   // Hide top-level navigation on create flow pages to reduce context switching.
   res.locals.hideMainNav = isClinicsCreateFlowPath;
@@ -491,13 +491,17 @@ router.all('/site/:id/clinics/days', (req, res) => {
   }
 
   if (flowType === 'single') {
-    return res.redirect(`/site/${req.site_id}/clinics/time-and-capacity`);
+    return res.redirect(`/site/${req.site_id}/clinics/clinic-times`);
   }
 
   return res.render('site/clinics/series/days');
 });
 
 router.all('/site/:id/clinics/time-and-capacity', (req, res) => {
+  return res.redirect(`/site/${req.site_id}/clinics/clinic-times`);
+});
+
+router.all('/site/:id/clinics/clinic-times', (req, res) => {
   ensureCreateSession(req.session.data);
   const flowType = clinicFlowType(req.session.data);
 
@@ -505,7 +509,18 @@ router.all('/site/:id/clinics/time-and-capacity', (req, res) => {
     return res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`);
   }
 
-  return res.render(`site/clinics/${flowType}/time-and-capacity`);
+  return res.render(`site/clinics/${flowType}/clinic-times`);
+});
+
+router.all('/site/:id/clinics/appointments-calculator', (req, res) => {
+  ensureCreateSession(req.session.data);
+  const flowType = clinicFlowType(req.session.data);
+
+  if (!flowType) {
+    return res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`);
+  }
+
+  return res.render(`site/clinics/${flowType}/appointments-calculator`);
 });
 
 router.all('/site/:id/clinics/services', (req, res) => {
@@ -689,7 +704,7 @@ router.get('/site/:id/create-availability', (req, res) => res.redirect(`/site/${
 router.all('/site/:id/create-availability/type-of-session', (req, res) => res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`));
 router.all('/site/:id/create-availability/dates', (req, res) => res.redirect(`/site/${req.site_id}/clinics/details`));
 router.all('/site/:id/create-availability/days', (req, res) => res.redirect(`/site/${req.site_id}/clinics/days`));
-router.all('/site/:id/create-availability/time-and-capacity', (req, res) => res.redirect(`/site/${req.site_id}/clinics/time-and-capacity`));
+router.all('/site/:id/create-availability/time-and-capacity', (req, res) => res.redirect(`/site/${req.site_id}/clinics/clinic-times`));
 router.all('/site/:id/create-availability/services', (req, res) => res.redirect(`/site/${req.site_id}/clinics/services`));
 router.all('/site/:id/create-availability/clinic-closures', (req, res) => res.redirect(`/site/${req.site_id}/clinics/clinic-closures`));
 router.all('/site/:id/create-availability/check-answers', (req, res) => res.redirect(`/site/${req.site_id}/clinics/check-answers`));

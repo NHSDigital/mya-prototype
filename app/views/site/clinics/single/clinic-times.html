@@ -1,0 +1,79 @@
+{% extends '../../../layouts/layout.html' %}
+
+{% set pageName = "Clinic times" %}
+
+{% set backUrl = '/site/' + site_id + '/clinics/details' %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: backUrl
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Create a single clinic</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <form action="/site/{{ site_id }}/clinics/appointments-calculator" method="post">
+        {{ dateInput({
+          id: "start-time",
+          namePrefix: "newSession[startTime]",
+          fieldset: {
+            legend: {
+              text: "Start time",
+              classes: "nhsuk-label--m"
+            }
+          },
+          hint: {
+            text: "For example, 10:00"
+          },
+          items: [
+            {
+              name: "hour",
+              classes: "nhsuk-input--width-2",
+              value: data.newSession.startTime.hour
+            },
+            {
+              name: "minute",
+              classes: "nhsuk-input--width-2",
+              value: data.newSession.startTime.minute
+            }
+          ]
+        }) }}
+
+        {{ dateInput({
+          id: "end-time",
+          namePrefix: "newSession[endTime]",
+          fieldset: {
+            legend: {
+              text: "End time",
+              classes: "nhsuk-label--m"
+            }
+          },
+          hint: {
+            text: "For example, 17:00"
+          },
+          items: [
+            {
+              name: "hour",
+              classes: "nhsuk-input--width-2",
+              value: data.newSession.endTime.hour
+            },
+            {
+              name: "minute",
+              classes: "nhsuk-input--width-2",
+              value: data.newSession.endTime.minute
+            }
+          ]
+        }) }}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

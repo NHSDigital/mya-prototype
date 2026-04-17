@@ -1,0 +1,16 @@
+{%- macro appointmentsSummary(params) -%}
+<div
+  class="app-appointments-summary{%- if params.classes %} {{ params.classes }}{% endif -%}"
+  {%- if params.ariaLive !== "off" %} aria-live="{{ params.ariaLive | default('polite') }}"{% endif -%}
+  {%- for attribute, value in (params.attributes or {}) %} {{ attribute }}="{{ value }}"{% endfor -%}
+>
+  <dl class="app-appointments-summary__list">
+    {%- for item in params.items %}
+    <div class="app-appointments-summary__item">
+      <dd class="app-appointments-summary__figure">{{ item.figure }}</dd>
+      <dt class="app-appointments-summary__label">{{ item.label }}</dt>
+    </div>
+    {%- endfor %}
+  </dl>
+</div>
+{%- endmacro -%}

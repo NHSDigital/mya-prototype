@@ -1,0 +1,74 @@
+////
+/// Appointments summary
+///
+/// Custom component that displays calculated clinic capacity.
+/// Built from NHS Sass variables, mixins and utilities so it
+/// inherits design-system tokens (colour, type scale, spacing).
+///
+/// Usage: include after the two inputs that feed it.
+/// Updates via `aria-live="polite"` when the values change.
+////
+
+@use "nhsuk-frontend/dist/nhsuk" as *;
+
+.app-appointments-summary {
+  // Horizontal rules top and bottom to match the visual in the design.
+  // Using the NHS border colour keeps this consistent with summary list,
+  // table and card dividers.
+  border-top: 1px solid $nhsuk-border-colour;
+  border-bottom: 1px solid $nhsuk-border-colour;
+
+  // Match the vertical rhythm used by summary list
+  padding: nhsuk-spacing(4) 0;
+  margin-bottom: nhsuk-spacing(4);
+}
+
+.app-appointments-summary__list {
+  // Reset the dl
+  margin: 0;
+  padding: 0;
+
+  // Two-column layout on tablet and up, stacked on mobile.
+  // Uses NHS media query mixin for the standard breakpoint.
+  @include nhsuk-media-query($from: tablet) {
+    display: flex;
+    gap: nhsuk-spacing(6);
+  }
+}
+
+.app-appointments-summary__item {
+  // Each item is a figure+label pair.
+  // On mobile, stack with space between items.
+  & + & {
+    margin-top: nhsuk-spacing(4);
+
+    @include nhsuk-media-query($from: tablet) {
+      margin-top: 0;
+    }
+  }
+
+  @include nhsuk-media-query($from: tablet) {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.app-appointments-summary__figure {
+  // Use the NHS XL heading size for the number — it's the primary content
+  // of this component so it should be the most prominent thing on the page
+  // after the H1.
+  @include nhsuk-font-size(48);
+
+  margin: 0 0 nhsuk-spacing(1);
+  font-weight: $nhsuk-font-bold;
+  color: $nhsuk-text-colour;
+}
+
+.app-appointments-summary__label {
+  // Body copy size — sits directly under the figure as its description.
+  // Visually a label, semantically a <dt> so screen readers read
+  // "appointments per hour: 24" rather than "24".
+  @include nhsuk-font-size(19);
+
+  color: $nhsuk-text-colour;
+}
