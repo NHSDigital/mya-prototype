@@ -1,0 +1,25 @@
+{% extends '../../../layouts/layout.html' %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/clinics/edit/' + sessionId
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <h1 class="nhsuk-heading-l">What do you want to change?</h1>
+
+      <form action="/site/{{ site_id }}/clinics/edit/{{ sessionId }}/what-change" method="post">
+        {{ radios({
+          idPrefix: 'edit-field',
+          name: 'field',
+          items: options
+        }) }}
+
+        {{ button({ text: 'Continue' }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

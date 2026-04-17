@@ -1,0 +1,35 @@
+{% extends '../../../layouts/layout.html' %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/any-other-changes'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <h1 class="nhsuk-heading-l">{{ affectedCount }} bookings are affected by this edit to the {{ 'series' if isSeries else 'clinic' }}</h1>
+      <p class="nhsuk-body">What do you want to do with the booked appointments?</p>
+
+      <form action="/site/{{ site_id }}/clinics/edit/{{ sessionId }}/affected-bookings" method="post">
+        {{ radios({
+          idPrefix: 'booking-action',
+          name: 'bookingAction',
+          items: [
+            {
+              value: 'orphan',
+              text: 'Keep booked appointments (make them orphaned)'
+            },
+            {
+              value: 'cancel',
+              text: 'Cancel appointments (cancel them)'
+            }
+          ]
+        }) }}
+
+        {{ button({ text: 'Continue' }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

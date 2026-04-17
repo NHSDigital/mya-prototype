@@ -95,6 +95,66 @@ function toTimeString(timeInput) {
   return `${hour}:${minute}`;
 }
 
+function toTimeParts(timeString = '') {
+  const [hour = '', minute = ''] = String(timeString).split(':');
+  return { hour, minute };
+}
+
+function toDateParts(isoDate) {
+  const dt = DateTime.fromISO(isoDate || '');
+  if (!dt.isValid) {
+    return { day: '', month: '', year: '' };
+  }
+
+  return {
+    day: String(dt.day),
+    month: String(dt.month),
+    year: String(dt.year)
+  };
+}
+
+function inferClinicTypeFromModel(model = {}) {
+  const explicit = normalizeSessionType(model.type);
+  if (explicit === 'Single clinic' || explicit === 'Clinic series') {
+    return explicit;
+  }
+
+  if (model.startDate && model.endDate && model.startDate === model.endDate) {
+    return 'Single clinic';
+  }
+
+  return 'Clinic series';
+}
+
+function populateEditSession(data, model) {
+  const clinicType = inferClinicTypeFromModel(model);
+  const startDateParts = toDateParts(model.startDate);
+  const endDateParts = toDateParts(model.endDate || model.startDate);
+
+  data.newSession = {
+    name: model.label || '',
+    type: clinicType,
+    startDate: startDateParts,
+    endDate: endDateParts,
+    singleDate: clinicType === 'Single clinic' ? startDateParts : { day: '', month: '', year: '' },
+    days: asArray(model.recurrencePattern?.byDay),
+    startTime: toTimeParts(model.from),
+    endTime: toTimeParts(model.until),
+    capacity: String(Number(model.capacity) || ''),
+    duration: String(Number(model.slotLength) || ''),
+    services: asArray(model.services),
+    closures: asArray(model.closures)
+      .filter((closure) => closure?.startDate && closure?.endDate)
+      .map((closure) => ({
+        startDate: closure.startDate,
+        endDate: closure.endDate,
+        label: closure.label || ''
+      }))
+  };
+
+  data.editingSessionId = model.id;
+}
+
 function buildPersistableSession(newSession) {
   const mode = normalizeSessionType(newSession.type) || 'Clinic series';
   const isSingleDate = mode === 'Single clinic';
@@ -233,6 +293,7 @@ function buildRecurringSessionModel(newSession) {
 
   return {
     id: randomUUID().split('-')[0],
+    type: mode,
     label: (newSession.name || '').trim() || buildSessionLabel(byDay, from),
     startDate: startDateISO,
     endDate: endDateISO,
@@ -263,6 +324,272 @@ function persistRecurringSession(data, site_id, model) {
   data.recurring_sessions[site_id][model.id] = model;
 }
 
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function editFieldOptions(isSeries) {
+  const options = [
+    { value: 'name', text: 'Name' },
+    { value: 'date', text: isSeries ? 'Dates' : 'Date' },
+    ...(isSeries ? [{ value: 'days', text: 'Days' }] : []),
+    { value: 'time', text: 'Time' },
+    { value: 'capacity', text: 'Vaccinators and capacity' },
+    { value: 'duration', text: 'Appointment length' },
+    { value: 'services', text: 'Services' },
+    ...(isSeries ? [{ value: 'closures', text: 'Clinic closures' }] : [])
+  ];
+
+  return options;
+}
+
+function getEditState(data) {
+  return data.editClinic || null;
+}
+
+function setEditState(data, state) {
+  data.editClinic = state;
+}
+
+function clearEditState(data) {
+  delete data.editClinic;
+}
+
+function normalizeIsoMinute(datetimeISO) {
+  const dt = DateTime.fromISO(datetimeISO || '', { zone: 'Europe/London' });
+  if (!dt.isValid) return null;
+  return dt.toFormat("yyyy-MM-dd'T'HH:mm");
+}
+
+function modelToDraft(model) {
+  const type = inferClinicTypeFromModel(model);
+  const startDateParts = toDateParts(model.startDate);
+  const endDateParts = toDateParts(model.endDate || model.startDate);
+
+  return {
+    id: model.id,
+    type,
+    name: model.label || '',
+    startDate: model.startDate,
+    endDate: model.endDate || model.startDate,
+    singleDate: model.startDate,
+    days: asArray(model.recurrencePattern?.byDay),
+    from: model.from,
+    until: model.until,
+    startTime: toTimeParts(model.from),
+    endTime: toTimeParts(model.until),
+    capacity: Number(model.capacity) || 1,
+    duration: Number(model.slotLength) || 10,
+    services: asArray(model.services),
+    closures: asArray(model.closures)
+      .filter((closure) => closure?.startDate && closure?.endDate)
+      .map((closure) => ({
+        startDate: closure.startDate,
+        endDate: closure.endDate,
+        label: closure.label || ''
+      })),
+    startDateInput: startDateParts,
+    endDateInput: endDateParts,
+    singleDateInput: startDateParts
+  };
+}
+
+function draftToNewSession(draft) {
+  return {
+    name: draft.name,
+    type: draft.type,
+    startDate: draft.startDateInput,
+    endDate: draft.endDateInput,
+    singleDate: draft.singleDateInput,
+    days: asArray(draft.days),
+    startTime: draft.startTime,
+    endTime: draft.endTime,
+    capacity: String(draft.capacity),
+    duration: String(draft.duration),
+    services: asArray(draft.services),
+    closures: asArray(draft.closures)
+  };
+}
+
+function draftToModel(draft) {
+  const model = buildRecurringSessionModel(draftToNewSession(draft));
+  model.id = draft.id;
+  model.type = draft.type;
+  return model;
+}
+
+function ensureEditStateForSession(data, siteId, sessionId) {
+  const existing = getEditState(data);
+  if (existing && existing.siteId === siteId && existing.sessionId === sessionId) {
+    return existing;
+  }
+
+  const model = data?.recurring_sessions?.[siteId]?.[sessionId];
+  if (!model) return null;
+
+  const draft = modelToDraft(model);
+  const state = {
+    siteId,
+    sessionId,
+    original: clone(model),
+    draft,
+    bookingAction: null,
+    affectedBookingIds: []
+  };
+
+  setEditState(data, state);
+  return state;
+}
+
+function parseDateInputToISO(input = {}) {
+  const day = String(input.day || '').trim();
+  const month = String(input.month || '').trim();
+  const year = String(input.year || '').trim();
+  if (!day || !month || !year) return null;
+
+  const dt = DateTime.fromObject({ day: +day, month: +month, year: +year });
+  return dt.isValid ? dt.toISODate() : null;
+}
+
+function buildSummaryRowsForEdit(draft, siteId, sessionId, data) {
+  const isSeries = draft.type === 'Clinic series';
+  const startDateText = DateTime.fromISO(draft.startDate).toFormat('d MMM yyyy');
+  const endDateText = DateTime.fromISO(draft.endDate).toFormat('d MMM yyyy');
+  const dateText = isSeries ? `${startDateText} to ${endDateText}` : startDateText;
+  const services = asArray(draft.services)
+    .map((id) => data.services?.[id]?.name)
+    .filter(Boolean)
+    .join(', ');
+  const closuresText = draft.closures?.length ? `${draft.closures.length} added` : 'None added';
+
+  const rows = [
+    {
+      key: { text: 'Name' },
+      value: { text: draft.name || 'Not provided' },
+      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/name`, text: 'Change', visuallyHiddenText: ' name' }] }
+    },
+    {
+      key: { text: isSeries ? 'Dates' : 'Date' },
+      value: { text: dateText },
+      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/date`, text: 'Change', visuallyHiddenText: ' dates' }] }
+    },
+    ...(isSeries ? [{
+      key: { text: 'Days' },
+      value: { text: asArray(draft.days).join(', ') },
+      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/days`, text: 'Change', visuallyHiddenText: ' days' }] }
+    }] : []),
+    {
+      key: { text: 'Time' },
+      value: { text: `${draft.from} to ${draft.until}` },
+      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/time`, text: 'Change', visuallyHiddenText: ' time' }] }
+    },
+    {
+      key: { text: 'Vaccinators and capacity' },
+      value: { text: String(draft.capacity) },
+      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/capacity`, text: 'Change', visuallyHiddenText: ' vaccinators and capacity' }] }
+    },
+    {
+      key: { text: 'Appointment length' },
+      value: { text: `${draft.duration} minutes` },
+      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/duration`, text: 'Change', visuallyHiddenText: ' appointment length' }] }
+    },
+    {
+      key: { text: 'Services' },
+      value: { text: services || 'None selected' },
+      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/services`, text: 'Change', visuallyHiddenText: ' services' }] }
+    },
+    ...(isSeries ? [{
+      key: { text: 'Clinic closures' },
+      value: { text: closuresText },
+      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/closures`, text: 'Change', visuallyHiddenText: ' clinic closures' }] }
+    }] : [])
+  ];
+
+  return rows;
+}
+
+function calculateAffectedBookings(originalModel, updatedModel, siteBookings) {
+  const originalByMinute = new Map();
+  const updatedByMinute = new Map();
+
+  const collect = (target, model) => {
+    const merged = mergeDailyAvailability({}, String(model.site_id || ''), { [model.id]: model });
+    for (const [date, day] of Object.entries(merged || {})) {
+      for (const session of (day.sessions || [])) {
+        const start = DateTime.fromISO(`${date}T${session.from}`, { zone: 'Europe/London' });
+        const end = DateTime.fromISO(`${date}T${session.until}`, { zone: 'Europe/London' });
+        const slotLength = Number(session.slotLength) || 10;
+        const capacity = Number(session.capacity) || 1;
+
+        for (let dt = start; dt < end; dt = dt.plus({ minutes: slotLength })) {
+          const key = dt.toFormat("yyyy-MM-dd'T'HH:mm");
+          target.set(key, (target.get(key) || 0) + capacity);
+        }
+      }
+    }
+  };
+
+  collect(originalByMinute, originalModel);
+  collect(updatedByMinute, updatedModel);
+
+  const updatedServices = new Set(asArray(updatedModel.services));
+  const bookingsByMinute = new Map();
+
+  for (const booking of Object.values(siteBookings || {})) {
+    const key = normalizeIsoMinute(booking?.datetime);
+    if (!key || !originalByMinute.has(key)) continue;
+
+    const bucket = bookingsByMinute.get(key) || [];
+    bucket.push(booking);
+    bookingsByMinute.set(key, bucket);
+  }
+
+  const affectedIds = [];
+
+  for (const [minute, minuteBookings] of bookingsByMinute.entries()) {
+    const newCapacity = updatedByMinute.get(minute) || 0;
+
+    const serviceMismatched = minuteBookings.filter((booking) => !updatedServices.has(booking.service));
+    for (const booking of serviceMismatched) {
+      affectedIds.push(booking.id);
+    }
+
+    const serviceMatched = minuteBookings
+      .filter((booking) => updatedServices.has(booking.service))
+      .sort((a, b) => Number(a.id) - Number(b.id));
+
+    if (newCapacity <= 0) {
+      for (const booking of serviceMatched) {
+        affectedIds.push(booking.id);
+      }
+      continue;
+    }
+
+    if (serviceMatched.length > newCapacity) {
+      for (const booking of serviceMatched.slice(newCapacity)) {
+        affectedIds.push(booking.id);
+      }
+    }
+  }
+
+  return Array.from(new Set(affectedIds.map((id) => String(id))));
+}
+
+function applyAffectedBookingAction(siteBookings, affectedIds, action) {
+  if (!action || !Array.isArray(affectedIds) || affectedIds.length === 0) return;
+
+  for (const id of affectedIds) {
+    if (!siteBookings?.[id]) continue;
+    if (action === 'orphan') {
+      siteBookings[id].status = 'orphaned';
+      continue;
+    }
+    if (action === 'cancel') {
+      siteBookings[id].status = 'cancelled';
+    }
+  }
+}
+
 function buildSessionHistory(siteRecurringSessions, startDate = null, endDate = null, today = null) {
   const rows = [];
 
@@ -279,6 +606,8 @@ function buildSessionHistory(siteRecurringSessions, startDate = null, endDate = 
     if (endDate && sessionStart > endDate) continue;
 
     rows.push({
+      id: session.id,
+      type: session.type,
       label: session.label,
       date: sessionStart,
       endDate: sessionEnd,
@@ -314,6 +643,8 @@ function buildPastSessionHistory(siteRecurringSessions, startDate = null, endDat
     if (endDate && sessionStart > endDate) continue;
 
     rows.push({
+      id: session.id,
+      type: session.type,
       label: session.label,
       date: sessionStart,
       endDate: sessionEnd,
@@ -451,6 +782,242 @@ router.get('/site/:id', (req, res) => {
 router.get('/site/:id/clinics', (req, res) => {
   ensureCreateSession(req.session.data);
   res.render('site/clinics/clinics');
+});
+
+router.get('/site/:id/clinics/edit/:sessionId', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  const heading = state.draft.type === 'Clinic series' ? 'Edit clinic series' : 'Edit single clinic';
+  return res.render('site/clinics/edit/summary', {
+    pageName: heading,
+    rows: buildSummaryRowsForEdit(state.draft, req.site_id, req.params.sessionId, data),
+    sessionId: req.params.sessionId
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/change/:field', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  const { field } = req.params;
+  const isSeries = state.draft.type === 'Clinic series';
+
+  if (req.method === 'POST') {
+    if (field === 'name') {
+      state.draft.name = String(req.body?.draft?.name || '').trim();
+    }
+
+    if (field === 'date') {
+      if (isSeries) {
+        const startISO = parseDateInputToISO(req.body?.draft?.startDate || {});
+        const endISO = parseDateInputToISO(req.body?.draft?.endDate || {});
+        if (startISO && endISO) {
+          state.draft.startDate = startISO;
+          state.draft.endDate = endISO;
+          state.draft.startDateInput = toDateParts(startISO);
+          state.draft.endDateInput = toDateParts(endISO);
+        }
+      } else {
+        const singleISO = parseDateInputToISO(req.body?.draft?.singleDate || {});
+        if (singleISO) {
+          state.draft.startDate = singleISO;
+          state.draft.endDate = singleISO;
+          state.draft.singleDate = singleISO;
+          state.draft.singleDateInput = toDateParts(singleISO);
+        }
+      }
+    }
+
+    if (field === 'days' && isSeries) {
+      state.draft.days = asArray(req.body?.draft?.days);
+    }
+
+    if (field === 'time') {
+      const startHour = String(req.body?.draft?.startTime?.hour || '').padStart(2, '0');
+      const startMinute = String(req.body?.draft?.startTime?.minute || '').padStart(2, '0');
+      const endHour = String(req.body?.draft?.endTime?.hour || '').padStart(2, '0');
+      const endMinute = String(req.body?.draft?.endTime?.minute || '').padStart(2, '0');
+
+      state.draft.startTime = { hour: startHour, minute: startMinute };
+      state.draft.endTime = { hour: endHour, minute: endMinute };
+      state.draft.from = `${startHour}:${startMinute}`;
+      state.draft.until = `${endHour}:${endMinute}`;
+    }
+
+    if (field === 'capacity') {
+      state.draft.capacity = Math.max(1, Number(req.body?.draft?.capacity) || 1);
+    }
+
+    if (field === 'duration') {
+      const duration = Number(req.body?.draft?.duration) || 10;
+      state.draft.duration = Math.min(60, Math.max(1, duration));
+    }
+
+    if (field === 'services') {
+      state.draft.services = asArray(req.body?.draft?.services);
+    }
+
+    if (field === 'closures' && isSeries) {
+      const closures = asArray(state.draft.closures);
+      const addAnother = req.body?.addAnother;
+      const removeIndex = Number(req.body?.removeIndex);
+      if (Number.isInteger(removeIndex) && removeIndex >= 0 && closures[removeIndex]) {
+        closures.splice(removeIndex, 1);
+      }
+
+      if (addAnother === 'yes') {
+        const parsed = parseClosureFromBody(req.body?.closure || {});
+        if (parsed) {
+          closures.push(parsed);
+        }
+      }
+
+      state.draft.closures = closures;
+    }
+
+    setEditState(data, state);
+    return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/any-other-changes`);
+  }
+
+  return res.render('site/clinics/edit/change-field', {
+    field,
+    isSeries,
+    sessionId: req.params.sessionId,
+    draft: state.draft,
+    serviceGroups: data.serviceGroups,
+    services: data.services
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/any-other-changes', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  if (req.method === 'POST') {
+    if (req.body?.moreChanges === 'yes') {
+      return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/what-change`);
+    }
+
+    const updatedModel = draftToModel(state.draft);
+    updatedModel.site_id = req.site_id;
+    const originalModel = { ...state.original, site_id: req.site_id };
+    const siteBookings = data?.bookings?.[req.site_id] || {};
+    const affectedIds = calculateAffectedBookings(originalModel, updatedModel, siteBookings);
+    state.affectedBookingIds = affectedIds;
+    setEditState(data, state);
+
+    if (affectedIds.length > 0) {
+      return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/affected-bookings`);
+    }
+
+    return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/check-answers`);
+  }
+
+  return res.render('site/clinics/edit/any-other-changes', {
+    sessionId: req.params.sessionId,
+    isSeries: state.draft.type === 'Clinic series'
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/what-change', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  const isSeries = state.draft.type === 'Clinic series';
+
+  if (req.method === 'POST') {
+    const field = req.body?.field;
+    const valid = editFieldOptions(isSeries).some((item) => item.value === field);
+    if (!valid) {
+      return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/what-change`);
+    }
+    return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/change/${field}`);
+  }
+
+  return res.render('site/clinics/edit/what-change', {
+    sessionId: req.params.sessionId,
+    options: editFieldOptions(isSeries),
+    isSeries
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/affected-bookings', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  const affectedCount = asArray(state.affectedBookingIds).length;
+  if (affectedCount === 0) {
+    return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/check-answers`);
+  }
+
+  if (req.method === 'POST') {
+    const action = req.body?.bookingAction;
+    if (action === 'orphan' || action === 'cancel') {
+      state.bookingAction = action;
+      setEditState(data, state);
+      return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/check-answers`);
+    }
+  }
+
+  return res.render('site/clinics/edit/affected-bookings', {
+    sessionId: req.params.sessionId,
+    isSeries: state.draft.type === 'Clinic series',
+    affectedCount
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  if (req.method === 'POST') {
+    const updatedModel = draftToModel(state.draft);
+    persistRecurringSession(data, req.site_id, updatedModel);
+
+    const siteBookings = data?.bookings?.[req.site_id] || {};
+    applyAffectedBookingAction(siteBookings, state.affectedBookingIds, state.bookingAction);
+    clearEditState(data);
+    return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/success`);
+  }
+
+  const bookingActionText = state.bookingAction === 'cancel'
+    ? 'Cancel appointments (cancel them)'
+    : (state.bookingAction === 'orphan' ? 'Keep booked appointments (make them orphaned)' : 'No booking action selected');
+
+  return res.render('site/clinics/edit/check-answers', {
+    sessionId: req.params.sessionId,
+    isSeries: state.draft.type === 'Clinic series',
+    rows: buildSummaryRowsForEdit(state.draft, req.site_id, req.params.sessionId, data),
+    affectedCount: asArray(state.affectedBookingIds).length,
+    bookingActionText
+  });
+});
+
+router.get('/site/:id/clinics/edit/:sessionId/success', (req, res) => {
+  return res.render('site/clinics/edit/success');
+});
+
+router.get('/site/:id/clinics/:sessionId/edit', (req, res) => {
+  return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}`);
 });
 
 router.all('/site/:id/clinics/type-of-session', (req, res) => {
@@ -726,8 +1293,12 @@ router.all('/site/:id/clinics/process-new-session', (req, res) => {
   }
 
   const recurringSession = buildRecurringSessionModel(newSession);
+  if (data.editingSessionId) {
+    recurringSession.id = data.editingSessionId;
+  }
   persistRecurringSession(data, site_id, recurringSession);
   delete data.newSession;
+  delete data.editingSessionId;
 
   res.redirect(`/site/${site_id}/clinics/success`);
 });

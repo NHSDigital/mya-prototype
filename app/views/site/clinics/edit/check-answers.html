@@ -1,0 +1,36 @@
+{% extends '../../../layouts/layout.html' %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/any-other-changes'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <h1 class="nhsuk-heading-l">Check your answers</h1>
+
+      {% set allRows = rows %}
+      {% if affectedCount > 0 %}
+        {% set allRows = allRows.concat([{
+          key: { text: 'Booked appointments' },
+          value: { text: bookingActionText },
+          actions: {
+            items: [{
+              href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/affected-bookings',
+              text: 'Change',
+              visuallyHiddenText: ' booked appointments action'
+            }]
+          }
+        }]) %}
+      {% endif %}
+
+      {{ summaryList({ rows: allRows }) }}
+
+      <form action="/site/{{ site_id }}/clinics/edit/{{ sessionId }}/check-answers" method="post">
+        {{ button({ text: 'Save changes' }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

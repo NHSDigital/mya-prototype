@@ -98,7 +98,7 @@
                 <td class="nhsuk-table__cell" role="cell">{{ daysLabel(session) }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ session.slotLength or session.duration }} minutes</td>
-                <td class="nhsuk-table__cell" role="cell"><a href="/not-in-this-prototype">Edit</a>, <a href="/not-in-this-prototype">Remove</a></td>
+                <td class="nhsuk-table__cell" role="cell"><a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">Edit</a>, <a href="/not-in-this-prototype">Remove</a></td>
               </tr>
             {% endfor %}
           </tbody>
@@ -137,7 +137,7 @@
                 <td class="nhsuk-table__cell" role="cell">{{ daysLabel(session) }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ session.slotLength or session.duration }} minutes</td>
-                <td class="nhsuk-table__cell" role="cell"><a href="/not-in-this-prototype">Edit</a>, <a href="/not-in-this-prototype">Remove</a></td>
+                <td class="nhsuk-table__cell" role="cell"><a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">Edit</a>, <a href="/not-in-this-prototype">Remove</a></td>
               </tr>
             {% endfor %}
           </tbody>

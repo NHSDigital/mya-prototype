@@ -73,13 +73,13 @@ const clinics = [
     ]
   },
   {
-    label: 'Ongoing Tue clinic series 11:00',
+    label: 'Ongoing clinic series 11 to 3pm',
     startDate: ongoingSeriesStart,
     endDate: ongoingSeriesEnd,
     recurrencePattern: {
       frequency: 'Weekly',
       interval: 1,
-      byDay: ['Tuesday']
+      byDay: ['Monday','Tuesday','Wednesday','Thursday','Friday']
     },
     from: '11:00',
     until: '15:00',
@@ -146,8 +146,8 @@ module.exports = {
       SERVICE_IDS.RSV_ADULT
     ],
     statuses: ['scheduled', 'cancelled', 'orphaned'],
-    fillRate: 0.01,
-    fillRatesByStatus: { scheduled: 0.99, cancelled: 0.01, orphaned: 0 },
+    fillRate: 0.35,
+    fillRatesByStatus: { scheduled: 0.75, cancelled: 0.25, orphaned: 0 },
     overrides: [
       {
         datetime: `${nextTuesdayDate}T11:00`,

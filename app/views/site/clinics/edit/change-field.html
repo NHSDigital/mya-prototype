@@ -1,0 +1,201 @@
+{% extends '../../../layouts/layout.html' %}
+
+{% set headingMap = {
+  name: 'Edit name',
+  date: isSeries and 'Edit dates' or 'Edit date',
+  days: 'Edit days',
+  time: 'Edit time',
+  capacity: 'Edit vaccinators and capacity',
+  duration: 'Edit appointment length',
+  services: 'Edit services',
+  closures: 'Edit clinic closures'
+} %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/clinics/edit/' + sessionId
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <h1 class="nhsuk-heading-l">{{ headingMap[field] }}</h1>
+
+      <form action="/site/{{ site_id }}/clinics/edit/{{ sessionId }}/change/{{ field }}" method="post">
+        {% if field == 'name' %}
+          {{ input({
+            label: { text: 'Clinic name', classes: 'nhsuk-label--m' },
+            id: 'name',
+            name: 'draft[name]',
+            value: draft.name,
+            classes: 'nhsuk-input--width-20'
+          }) }}
+        {% endif %}
+
+        {% if field == 'date' and isSeries %}
+          {{ dateInput({
+            id: 'start-date',
+            namePrefix: 'draft[startDate]',
+            fieldset: { legend: { text: 'Start date', classes: 'nhsuk-label--m' } },
+            items: [
+              { name: 'day', classes: 'nhsuk-input--width-2', value: draft.startDateInput.day },
+              { name: 'month', classes: 'nhsuk-input--width-2', value: draft.startDateInput.month },
+              { name: 'year', classes: 'nhsuk-input--width-4', value: draft.startDateInput.year }
+            ]
+          }) }}
+          {{ dateInput({
+            id: 'end-date',
+            namePrefix: 'draft[endDate]',
+            fieldset: { legend: { text: 'End date', classes: 'nhsuk-label--m' } },
+            items: [
+              { name: 'day', classes: 'nhsuk-input--width-2', value: draft.endDateInput.day },
+              { name: 'month', classes: 'nhsuk-input--width-2', value: draft.endDateInput.month },
+              { name: 'year', classes: 'nhsuk-input--width-4', value: draft.endDateInput.year }
+            ]
+          }) }}
+        {% endif %}
+
+        {% if field == 'date' and not isSeries %}
+          {{ dateInput({
+            id: 'single-date',
+            namePrefix: 'draft[singleDate]',
+            fieldset: { legend: { text: 'Clinic date', classes: 'nhsuk-label--m' } },
+            items: [
+              { name: 'day', classes: 'nhsuk-input--width-2', value: draft.singleDateInput.day },
+              { name: 'month', classes: 'nhsuk-input--width-2', value: draft.singleDateInput.month },
+              { name: 'year', classes: 'nhsuk-input--width-4', value: draft.singleDateInput.year }
+            ]
+          }) }}
+        {% endif %}
+
+        {% if field == 'days' %}
+          {{ checkboxes({
+            idPrefix: 'days',
+            name: 'draft[days]',
+            items: [
+              { value: 'Monday', text: 'Monday', checked: true if 'Monday' in (draft.days or []) },
+              { value: 'Tuesday', text: 'Tuesday', checked: true if 'Tuesday' in (draft.days or []) },
+              { value: 'Wednesday', text: 'Wednesday', checked: true if 'Wednesday' in (draft.days or []) },
+              { value: 'Thursday', text: 'Thursday', checked: true if 'Thursday' in (draft.days or []) },
+              { value: 'Friday', text: 'Friday', checked: true if 'Friday' in (draft.days or []) },
+              { value: 'Saturday', text: 'Saturday', checked: true if 'Saturday' in (draft.days or []) },
+              { value: 'Sunday', text: 'Sunday', checked: true if 'Sunday' in (draft.days or []) }
+            ]
+          }) }}
+        {% endif %}
+
+        {% if field == 'time' %}
+          {{ dateInput({
+            id: 'start-time',
+            namePrefix: 'draft[startTime]',
+            fieldset: { legend: { text: 'Start time', classes: 'nhsuk-label--m' } },
+            items: [
+              { name: 'hour', classes: 'nhsuk-input--width-2', value: draft.startTime.hour },
+              { name: 'minute', classes: 'nhsuk-input--width-2', value: draft.startTime.minute }
+            ]
+          }) }}
+          {{ dateInput({
+            id: 'end-time',
+            namePrefix: 'draft[endTime]',
+            fieldset: { legend: { text: 'End time', classes: 'nhsuk-label--m' } },
+            items: [
+              { name: 'hour', classes: 'nhsuk-input--width-2', value: draft.endTime.hour },
+              { name: 'minute', classes: 'nhsuk-input--width-2', value: draft.endTime.minute }
+            ]
+          }) }}
+        {% endif %}
+
+        {% if field == 'capacity' %}
+          {{ input({
+            label: { text: 'Vaccinators and capacity', classes: 'nhsuk-label--m' },
+            id: 'capacity',
+            name: 'draft[capacity]',
+            classes: 'nhsuk-input--width-3',
+            inputmode: 'numeric',
+            value: draft.capacity
+          }) }}
+        {% endif %}
+
+        {% if field == 'duration' %}
+          {{ input({
+            label: { text: 'Appointment length', classes: 'nhsuk-label--m' },
+            hint: { text: 'Up to a maximum of 60 minutes' },
+            id: 'duration',
+            name: 'draft[duration]',
+            classes: 'nhsuk-input--width-3',
+            inputmode: 'numeric',
+            suffix: 'minutes',
+            value: draft.duration
+          }) }}
+        {% endif %}
+
+        {% if field == 'services' %}
+          {% for groupId, group in serviceGroups %}
+            <fieldset class="nhsuk-fieldset app-checkbox-group">
+              <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--s">{{ group.title }}</legend>
+              <div class="nhsuk-checkboxes" data-module="nhsuk-checkboxes">
+                {% for id, service in services %}
+                  {% if service.group == groupId %}
+                    <div class="nhsuk-checkboxes__item">
+                      <input class="nhsuk-checkboxes__input" id="service-{{ id }}" name="draft[services]" type="checkbox" value="{{ id }}" {% if id in (draft.services or []) %}checked{% endif %}>
+                      <label class="nhsuk-label nhsuk-checkboxes__label" for="service-{{ id }}">{{ service.name }}</label>
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </fieldset>
+          {% endfor %}
+        {% endif %}
+
+        {% if field == 'closures' %}
+          {% if draft.closures and (draft.closures | length > 0) %}
+            <ul class="nhsuk-list">
+              {% for closure in draft.closures %}
+                <li class="nhsuk-u-margin-bottom-2">
+                  {% if closure.startDate == closure.endDate %}
+                    {{ closure.startDate | formatDate('d MMM yyyy') }}
+                  {% else %}
+                    {{ closure.startDate | formatDate('d MMM yyyy') }} to {{ closure.endDate | formatDate('d MMM yyyy') }}
+                  {% endif %}
+                  {% if closure.label %} - {{ closure.label }}{% endif %}
+                  <button class="nhsuk-button nhsuk-button--secondary nhsuk-u-margin-left-2" type="submit" name="removeIndex" value="{{ loop.index0 }}">Remove</button>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+          {{ input({
+            label: { text: 'Closure name', classes: 'nhsuk-label--m' },
+            id: 'closure-name',
+            name: 'closure[name]',
+            classes: 'nhsuk-input--width-20'
+          }) }}
+          {{ dateInput({
+            id: 'closure-start-date',
+            namePrefix: 'closure[startDate]',
+            fieldset: { legend: { text: 'Closure start date', classes: 'nhsuk-label--m' } },
+            items: [
+              { name: 'day', classes: 'nhsuk-input--width-2' },
+              { name: 'month', classes: 'nhsuk-input--width-2' },
+              { name: 'year', classes: 'nhsuk-input--width-4' }
+            ]
+          }) }}
+          {{ dateInput({
+            id: 'closure-end-date',
+            namePrefix: 'closure[endDate]',
+            fieldset: { legend: { text: 'Closure end date', classes: 'nhsuk-label--m' } },
+            items: [
+              { name: 'day', classes: 'nhsuk-input--width-2' },
+              { name: 'month', classes: 'nhsuk-input--width-2' },
+              { name: 'year', classes: 'nhsuk-input--width-4' }
+            ]
+          }) }}
+          <input type="hidden" name="addAnother" value="yes">
+        {% endif %}
+
+        {{ button({ text: 'Continue' }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}
