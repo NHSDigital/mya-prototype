@@ -538,7 +538,16 @@ router.all('/site/:id/clinics/services', (req, res) => {
 
 router.all('/site/:id/clinics/clinic-closures', (req, res) => {
   ensureCreateSession(req.session.data);
-  const flowType = clinicFlowType(req.session.data);
+  let flowType = clinicFlowType(req.session.data);
+
+  if (flowType !== 'series') {
+    const postedType = normalizeSessionType(req.body?.newSession?.type);
+    if (postedType === 'Clinic series') {
+      req.session.data.newSession = req.session.data.newSession || {};
+      req.session.data.newSession.type = 'Clinic series';
+      flowType = 'series';
+    }
+  }
 
   if (flowType !== 'series') {
     return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
@@ -552,7 +561,14 @@ router.all('/site/:id/clinics/clinic-closures', (req, res) => {
       return res.redirect(`/site/${req.site_id}/clinics/clinic-closures/add`);
     }
 
-    return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
+    if (addAnother === 'no') {
+      return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
+    }
+
+    // Initial POST from services (or no radio selection) should stay on this page.
+    return res.render('site/clinics/series/clinic-closures', {
+      closures
+    });
   }
 
   return res.render('site/clinics/series/clinic-closures', {
@@ -562,7 +578,16 @@ router.all('/site/:id/clinics/clinic-closures', (req, res) => {
 
 router.all('/site/:id/clinics/clinic-closures/add', (req, res) => {
   ensureCreateSession(req.session.data);
-  const flowType = clinicFlowType(req.session.data);
+  let flowType = clinicFlowType(req.session.data);
+
+  if (flowType !== 'series') {
+    const postedType = normalizeSessionType(req.body?.newSession?.type);
+    if (postedType === 'Clinic series') {
+      req.session.data.newSession = req.session.data.newSession || {};
+      req.session.data.newSession.type = 'Clinic series';
+      flowType = 'series';
+    }
+  }
 
   if (flowType !== 'series') {
     return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
@@ -597,7 +622,16 @@ router.all('/site/:id/clinics/clinic-closures/add', (req, res) => {
 
 router.all('/site/:id/clinics/clinic-closures/:index/change', (req, res) => {
   ensureCreateSession(req.session.data);
-  const flowType = clinicFlowType(req.session.data);
+  let flowType = clinicFlowType(req.session.data);
+
+  if (flowType !== 'series') {
+    const postedType = normalizeSessionType(req.body?.newSession?.type);
+    if (postedType === 'Clinic series') {
+      req.session.data.newSession = req.session.data.newSession || {};
+      req.session.data.newSession.type = 'Clinic series';
+      flowType = 'series';
+    }
+  }
 
   if (flowType !== 'series') {
     return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
@@ -636,7 +670,16 @@ router.all('/site/:id/clinics/clinic-closures/:index/change', (req, res) => {
 
 router.all('/site/:id/clinics/clinic-closures/:index/remove', (req, res) => {
   ensureCreateSession(req.session.data);
-  const flowType = clinicFlowType(req.session.data);
+  let flowType = clinicFlowType(req.session.data);
+
+  if (flowType !== 'series') {
+    const postedType = normalizeSessionType(req.body?.newSession?.type);
+    if (postedType === 'Clinic series') {
+      req.session.data.newSession = req.session.data.newSession || {};
+      req.session.data.newSession.type = 'Clinic series';
+      flowType = 'series';
+    }
+  }
 
   if (flowType !== 'series') {
     return res.redirect(`/site/${req.site_id}/clinics/check-answers`);

@@ -27,6 +27,7 @@
       {% endif %}
 
       <form action="{{ actionHref }}" method="post">
+        <input type="hidden" name="newSession[type]" value="Clinic series">
         {{ input({
           label: {
             text: "Name",

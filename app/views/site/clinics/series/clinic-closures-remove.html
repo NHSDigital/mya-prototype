@@ -26,6 +26,7 @@
       </p>
 
       <form action="/site/{{ site_id }}/clinics/clinic-closures/{{ index }}/remove" method="post">
+        <input type="hidden" name="newSession[type]" value="Clinic series">
         {{ button({
           text: "Yes, remove closure"
         }) }}

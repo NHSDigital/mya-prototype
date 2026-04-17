@@ -45,6 +45,7 @@
       {% endif %}
 
       <form action="/site/{{ site_id }}/clinics/clinic-closures" method="post">
+        <input type="hidden" name="newSession[type]" value="Clinic series">
         {{ radios({
           idPrefix: "add-another-closure",
           name: "addAnother",
