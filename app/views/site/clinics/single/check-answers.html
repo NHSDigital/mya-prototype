@@ -51,6 +51,22 @@
           rows: [
             {
               key: {
+                text: "Name"
+              },
+              value: {
+                text: data.newSession.name or "Not provided"
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/clinics/details",
+                    text: "Change",
+                    visuallyHiddenText: " clinic name"
+                  }
+                ]
+              }
+            }, {
+              key: {
                 text: "Date"
               },
               value: {
@@ -59,7 +75,7 @@
               actions: {
                 items: [
                   {
-                    href: "/site/" + site_id + "/clinics/dates",
+                    href: "/site/" + site_id + "/clinics/details",
                     text: "Change",
                     visuallyHiddenText: " date"
                   }

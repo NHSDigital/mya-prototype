@@ -1,6 +1,6 @@
 {% extends '../../../layouts/layout.html' %}
 
-{% set pageName = "Clinic details" %}
+{% set pageName = "Details" %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -15,6 +15,20 @@
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       <form action="/site/{{ site_id }}/clinics/time-and-capacity" method="post">
+        {{ input({
+          label: {
+            text: "Clinic name",
+            classes: "nhsuk-label--m"
+          },
+          id: "clinic-name",
+          name: "newSession[name]",
+          classes: "nhsuk-input--width-20",
+          hint: {
+            text: "A short name to help you identify this clinic series. For example, weekly flu clinic"
+          },
+          value: data.newSession.name
+        }) }}
+
         {{ dateInput({
           id: "single-date",
           namePrefix: "newSession[singleDate]",
