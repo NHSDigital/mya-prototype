@@ -1,0 +1,78 @@
+{% extends '../../../layouts/layout.html' %}
+
+{% set pageName = "Clinic closures" %}
+
+{% macro closureText(closure) %}
+  {% if closure.startDate == closure.endDate %}
+    {{ closure.startDate | formatDate('d MMM yyyy') }}
+  {% else %}
+    {{ closure.startDate | formatDate('d MMM yyyy') }} to {{ closure.endDate | formatDate('d MMM yyyy') }}
+  {% endif %}
+  {% if closure.label %}
+    - {{ closure.label }}
+  {% endif %}
+{% endmacro %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/clinics/services'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Create clinic series</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      {% if closures | length > 0 %}
+        <h2 class="nhsuk-heading-m">You have added {{ closures | length }} clinic closure{{ 's' if closures | length != 1 }}</h2>
+
+        <ul class="nhsuk-list">
+          {% for closure in closures %}
+            <li class="nhsuk-u-margin-bottom-3">
+              <strong>{{ closureText(closure) }}</strong><br>
+              <a href="/site/{{ site_id }}/clinics/clinic-closures/{{ loop.index0 }}/change">Change</a>
+              <span aria-hidden="true"> | </span>
+              <a href="/site/{{ site_id }}/clinics/clinic-closures/{{ loop.index0 }}/remove">Remove</a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        {{ insetText({
+          text: "No clinic closures added yet."
+        }) }}
+      {% endif %}
+
+      <form action="/site/{{ site_id }}/clinics/clinic-closures" method="post">
+        {{ radios({
+          idPrefix: "add-another-closure",
+          name: "addAnother",
+          fieldset: {
+            legend: {
+              text: "Do you need to add another clinic closure?",
+              classes: "nhsuk-fieldset__legend--m"
+            }
+          },
+          hint: {
+            text: "You can add single-day closures and date-range closures."
+          },
+          items: [
+            {
+              value: "yes",
+              text: "Yes"
+            },
+            {
+              value: "no",
+              text: "No"
+            }
+          ]
+        }) }}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

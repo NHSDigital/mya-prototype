@@ -1,0 +1,103 @@
+{% extends '../../../layouts/layout.html' %}
+
+{% set pageName = "Add clinic closure" %}
+{% if mode == 'change' %}{% set pageName = "Change clinic closure" %}{% endif %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/clinics/clinic-closures'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Create clinic series</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      {% if error %}
+        <div class="nhsuk-error-summary" aria-labelledby="error-summary-title" role="alert" tabindex="-1">
+          <h2 class="nhsuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+          <div class="nhsuk-error-summary__body">
+            <ul class="nhsuk-list nhsuk-error-summary__list">
+              <li>{{ error }}</li>
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+
+      <form action="{{ actionHref }}" method="post">
+        {{ input({
+          label: {
+            text: "Name",
+            classes: "nhsuk-label--m"
+          },
+          id: "closure-name",
+          name: "closure[name]",
+          classes: "nhsuk-input--width-20",
+          value: closure.name
+        }) }}
+
+        {{ dateInput({
+          id: "closure-start-date",
+          namePrefix: "closure[startDate]",
+          fieldset: {
+            legend: {
+              text: "Closure start date",
+              classes: "nhsuk-label--m"
+            }
+          },
+          items: [
+            {
+              name: "day",
+              classes: "nhsuk-input--width-2",
+              value: closure.startDate.day
+            },
+            {
+              name: "month",
+              classes: "nhsuk-input--width-2",
+              value: closure.startDate.month
+            },
+            {
+              name: "year",
+              classes: "nhsuk-input--width-4",
+              value: closure.startDate.year
+            }
+          ]
+        }) }}
+
+        {{ dateInput({
+          id: "closure-end-date",
+          namePrefix: "closure[endDate]",
+          fieldset: {
+            legend: {
+              text: "Closure end date",
+              classes: "nhsuk-label--m"
+            }
+          },
+          items: [
+            {
+              name: "day",
+              classes: "nhsuk-input--width-2",
+              value: closure.endDate.day
+            },
+            {
+              name: "month",
+              classes: "nhsuk-input--width-2",
+              value: closure.endDate.month
+            },
+            {
+              name: "year",
+              classes: "nhsuk-input--width-4",
+              value: closure.endDate.year
+            }
+          ]
+        }) }}
+
+        {{ button({
+          text: "Continue"
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

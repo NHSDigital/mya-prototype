@@ -4,7 +4,7 @@
 
 {% block beforeContent %}
 {{ backLink({
-  href: '/site/' + site_id + '/clinics/services'
+  href: '/site/' + site_id + '/clinics/clinic-closures'
 }) }}
 {% endblock %}
 
@@ -52,6 +52,11 @@
               {% set servicesAvailable = servicesAvailable.concat(service.name) %}
             {% endif %}
           {% endfor %}
+        {% endif %}
+
+        {% set closureSummary = "None added" %}
+        {% if data.newSession.closures and (data.newSession.closures | length > 0) %}
+          {% set closureSummary = (data.newSession.closures | length) ~ " added" %}
         {% endif %}
 
         {{ summaryList({
@@ -165,6 +170,22 @@
                     href: "/site/" + site_id + "/clinics/services",
                     text: "Change",
                     visuallyHiddenText: " services available"
+                  }
+                ]
+              }
+            }, {
+              key: {
+                text: "Clinic closures"
+              },
+              value: {
+                text: closureSummary
+              },
+              actions: {
+                items: [
+                  {
+                    href: "/site/" + site_id + "/clinics/clinic-closures",
+                    text: "Change",
+                    visuallyHiddenText: " clinic closures"
                   }
                 ]
               }

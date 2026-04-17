@@ -4,6 +4,8 @@ const generateBookings = require('./_lib/generateBookings');
 const { stableId } = require('./_lib/utils');
 const catNames = require('./_lib/catNames');
 const site1Config = require('./site1.config');
+const mergeDailyAvailability = require('../helpers/recurringToDailyAvailability');
+const { DateTime } = require('luxon');
 
 const SERVICE_GROUPS = {
   FLU: {
@@ -146,6 +148,8 @@ const daily_availability = {};
 const bookings = {};
 const sites = {};
 const recurring_sessions = {};
+const DEFAULT_WINDOW_PAST_DAYS = 14;
+const DEFAULT_WINDOW_FUTURE_DAYS = 90;
 
 function buildRecurringDefaults({ site_id, start, end, patterns = {} }) {
   const grouped = new Map();
@@ -241,6 +245,90 @@ function buildSeedRecurringDefaults(site_id, seedRecurringClinics = []) {
   return output;
 }
 
+function normalizeBookingDatetime(datetimeISO, timezone = 'Europe/London') {
+  const dt = DateTime.fromISO(datetimeISO || '', { zone: timezone });
+  if (!dt.isValid) return null;
+  return dt.toISO({ suppressSeconds: true, suppressMilliseconds: true });
+}
+
+function toArray(value) {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  return [value];
+}
+
+function applyBookingOverrides(generatedBookings, bookingOverrides, site_id, timezone = 'Europe/London') {
+  const output = { ...(generatedBookings || {}) };
+  const overrideList = toArray(bookingOverrides);
+  if (overrideList.length === 0) return output;
+
+  const bookingsById = Object.values(output);
+  const datetimeToId = new Map();
+  let maxId = 0;
+
+  for (const booking of bookingsById) {
+    const id = Number(booking.id) || 0;
+    if (id > maxId) maxId = id;
+
+    const normalizedDatetime = normalizeBookingDatetime(booking.datetime, timezone);
+    if (!normalizedDatetime) continue;
+
+    if (!datetimeToId.has(normalizedDatetime)) {
+      datetimeToId.set(normalizedDatetime, booking.id);
+    }
+  }
+
+  for (const override of overrideList) {
+    const normalizedDatetime = normalizeBookingDatetime(override?.datetime, timezone);
+    if (!normalizedDatetime) continue;
+
+    let targetId = null;
+    const requestedId = Number(override?.id);
+    if (requestedId && output[requestedId]) {
+      targetId = requestedId;
+    } else {
+      targetId = datetimeToId.get(normalizedDatetime) || null;
+    }
+
+    if (!targetId) {
+      maxId += 1;
+      targetId = maxId;
+    }
+
+    const existing = output[targetId] || {};
+    const status = override?.status || existing.status || 'scheduled';
+
+    output[targetId] = {
+      ...existing,
+      ...override,
+      id: targetId,
+      site_id,
+      datetime: normalizedDatetime,
+      status,
+      name: override?.name || existing.name || 'Manual booking',
+      service: override?.service || existing.service || null,
+      nhsNumber: override?.nhsNumber || existing.nhsNumber || '',
+      dob: override?.dob || existing.dob || null,
+      contact: override?.contact || existing.contact || {}
+    };
+
+    datetimeToId.set(normalizedDatetime, targetId);
+  }
+
+  return output;
+}
+
+function filterAvailabilityByDateWindow(availability, startISO, endISO) {
+  const output = {};
+
+  for (const [dateISO, day] of Object.entries(availability || {})) {
+    if (dateISO < startISO || dateISO > endISO) continue;
+    output[dateISO] = day;
+  }
+
+  return output;
+}
+
 for (const cfg of sitesConfig) {
   const {
     site,
@@ -249,30 +337,63 @@ for (const cfg of sitesConfig) {
     patterns,
     overrides,
     bookings: bookingConfig,
+    clinics,
     seedClinics,
     seedRecurringClinics = []
   } = cfg;
-  const configuredSeedClinics = seedClinics || seedRecurringClinics;
+  const configuredClinics = clinics || seedClinics || seedRecurringClinics;
   const site_id = site.id;
+  const hasDateRange = Boolean(start && end);
+  const hasPatterns = Object.keys(patterns || {}).length > 0;
+  const hasOverrides = Object.keys(overrides || {}).length > 0;
+  const today = DateTime.now().startOf('day');
+  const windowStart = today.minus({ days: DEFAULT_WINDOW_PAST_DAYS }).toISODate();
+  const windowEnd = today.plus({ days: DEFAULT_WINDOW_FUTURE_DAYS }).toISODate();
 
-  const availability = generateAvailability({ site_id, start, end, patterns, overrides });
+  const recurringSessionsForSite = {
+    ...(hasDateRange && (hasPatterns || hasOverrides)
+      ? buildRecurringDefaults({ site_id, start, end, patterns })
+      : {}),
+    ...buildSeedRecurringDefaults(site_id, configuredClinics)
+  };
+
+  const hasClinicSeeds = Object.keys(recurringSessionsForSite).length > 0;
+
+  const availability = hasClinicSeeds
+    ? filterAvailabilityByDateWindow(
+      mergeDailyAvailability({}, site_id, recurringSessionsForSite),
+      windowStart,
+      windowEnd
+    )
+    : (hasDateRange
+      ? generateAvailability({ site_id, start, end, patterns, overrides })
+      : {});
 
   const slots = generateSlots(availability);
 
-  const bookingData = generateBookings({
+  const {
+    overrides: bookingOverrides,
+    manual: manualBookingOverrides,
+    ...bookingGeneratorConfig
+  } = bookingConfig || {};
+
+  const generatedBookings = generateBookings({
     site_id,
     slots,
-    ...bookingConfig,
+    ...bookingGeneratorConfig,
     names: catNames
   });
+
+  const bookingData = applyBookingOverrides(
+    generatedBookings,
+    [...toArray(bookingOverrides), ...toArray(manualBookingOverrides)],
+    site_id
+  );
 
   daily_availability[site_id] = availability;
   bookings[site_id] = bookingData;
   sites[site_id] = site;
-  recurring_sessions[site_id] = {
-    ...buildRecurringDefaults({ site_id, start, end, patterns }),
-    ...buildSeedRecurringDefaults(site_id, configuredSeedClinics)
-  };
+  recurring_sessions[site_id] = recurringSessionsForSite;
 }
 
 

@@ -1,0 +1,35 @@
+{% extends '../../../layouts/layout.html' %}
+
+{% set pageName = "Are you sure you want to remove this clinic closure?" %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: '/site/' + site_id + '/clinics/clinic-closures'
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <span class="nhsuk-caption-l">Create clinic series</span>
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <p class="nhsuk-body">
+        {% if closure.startDate == closure.endDate %}
+          {{ closure.startDate | formatDate('d MMM yyyy') }}
+        {% else %}
+          {{ closure.startDate | formatDate('d MMM yyyy') }} to {{ closure.endDate | formatDate('d MMM yyyy') }}
+        {% endif %}
+        {% if closure.label %}
+          - {{ closure.label }}
+        {% endif %}
+      </p>
+
+      <form action="/site/{{ site_id }}/clinics/clinic-closures/{{ index }}/remove" method="post">
+        {{ button({
+          text: "Yes, remove closure"
+        }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

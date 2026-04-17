@@ -2,12 +2,14 @@
 const { DateTime } = require('luxon');
 
 const today = DateTime.now().startOf('day');
-const rollingStart = today.minus({ days: 14 }).toISODate();
-const rollingEnd = today.plus({ months: 3 }).toISODate();
 
 const pastSeriesStart = today.minus({ months: 4 }).toISODate();
 const pastSeriesEnd = today.minus({ months: 2 }).toISODate();
 const pastSingleDate = today.minus({ days: 45 }).toISODate();
+const ongoingSeriesStart = today.minus({ days: 21 }).toISODate();
+const ongoingSeriesEnd = today.plus({ months: 2 }).toISODate();
+const futureSingleDate = today.plus({ days: 3 }).toISODate();
+const nextTuesdayDate = today.plus({ days: (2 - today.weekday + 7) % 7 }).toISODate();
 
 const SERVICE_IDS = {
   COVID_ADULT: 'COVID:18+',
@@ -18,24 +20,7 @@ const SERVICE_IDS = {
   RSV_ADULT: 'RSV:Adult'
 };
 
-const baseSessions = [
-  {
-    from: '09:30',
-    until: '17:00',
-    services: [
-      SERVICE_IDS.COVID_ADULT,
-      SERVICE_IDS.FLU_18_64,
-      SERVICE_IDS.FLU_65_PLUS,
-      SERVICE_IDS.COVID_FLU_18_64,
-      SERVICE_IDS.COVID_FLU_65_PLUS,
-      SERVICE_IDS.RSV_ADULT
-    ],
-    slotLength: 10,
-    capacity: 1
-  }
-];
-
-const seedClinics = [
+const clinics = [
   {
     label: 'Mon, Thu clinic series 10:00',
     startDate: pastSeriesStart,
@@ -51,7 +36,18 @@ const seedClinics = [
     services: [SERVICE_IDS.COVID_ADULT, SERVICE_IDS.FLU_65_PLUS],
     capacity: 2,
     childSessions: [],
-    closures: []
+    closures: [
+      {
+        startDate: pastSeriesStart,
+        endDate: pastSeriesStart,
+        label: 'Bank holiday'
+      },
+      {
+        startDate: DateTime.fromISO(pastSeriesStart).plus({ days: 14 }).toISODate(),
+        endDate: DateTime.fromISO(pastSeriesStart).plus({ days: 17 }).toISODate(),
+        label: 'Maintenance window'
+      }
+    ]
   },
   {
     label: 'Single clinic 09:00',
@@ -68,7 +64,56 @@ const seedClinics = [
     services: [SERVICE_IDS.RSV_ADULT],
     capacity: 1,
     childSessions: [],
-    closures: []
+    closures: [
+      {
+        startDate: pastSingleDate,
+        endDate: pastSingleDate,
+        label: 'One-off closure'
+      }
+    ]
+  },
+  {
+    label: 'Ongoing Tue clinic series 11:00',
+    startDate: ongoingSeriesStart,
+    endDate: ongoingSeriesEnd,
+    recurrencePattern: {
+      frequency: 'Weekly',
+      interval: 1,
+      byDay: ['Tuesday']
+    },
+    from: '11:00',
+    until: '15:00',
+    slotLength: 20,
+    services: [SERVICE_IDS.COVID_ADULT, SERVICE_IDS.RSV_ADULT],
+    capacity: 2,
+    childSessions: [],
+    closures: [
+      {
+        startDate: today.plus({ days: 7 }).toISODate(),
+        endDate: today.plus({ days: 7 }).toISODate(),
+        label: 'Staff training day'
+      },
+      {
+        startDate: today.plus({ days: 21 }).toISODate(),
+        endDate: today.plus({ days: 23 }).toISODate(),
+        label: 'Planned refurbishment'
+      }
+    ]
+  },
+  {
+    label: 'Future single clinic 13:00',
+    startDate: futureSingleDate,
+    endDate: futureSingleDate,
+    recurrencePattern: {
+      frequency: 'Weekly',
+      interval: 1,
+      byDay: ['Friday']
+    },
+    from: '13:00',
+    until: '16:00',
+    slotLength: 15,
+    services: [SERVICE_IDS.FLU_18_64],
+    capacity: 1
   }
 ];
 
@@ -89,22 +134,8 @@ module.exports = {
     region: 'London'
   },
 
-  // ---- Availability generation ----
-  start: rollingStart,
-  end: rollingEnd,
-  patterns: {
-    Monday: baseSessions,
-    Tuesday: baseSessions,
-    Wednesday: baseSessions,
-    Thursday: baseSessions,
-    Friday: baseSessions
-  },
-  overrides: {
-
-  },
-
-  // ---- Extra clinic seeds (in addition to generated defaults) ----
-  seedClinics,
+  // ---- Clinics ----
+  clinics,
 
   // ---- Bookings generation ----
   bookings: {
@@ -116,6 +147,26 @@ module.exports = {
     ],
     statuses: ['scheduled', 'cancelled', 'orphaned'],
     fillRate: 0.01,
-    fillRatesByStatus: { scheduled: 0.99, cancelled: 0.01, orphaned: 0 }
+    fillRatesByStatus: { scheduled: 0.99, cancelled: 0.01, orphaned: 0 },
+    overrides: [
+      {
+        datetime: `${nextTuesdayDate}T11:00`,
+        service: SERVICE_IDS.COVID_ADULT,
+        name: 'Alex Example',
+        status: 'scheduled'
+      },
+      {
+        datetime: `${nextTuesdayDate}T11:20`,
+        service: SERVICE_IDS.RSV_ADULT,
+        name: 'Sam Example',
+        status: 'cancelled'
+      },
+      {
+        datetime: `${DateTime.fromISO(nextTuesdayDate).plus({ days: 7 }).toISODate()}T12:00`,
+        service: SERVICE_IDS.COVID_ADULT,
+        name: 'Taylor Example',
+        status: 'scheduled'
+      }
+    ]
   }
 };

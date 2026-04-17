@@ -65,7 +65,14 @@ function ensureCreateSession(data) {
     },
     capacity: current.capacity || '',
     duration: current.duration || '',
-    services: asArray(current.services)
+    services: asArray(current.services),
+    closures: asArray(current.closures)
+      .filter((closure) => closure?.startDate && closure?.endDate)
+      .map((closure) => ({
+        startDate: closure.startDate,
+        endDate: closure.endDate,
+        label: closure.label || ''
+      }))
   };
 
   data.newSession = session;
@@ -129,6 +136,72 @@ function toIsoDate(dateParts) {
   }).toISODate();
 }
 
+function toIsoDateIfValid(dateInput) {
+  const day = String(dateInput?.day || '').trim();
+  const month = String(dateInput?.month || '').trim();
+  const year = String(dateInput?.year || '').trim();
+  if (!day || !month || !year) return null;
+
+  const dt = DateTime.fromObject({
+    day: +day,
+    month: +month,
+    year: +year
+  });
+
+  return dt.isValid ? dt.toISODate() : null;
+}
+
+function toDateInputParts(isoDate) {
+  const dt = DateTime.fromISO(isoDate || '');
+  if (!dt.isValid) {
+    return { day: '', month: '', year: '' };
+  }
+
+  return {
+    day: String(dt.day),
+    month: String(dt.month),
+    year: String(dt.year)
+  };
+}
+
+function parseClosureFromBody(closureBody = {}) {
+  const label = String(closureBody.name || '').trim();
+
+  const startDate = toIsoDateIfValid(closureBody.startDate);
+  const endDate = toIsoDateIfValid(closureBody.endDate);
+  if (!startDate || !endDate) return null;
+
+  return {
+    startDate,
+    endDate,
+    label
+  };
+}
+
+function toEditableClosure(closure = {}) {
+  return {
+    name: closure.label || '',
+    startDate: toDateInputParts(closure.startDate),
+    endDate: toDateInputParts(closure.endDate)
+  };
+}
+
+function toClosureFormInput(input = {}) {
+  return {
+    name: String(input.name || ''),
+    startDate: {
+      day: String(input.startDate?.day || ''),
+      month: String(input.startDate?.month || ''),
+      year: String(input.startDate?.year || '')
+    },
+    endDate: {
+      day: String(input.endDate?.day || ''),
+      month: String(input.endDate?.month || ''),
+      year: String(input.endDate?.year || '')
+    }
+  };
+}
+
 function toByDay(newSession, startDateISO) {
   const mode = normalizeSessionType(newSession.type) || 'Clinic series';
   if (mode === 'Single clinic') {
@@ -174,7 +247,13 @@ function buildRecurringSessionModel(newSession) {
     services,
     capacity,
     childSessions: [],
-    closures: []
+    closures: asArray(newSession.closures)
+      .filter((closure) => closure?.startDate && closure?.endDate)
+      .map((closure) => ({
+        startDate: closure.startDate,
+        endDate: closure.endDate,
+        label: closure.label || ''
+      }))
   };
 }
 
@@ -271,7 +350,7 @@ router.param('id', (req, res, next, id) => {
 router.use('/site/:id', (req, res, next) => {
   const data = req.session.data;
   const site_id = String(req.site_id);
-  const isClinicsCreateFlowPath = /^\/clinics\/(type-of-clinc|details|dates|days|time-and-capacity|services|check-answers|success)$/.test(req.path);
+  const isClinicsCreateFlowPath = /^\/clinics\/(type-of-clinc|details|dates|days|time-and-capacity|services|clinic-closures(?:\/.*)?|check-answers|success)$/.test(req.path);
 
   // Hide top-level navigation on create flow pages to reduce context switching.
   res.locals.hideMainNav = isClinicsCreateFlowPath;
@@ -442,6 +521,132 @@ router.all('/site/:id/clinics/services', (req, res) => {
   });
 });
 
+router.all('/site/:id/clinics/clinic-closures', (req, res) => {
+  ensureCreateSession(req.session.data);
+  const flowType = clinicFlowType(req.session.data);
+
+  if (flowType !== 'series') {
+    return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
+  }
+
+  const closures = req.session.data.newSession.closures || [];
+
+  if (req.method === 'POST') {
+    const addAnother = req.body?.addAnother;
+    if (addAnother === 'yes') {
+      return res.redirect(`/site/${req.site_id}/clinics/clinic-closures/add`);
+    }
+
+    return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
+  }
+
+  return res.render('site/clinics/series/clinic-closures', {
+    closures
+  });
+});
+
+router.all('/site/:id/clinics/clinic-closures/add', (req, res) => {
+  ensureCreateSession(req.session.data);
+  const flowType = clinicFlowType(req.session.data);
+
+  if (flowType !== 'series') {
+    return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
+  }
+
+  if (req.method === 'POST') {
+    const parsed = parseClosureFromBody(req.body?.closure || {});
+    if (!parsed) {
+      return res.render('site/clinics/series/clinic-closures-form', {
+        mode: 'add',
+        closure: toClosureFormInput(req.body?.closure || {}),
+        actionHref: `/site/${req.site_id}/clinics/clinic-closures/add`,
+        error: 'Enter valid closure start and end dates'
+      });
+    }
+
+    req.session.data.newSession.closures = req.session.data.newSession.closures || [];
+    req.session.data.newSession.closures.push(parsed);
+    return res.redirect(`/site/${req.site_id}/clinics/clinic-closures`);
+  }
+
+  return res.render('site/clinics/series/clinic-closures-form', {
+    mode: 'add',
+    closure: toClosureFormInput({
+      name: '',
+      startDate: { day: '', month: '', year: '' },
+      endDate: { day: '', month: '', year: '' }
+    }),
+    actionHref: `/site/${req.site_id}/clinics/clinic-closures/add`
+  });
+});
+
+router.all('/site/:id/clinics/clinic-closures/:index/change', (req, res) => {
+  ensureCreateSession(req.session.data);
+  const flowType = clinicFlowType(req.session.data);
+
+  if (flowType !== 'series') {
+    return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
+  }
+
+  const index = Number(req.params.index);
+  const closures = req.session.data.newSession.closures || [];
+  const current = closures[index];
+
+  if (!Number.isInteger(index) || index < 0 || !current) {
+    return res.redirect(`/site/${req.site_id}/clinics/clinic-closures`);
+  }
+
+  if (req.method === 'POST') {
+    const parsed = parseClosureFromBody(req.body?.closure || {});
+    if (!parsed) {
+      return res.render('site/clinics/series/clinic-closures-form', {
+        mode: 'change',
+        closure: toClosureFormInput(req.body?.closure || toEditableClosure(current)),
+        actionHref: `/site/${req.site_id}/clinics/clinic-closures/${index}/change`,
+        error: 'Enter valid closure start and end dates'
+      });
+    }
+
+    closures[index] = parsed;
+    req.session.data.newSession.closures = closures;
+    return res.redirect(`/site/${req.site_id}/clinics/clinic-closures`);
+  }
+
+  return res.render('site/clinics/series/clinic-closures-form', {
+    mode: 'change',
+    closure: toClosureFormInput(toEditableClosure(current)),
+    actionHref: `/site/${req.site_id}/clinics/clinic-closures/${index}/change`
+  });
+});
+
+router.all('/site/:id/clinics/clinic-closures/:index/remove', (req, res) => {
+  ensureCreateSession(req.session.data);
+  const flowType = clinicFlowType(req.session.data);
+
+  if (flowType !== 'series') {
+    return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
+  }
+
+  const index = Number(req.params.index);
+  const closures = req.session.data.newSession.closures || [];
+  const current = closures[index];
+
+  if (!Number.isInteger(index) || index < 0 || !current) {
+    return res.redirect(`/site/${req.site_id}/clinics/clinic-closures`);
+  }
+
+  if (req.method === 'POST') {
+    closures.splice(index, 1);
+    req.session.data.newSession.closures = closures;
+    return res.redirect(`/site/${req.site_id}/clinics/clinic-closures`);
+  }
+
+  return res.render('site/clinics/series/clinic-closures-remove', {
+    index,
+    closure: current
+  });
+});
+
 router.all('/site/:id/clinics/check-answers', (req, res) => {
   ensureCreateSession(req.session.data);
   const flowType = clinicFlowType(req.session.data);
@@ -486,6 +691,7 @@ router.all('/site/:id/create-availability/dates', (req, res) => res.redirect(`/s
 router.all('/site/:id/create-availability/days', (req, res) => res.redirect(`/site/${req.site_id}/clinics/days`));
 router.all('/site/:id/create-availability/time-and-capacity', (req, res) => res.redirect(`/site/${req.site_id}/clinics/time-and-capacity`));
 router.all('/site/:id/create-availability/services', (req, res) => res.redirect(`/site/${req.site_id}/clinics/services`));
+router.all('/site/:id/create-availability/clinic-closures', (req, res) => res.redirect(`/site/${req.site_id}/clinics/clinic-closures`));
 router.all('/site/:id/create-availability/check-answers', (req, res) => res.redirect(`/site/${req.site_id}/clinics/check-answers`));
 router.all('/site/:id/create-availability/process-new-session', (req, res) => res.redirect(`/site/${req.site_id}/clinics/process-new-session`));
 router.get('/site/:id/create-availability/success', (req, res) => res.redirect(`/site/${req.site_id}/clinics/success`));
