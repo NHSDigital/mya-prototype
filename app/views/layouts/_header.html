@@ -49,14 +49,24 @@
 
   {# Navigation #}
   {% if navigationItems | length > 0 and not hideMainNav %}
+    {% set currentPath = (currentPage or '/') | splitString('?', 0) | splitString('#', 0) %}
   <nav class="nhsuk-header__navigation" aria-label="Menu">
     <div class="nhsuk-header__navigation-container nhsuk-width-container">
       <ul class="nhsuk-header__navigation-list">
         {% for item in navigationItems %}
         {% set itemHref = item.href %}
         {% if item.hrefTemplate %}{% set itemHref = item.hrefTemplate | replace(':id', site_id) %}{% endif %}
-        <li class="nhsuk-header__navigation-item">
-          <a class="nhsuk-header__navigation-link" href="{{ itemHref }}">{{ item.text }}</a>
+          {% set itemPath = (itemHref or '') | splitString('?', 0) | splitString('#', 0) %}
+          {% set isCurrent = item.active or item.current %}
+          {% if itemPath and itemPath != '#' %}
+            {% if itemPath == '/' %}
+              {% set isCurrent = currentPath == '/' %}
+            {% elif currentPath == itemPath or currentPath.indexOf(itemPath + '/') == 0 %}
+              {% set isCurrent = true %}
+            {% endif %}
+          {% endif %}
+          <li class="nhsuk-header__navigation-item{% if isCurrent %} nhsuk-header__navigation-item--current{% endif %}">
+            <a class="nhsuk-header__navigation-link" href="{{ itemHref }}"{% if isCurrent %} aria-current="page"{% endif %}>{{ item.text }}</a>
         </li>
         {% endfor %}
         <li class="nhsuk-header__menu" hidden>
