@@ -173,9 +173,8 @@ function buildRecurringSessionModel(newSession) {
     slotLength,
     services,
     capacity,
-    exclusionTimes: [],
-    exclusionDateRanges: [],
-    overrideDates: []
+    childSessions: [],
+    closures: []
   };
 }
 

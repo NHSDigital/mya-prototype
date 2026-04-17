@@ -50,9 +50,8 @@ const seedClinics = [
     slotLength: 15,
     services: [SERVICE_IDS.COVID_ADULT, SERVICE_IDS.FLU_65_PLUS],
     capacity: 2,
-    exclusionTimes: [],
-    exclusionDateRanges: [],
-    overrideDates: []
+    childSessions: [],
+    closures: []
   },
   {
     label: 'Single clinic 09:00',
@@ -68,9 +67,8 @@ const seedClinics = [
     slotLength: 10,
     services: [SERVICE_IDS.RSV_ADULT],
     capacity: 1,
-    exclusionTimes: [],
-    exclusionDateRanges: [],
-    overrideDates: []
+    childSessions: [],
+    closures: []
   }
 ];
 

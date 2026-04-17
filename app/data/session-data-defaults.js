@@ -193,9 +193,8 @@ function buildRecurringDefaults({ site_id, start, end, patterns = {} }) {
       slotLength: record.slotLength,
       services: record.services,
       capacity: record.capacity,
-      exclusionTimes: [],
-      exclusionDateRanges: [],
-      overrideDates: []
+      childSessions: [],
+      closures: []
     };
   }
 
@@ -234,9 +233,8 @@ function buildSeedRecurringDefaults(site_id, seedRecurringClinics = []) {
       slotLength: Number(clinic.slotLength) || 10,
       services: clinic.services || [],
       capacity: Number(clinic.capacity) || 1,
-      exclusionTimes: clinic.exclusionTimes || [],
-      exclusionDateRanges: clinic.exclusionDateRanges || [],
-      overrideDates: clinic.overrideDates || []
+      childSessions: clinic.childSessions || [],
+      closures: clinic.closures || []
     };
   }
 

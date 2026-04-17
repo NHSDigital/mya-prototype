@@ -44,10 +44,10 @@ function applyServiceOperations(baseServices = [], operations = []) {
   return services;
 }
 
-function dateIsExcluded(dateISO, exclusionDateRanges = []) {
-  for (const range of asArray(exclusionDateRanges)) {
-    const from = range?.from;
-    const until = range?.until;
+function dateIsClosed(dateISO, closures = []) {
+  for (const closure of asArray(closures)) {
+    const from = closure?.startDate;
+    const until = closure?.endDate;
     if (!from || !until) continue;
     if (dateISO >= from && dateISO <= until) return true;
   }
@@ -55,17 +55,18 @@ function dateIsExcluded(dateISO, exclusionDateRanges = []) {
   return false;
 }
 
-function findOverrideForDate(dateISO, overrideDates = []) {
-  return asArray(overrideDates).find((override) => override?.date === dateISO) || null;
+function findChildSessionForDate(dateISO, childSessions = []) {
+  return asArray(childSessions).find((childSession) => childSession?.date === dateISO) || null;
 }
 
 function createSessionFromRecurring(recurring, dateISO) {
-  const override = findOverrideForDate(dateISO, recurring.overrideDates);
-  const from = override?.from || recurring.from;
-  const until = override?.until || recurring.until;
-  const services = override?.services
-    ? applyServiceOperations(recurring.services, override.services)
+  const childSession = findChildSessionForDate(dateISO, recurring.childSessions);
+  const from = childSession?.from || recurring.from;
+  const until = childSession?.until || recurring.until;
+  const services = childSession?.services
+    ? applyServiceOperations(recurring.services, childSession.services)
     : asArray(recurring.services);
+  const capacity = childSession?.capacity ?? recurring.capacity;
 
   return {
     id: stableId(`${recurring.id}-${dateISO}-${from}-${until}`),
@@ -74,7 +75,7 @@ function createSessionFromRecurring(recurring, dateISO) {
     until,
     services,
     slotLength: Number(recurring.slotLength) || 10,
-    capacity: Number(recurring.capacity) || 1
+    capacity: Number(capacity) || 1
   };
 }
 
@@ -103,7 +104,8 @@ function mergeDailyAvailability(baseDaily = {}, site_id, recurringSessions = {})
 
     for (let cursor = start; cursor <= end; cursor = cursor.plus({ days: 1 })) {
       const dateISO = cursor.toISODate();
-      if (dateIsExcluded(dateISO, recurring.exclusionDateRanges)) continue;
+      // Closures always take precedence over child sessions and base recurrence.
+      if (dateIsClosed(dateISO, recurring.closures)) continue;
       if (!matchesPattern(cursor, start, recurring.recurrencePattern)) continue;
 
       const session = createSessionFromRecurring(recurring, dateISO);
