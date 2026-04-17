@@ -15,6 +15,11 @@ module.exports = function (env) {
     return "<pre>" + util.inspect(obj, { depth: null, colors: false }) + "</pre>";
   }
 
+  // Serialize data for safe inline script usage
+  filters.toJson = (obj, spacing = 2) => {
+    return JSON.stringify(obj, null, spacing).replace(/</g, "\\u003c");
+  }
+
   // Format an NHS number as 123 456 7890
   filters.nhsNumber = (digits) => {
     const part1 = digits.slice(0, 3);

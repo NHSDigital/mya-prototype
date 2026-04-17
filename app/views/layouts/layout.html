@@ -49,6 +49,15 @@
   {% block scripts %}
     <!-- Custom JavaScript files can be added to this file -->
     {% include "includes/scripts.html" %}
+    <script id="global-page-data-json" type="application/json">{{ data | toJson | safe }}</script>
+    <script>
+      const pageDataElement = document.getElementById("global-page-data-json");
+      const pageData = pageDataElement ? JSON.parse(pageDataElement.textContent || "{}") : {};
+      console.groupCollapsed("Page data");
+      console.dir(pageData);
+      console.log("Page data (JSON)", JSON.stringify(pageData, null, 2));
+      console.groupEnd();
+    </script>
     <!-- For adding page specific JavaScript -->
     {% block pageScripts %}{% endblock %}
   {% endblock %}
