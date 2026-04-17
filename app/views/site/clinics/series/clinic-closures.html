@@ -3,10 +3,12 @@
 {% set pageName = "Clinic closures" %}
 
 {% macro closureText(closure) %}
-  {% if closure.startDate == closure.endDate %}
-    {{ closure.startDate | formatDate('d MMM yyyy') }}
+  {% set closureStart = closure.startDate | formatDate('d MMM yyyy') %}
+  {% set closureEnd = closure.endDate | formatDate('d MMM yyyy') %}
+  {% if closureStart == closureEnd %}
+    {{ closureStart }}
   {% else %}
-    {{ closure.startDate | formatDate('d MMM yyyy') }} to {{ closure.endDate | formatDate('d MMM yyyy') }}
+    {{ closureStart }} to {{ closureEnd }}
   {% endif %}
   {% if closure.label %}
     - {{ closure.label }}
@@ -28,20 +30,45 @@
       {% if closures | length > 0 %}
         <h2 class="nhsuk-heading-m">You have added {{ closures | length }} clinic closure{{ 's' if closures | length != 1 }}</h2>
 
-        <ul class="nhsuk-list">
-          {% for closure in closures %}
-            <li class="nhsuk-u-margin-bottom-3">
-              <strong>{{ closureText(closure) }}</strong><br>
-              <a href="/site/{{ site_id }}/clinics/clinic-closures/{{ loop.index0 }}/change">Change</a>
-              <span aria-hidden="true"> | </span>
-              <a href="/site/{{ site_id }}/clinics/clinic-closures/{{ loop.index0 }}/remove">Remove</a>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        {{ insetText({
-          text: "No clinic closures added yet."
+        {% set closureRows = [] %}
+        {% for closure in closures %}
+          {% set closureTitle = closure.label | trim %}
+          {% if not closureTitle %}
+            {% set closureTitle = "Closure " + loop.index %}
+          {% endif %}
+          {% set closureRows = closureRows.concat({
+            key: {
+              text: closureTitle
+            },
+            value: {
+              text: closureText(closure) | trim
+            },
+            actions: {
+              items: [
+                {
+                  href: "/site/" + site_id + "/clinics/clinic-closures/" + loop.index0 + "/change",
+                  text: "Change",
+                  visuallyHiddenText: " closure " + loop.index
+                },
+                {
+                  href: "/site/" + site_id + "/clinics/clinic-closures/" + loop.index0 + "/remove",
+                  text: "Remove",
+                  visuallyHiddenText: " closure " + loop.index
+                }
+              ]
+            }
+          }) %}
+        {% endfor %}
+
+        {{ summaryList({
+          rows: closureRows
         }) }}
+      {% endif %}
+
+      {% if closures | length > 0 %}
+        {% set questionText = "Are there any other dates when this clinic will not take place?" %}
+      {% else %}
+        {% set questionText = "Are there any dates when this clinic will not take place?" %}
       {% endif %}
 
       <form action="/site/{{ site_id }}/clinics/clinic-closures" method="post">
@@ -51,12 +78,13 @@
           name: "addAnother",
           fieldset: {
             legend: {
-              text: "Do you need to add another clinic closure?",
+              text: questionText,
               classes: "nhsuk-fieldset__legend--m"
             }
           },
+          classes: "nhsuk-radios--inline",
           hint: {
-            text: "You can add single-day closures and date-range closures."
+            text: "For example, bank holidays"
           },
           items: [
             {

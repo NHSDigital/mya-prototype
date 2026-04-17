@@ -2,6 +2,19 @@
 
 {% set pageName = "Check your answers" %}
 
+{% macro closureText(closure) %}
+  {% set closureStart = closure.startDate | formatDate('d MMM yyyy') %}
+  {% set closureEnd = closure.endDate | formatDate('d MMM yyyy') %}
+  {% if closureStart == closureEnd %}
+    {{ closureStart }}
+  {% else %}
+    {{ closureStart }} to {{ closureEnd }}
+  {% endif %}
+  {% if closure.label %}
+    - {{ closure.label }}
+  {% endif %}
+{% endmacro %}
+
 {% block beforeContent %}
 {{ backLink({
   href: '/site/' + site_id + '/clinics/clinic-closures'
@@ -54,10 +67,17 @@
           {% endfor %}
         {% endif %}
 
-        {% set closureSummary = "None added" %}
-        {% if data.newSession.closures and (data.newSession.closures | length > 0) %}
-          {% set closureSummary = (data.newSession.closures | length) ~ " added" %}
-        {% endif %}
+        {% set closuresSummaryHtml %}
+          {% if data.newSession.closures and (data.newSession.closures | length > 0) %}
+            <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+              {% for closure in data.newSession.closures %}
+                <li>{{ closureText(closure) | trim }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            None added
+          {% endif %}
+        {% endset %}
 
         {{ summaryList({
           rows: [
@@ -178,7 +198,7 @@
                 text: "Clinic closures"
               },
               value: {
-                text: closureSummary
+                html: closuresSummaryHtml
               },
               actions: {
                 items: [
@@ -194,10 +214,10 @@
         }) }}
 
         <h2 class="nhsuk-heading-m nhsuk-u-margin-top-6">Before you continue</h2>
-        <p class="nhsuk-body">Review your answers and publish this clinic when you are ready.</p>
+        <p class="nhsuk-body">By publishing this clinic series, you confirm that your site is assured to deliver the services you have selected.</p>
 
         {{ button({
-          text: "Save and publish clinic"
+          text: "Publish clinic series"
         }) }}
       </form>
     </div>

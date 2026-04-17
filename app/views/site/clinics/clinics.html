@@ -45,14 +45,14 @@
 
   {% if session.endDate and session.endDate != session.date %}
     {% if isSingle %}
-      Date: {{ session.date | formatDate('d MMM yyyy') }}
+      {{ session.date | formatDate('d MMM yyyy') }}
     {% else %}
-      Dates: {{ session.date | formatDate('d MMM yyyy') }} to {{ session.endDate | formatDate('d MMM yyyy') }}
+      {{ session.date | formatDate('d MMM yyyy') }} to {{ session.endDate | formatDate('d MMM yyyy') }}
     {% endif %}
   {% else %}
-    Date: {{ session.date | formatDate('d MMM yyyy') }}
+    {{ session.date | formatDate('d MMM yyyy') }}
   {% endif %}
-  | Time: {{ timeLabel(session) }}
+  {{ timeLabel(session) }}
 {% endmacro %}
 
 {% block content %}
@@ -61,7 +61,7 @@
       <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
 
       {{ button({
-        text: "Create new clinic",
+        text: "Create clinic",
         classes: "nhsuk-button--secondary nhsuk-button--small",
         href: "/site/" + site_id + "/clinics/type-of-clinc?new=1"
       }) }}
@@ -82,7 +82,7 @@
             <tr role="row">
               <th scope="col" class="nhsuk-table__header" role="columnheader">Name</th>
               <th scope="col" class="nhsuk-table__header" role="columnheader">Type</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Date(s)</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Dates and times</th>
               <th scope="col" class="nhsuk-table__header" role="columnheader">Days</th>
               <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
               <th scope="col" class="nhsuk-table__header" role="columnheader">Appointment length</th>
@@ -98,20 +98,20 @@
                 <td class="nhsuk-table__cell" role="cell">{{ daysLabel(session) }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ session.slotLength or session.duration }} minutes</td>
-                <td class="nhsuk-table__cell" role="cell"><a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">Edit</a>, <a href="/not-in-this-prototype">Remove</a></td>
+                <td class="nhsuk-table__cell" role="cell"><a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">Edit</a> <a href="/not-in-this-prototype">Remove</a></td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
       {% endif %}
 
-      <h2 class="nhsuk-heading-m nhsuk-u-margin-top-6">Past clinics</h2>
+      <h2 class="nhsuk-heading-m nhsuk-u-margin-top-6">Completed clinics</h2>
 
       {% set pastSessionHistory = pastSessionHistory or [] %}
 
       {% if pastSessionHistory | length == 0 %}
         {{ insetText({
-          text: "No past clinics to show."
+          text: "No completed clinics"
         }) }}
       {% endif %}
 
@@ -137,7 +137,7 @@
                 <td class="nhsuk-table__cell" role="cell">{{ daysLabel(session) }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ session.slotLength or session.duration }} minutes</td>
-                <td class="nhsuk-table__cell" role="cell"><a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">Edit</a>, <a href="/not-in-this-prototype">Remove</a></td>
+                <td class="nhsuk-table__cell" role="cell"><a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">Edit</a> <a href="/not-in-this-prototype">Remove</a></td>
               </tr>
             {% endfor %}
           </tbody>
