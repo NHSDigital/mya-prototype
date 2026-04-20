@@ -1026,6 +1026,147 @@ function buildPastSessionHistory(siteRecurringSessions, startDate = null, endDat
   });
 }
 
+function sortSessionsForAvailability(sessions = []) {
+  return asArray(sessions).slice().sort((a, b) => {
+    const left = `${a?.from || ''}-${a?.until || ''}-${a?.label || ''}`;
+    const right = `${b?.from || ''}-${b?.until || ''}-${b?.label || ''}`;
+    return left.localeCompare(right);
+  });
+}
+
+function slotMatchesSession(slot, session) {
+  if (slot?.sessionId && session?.id) {
+    return String(slot.sessionId) === String(session.id);
+  }
+
+  return slot?.group?.start === session?.from
+    && slot?.group?.end === session?.until
+    && (!slot?.recurringSessionId || !session?.recurringId || String(slot.recurringSessionId) === String(session.recurringId));
+}
+
+function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, servicesById, siteBookings, siteId, today, recurringSessionsById = {}) {
+  return week.map((day) => {
+    const sessions = sortSessionsForAvailability(dailyAvailability?.[day]?.sessions);
+    const dateSlots = asArray(slotsByDate?.[day]);
+
+    const sessionSummaries = sessions.map((session) => {
+      const sessionSlots = dateSlots.filter((slot) => slotMatchesSession(slot, session));
+      const bookedTotal = sessionSlots.filter((slot) => slot?.booking_status === 'scheduled').length;
+      const totalSlots = sessionSlots.length;
+      const resolvedLabel = session.label || recurringSessionsById?.[session?.recurringId]?.label || '';
+
+      return {
+        id: session.id,
+        label: resolvedLabel,
+        from: session.from,
+        until: session.until,
+        services: asArray(session.services).map((serviceId) => ({
+          id: serviceId,
+          name: servicesById?.[serviceId]?.name || serviceId,
+          bookedCount: sessionSlots.filter((slot) => (
+            slot?.booking_status === 'scheduled'
+            && slot?.booking_id
+            && siteBookings?.[slot.booking_id]?.service === serviceId
+          )).length
+        })),
+        bookedTotal,
+        unbookedTotal: Math.max(0, totalSlots - bookedTotal),
+        actionHref: day < today ? null : `/site/${siteId}/change/session/${session.id}`
+      };
+    });
+
+    const totalAppointments = sessionSummaries.reduce((sum, session) => sum + session.bookedTotal + session.unbookedTotal, 0);
+    const bookedAppointments = sessionSummaries.reduce((sum, session) => sum + session.bookedTotal, 0);
+    const clinicNames = [...new Set(sessionSummaries.map((session) => session.label).filter(Boolean))];
+
+    return {
+      date: day,
+      isToday: day === today,
+      isPast: day < today,
+      clinicNames,
+      sessions: sessionSummaries,
+      totalAppointments,
+      bookedAppointments,
+      unbookedAppointments: Math.max(0, totalAppointments - bookedAppointments),
+      dayViewHref: `/site/${siteId}/availability/day?date=${day}`
+    };
+  });
+}
+
+function buildMonthWeekRanges(referenceDateISO) {
+  const fallback = DateTime.fromISO(getToday());
+  const referenceDate = DateTime.fromISO(referenceDateISO || '', { zone: 'Europe/London' });
+  const current = (referenceDate.isValid ? referenceDate : fallback).startOf('month');
+  const firstWeekStart = current.startOf('week');
+  const lastWeekStart = current.endOf('month').startOf('week');
+  const weeks = [];
+
+  for (let cursor = firstWeekStart; cursor <= lastWeekStart; cursor = cursor.plus({ days: 7 })) {
+    const days = [];
+    for (let i = 0; i < 7; i += 1) {
+      days.push(cursor.plus({ days: i }).toISODate());
+    }
+
+    weeks.push({
+      start: cursor.toISODate(),
+      end: cursor.plus({ days: 6 }).toISODate(),
+      days
+    });
+  }
+
+  return {
+    currentDate: current.toISODate(),
+    previousMonthDate: current.minus({ months: 1 }).toISODate(),
+    nextMonthDate: current.plus({ months: 1 }).toISODate(),
+    weeks
+  };
+}
+
+function buildMonthAvailabilitySummary(weekRanges, dailyAvailability, slotsByDate, servicesById, siteBookings, siteId, today, recurringSessionsById = {}) {
+  return asArray(weekRanges).map((weekRange) => {
+    const daySummaries = buildWeekAvailabilitySummary(
+      weekRange.days,
+      dailyAvailability,
+      slotsByDate,
+      servicesById,
+      siteBookings,
+      siteId,
+      today,
+      recurringSessionsById
+    );
+
+    const services = new Map();
+
+    daySummaries.forEach((day) => {
+      day.sessions.forEach((session) => {
+        session.services.forEach((service) => {
+          const existing = services.get(service.id) || {
+            id: service.id,
+            name: service.name,
+            bookedCount: 0
+          };
+
+          existing.bookedCount += Number(service.bookedCount) || 0;
+          services.set(service.id, existing);
+        });
+      });
+    });
+
+    const totalAppointments = daySummaries.reduce((sum, day) => sum + day.totalAppointments, 0);
+    const bookedAppointments = daySummaries.reduce((sum, day) => sum + day.bookedAppointments, 0);
+
+    return {
+      start: weekRange.start,
+      end: weekRange.end,
+      services: Array.from(services.values()),
+      totalAppointments,
+      bookedAppointments,
+      unbookedAppointments: Math.max(0, totalAppointments - bookedAppointments),
+      weekViewHref: `/site/${siteId}/availability/week?date=${weekRange.start}`
+    };
+  });
+}
+
 // -----------------------------------------------------------------------------
 // PARAM HANDLER – capture site_id once for all /site/:id routes
 // -----------------------------------------------------------------------------
@@ -1905,19 +2046,50 @@ router.get('/site/:id/availability/week', (req, res) => {
     end: startOfWeek.plus({ days: 13 }).toISODate() //next Sunday
   }
 
+  const weekDays = buildWeekAvailabilitySummary(
+    week,
+    res.locals.dailyAvailability,
+    res.locals.slots,
+    data.services || {},
+    data?.bookings?.[site_id] || {},
+    site_id,
+    today,
+    data?.recurring_sessions?.[site_id] || {}
+  );
 
   res.render('site/availability/week', {
     date: startFromDate,
     today,
     week,
+    weekDays,
     previousWeek,
     nextWeek
   });
 });
 
-router.get('/site/:id/availability/month', (req, res) => { 
-  res.redirect('/not-in-this-prototype');
-  //res.render('site/availability/month');
+router.get('/site/:id/availability/month', (req, res) => {
+  const data = req.session.data;
+  const site_id = req.site_id;
+  const today = getToday();
+  const monthData = buildMonthWeekRanges(req.query.date || today);
+  const recurringSessions = data?.recurring_sessions?.[site_id] || {};
+  const monthWeeks = buildMonthAvailabilitySummary(
+    monthData.weeks,
+    res.locals.dailyAvailability,
+    res.locals.slots,
+    data.services || {},
+    data?.bookings?.[site_id] || {},
+    site_id,
+    today,
+    recurringSessions
+  );
+
+  res.render('site/availability/month', {
+    currentDate: monthData.currentDate,
+    previousMonthDate: monthData.previousMonthDate,
+    nextMonthDate: monthData.nextMonthDate,
+    monthWeeks
+  });
 });
 
 router.get('/site/:id/availability/all', (req, res) => { 

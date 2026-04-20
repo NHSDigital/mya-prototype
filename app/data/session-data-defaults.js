@@ -419,17 +419,23 @@ for (const cfg of sitesConfig) {
 
   const hasClinicSeeds = Object.keys(recurringSessionsForSite).length > 0;
 
-  const availability = hasClinicSeeds
+  const baseAvailability = hasClinicSeeds
+    ? {}
+    : (
+      hasDateRange
+        ? generateAvailability({ site_id, start, end, patterns, overrides })
+        : {}
+    );
+
+  const effectiveAvailability = hasClinicSeeds
     ? filterAvailabilityByDateWindow(
-      mergeDailyAvailability({}, site_id, recurringSessionsForSite),
+      mergeDailyAvailability(baseAvailability, site_id, recurringSessionsForSite),
       windowStart,
       windowEnd
     )
-    : (hasDateRange
-      ? generateAvailability({ site_id, start, end, patterns, overrides })
-      : {});
+    : baseAvailability;
 
-  const slots = generateSlots(availability);
+  const slots = generateSlots(effectiveAvailability);
 
   const {
     overrides: bookingOverrides,
@@ -451,7 +457,7 @@ for (const cfg of sitesConfig) {
     slots
   );
 
-  daily_availability[site_id] = availability;
+  daily_availability[site_id] = baseAvailability;
   bookings[site_id] = bookingData;
   sites[site_id] = site;
   recurring_sessions[site_id] = recurringSessionsForSite;

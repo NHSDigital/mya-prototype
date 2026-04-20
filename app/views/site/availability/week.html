@@ -1,14 +1,12 @@
 {% extends '../../layouts/layout.html' %}
 {% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
-{% from '../../includes/renderServicesTable.njk' import renderServicesTable %}
+{% from 'nhsuk/components/card/macro.njk' import card %}
 
 {% set pageName = week[0] | formatDate('d LLLL') ~ ' to ' ~ week[6] | formatDate('d LLLL yyyy') %}
 
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
-
-      
       {{
         appSecondaryNavigation({
           items: [
@@ -37,45 +35,89 @@
       {% if features.cancelDateRange %}
       {% include "../../includes/addCancelButtons.njk" %}
       {% endif %}
+
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       {{ pagination({
         previous: {
           labelText: previousWeek.start | formatDate('d') ~ " to " ~ previousWeek.end | formatDate('d LLL'),
-          href: "/site/"~site_id~"/availability/week?date="~previousWeek.start
+          href: "/site/" ~ site_id ~ "/availability/week?date=" ~ previousWeek.start
         },
         next: {
           labelText: nextWeek.start | formatDate('d') ~ " to " ~ nextWeek.end | formatDate('d LLL'),
-          href: "/site/"~site_id~"/availability/week?date="~nextWeek.start  
+          href: "/site/" ~ site_id ~ "/availability/week?date=" ~ nextWeek.start
         }
       }) }}
+
+      <ol class="app-panel-list">
+        {% for day in weekDays %}
+        <li class="app-panel-list__item">
+          {% call card({
+            heading: day.date | formatDate('cccc d LLLL') ~ (' (today)' if day.isToday else ''),
+            headingClasses: 'nhsuk-heading-m',
+            classes: 'nhsuk-u-margin-bottom-4'
+          }) %}
+            {% if day.sessions and day.sessions.length %}
+
+              <table class="nhsuk-table">
+                <thead class="nhsuk-table__head">
+                  <tr class="nhsuk-table__row">
+                    <th scope="col" class="nhsuk-table__header">Name and time</th>
+                    <th scope="col" class="nhsuk-table__header">Services</th>
+                    <th scope="col" class="nhsuk-table__header">Booked</th>
+                    <th scope="col" class="nhsuk-table__header">Unbooked</th>
+                    <th scope="col" class="nhsuk-table__header">Action</th>
+                  </tr>
+                </thead>
+                <tbody class="nhsuk-table__body">
+                  {% for session in day.sessions %}
+                  <tr class="nhsuk-table__row">
+                    <td class="nhsuk-table__cell">
+                      {% if session.label %}
+                      {{ session.label }}<br>
+                      {% endif %}
+                      <strong>{{ session.from | nhsTime }} to {{ session.until | nhsTime }}</strong>
+                    </td>
+                    <td class="nhsuk-table__cell">
+                      {% for service in session.services %}
+                        {{ service.name }}{% if not loop.last %}<br>{% endif %}
+                      {% endfor %}
+                    </td>
+                    <td class="nhsuk-table__cell">
+                      {% for service in session.services %}
+                        {{ service.bookedCount }} booked{% if not loop.last %}<br>{% endif %}
+                      {% endfor %}
+                    </td>
+                    <td class="nhsuk-table__cell">{{ session.unbookedTotal }} unbooked</td>
+                    <td class="nhsuk-table__cell">
+                      {% if session.actionHref %}
+                      <a href="{{ session.actionHref }}">Change</a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+              <div class="nhsuk-grid-row nhsuk-u-padding-top-3">
+                <div class="nhsuk-grid-column-one-third">
+                  <p class="nhsuk-body-s nhsuk-u-margin-bottom-0"><strong>Total appointments:</strong> {{ day.totalAppointments }}</p>
+                </div>
+                <div class="nhsuk-grid-column-one-third">
+                  <p class="nhsuk-body-s nhsuk-u-margin-bottom-0"><strong>Booked:</strong> {{ day.bookedAppointments }}</p>
+                </div>
+                <div class="nhsuk-grid-column-one-third">
+                  <p class="nhsuk-body-s nhsuk-u-margin-bottom-0"><strong>Unbooked:</strong> {{ day.unbookedAppointments }}</p>
+                </div>
+              </div>
+
+            {% else %}
+              <p class="nhsuk-body nhsuk-u-margin-bottom-0">No appointments.</p>
+            {% endif %}
+          {% endcall %}
+        </li>
+        {% endfor %}
+      </ol>
     </div>
   </div>
-  <ol class="nhsuk-grid-row app-panel-list">
-  {% set inThePast = true %}
-  {% for day in week %}
-  {% if day == date %}{% set inThePast = false %}{% endif %}
-  <li class="nhsuk-grid-column-full app-panel-list__item">
-
-    <div class="nhsuk-table__panel-with-heading-tab {% if inThePast %} app-table__panel-with-heading-tab--past{% endif %}">
-      <h2 class="nhsuk-table__heading-tab">{% if inThePast %}<span class="nhsuk-u-visually-hidden">Date in the past: </span>{% endif %}{{ day | formatDate('cccc, d LLLL') }}{% if day == today %} (today){% endif %}</h2>
-        {% if dailyAvailability[day] %}
-       {{ renderServicesTable({
-          date: day, 
-          sessions: dailyAvailability[day].sessions,
-          slots: slots,
-          site_id: site_id,
-          data: data,
-          change: {
-            type: 'session'
-          }
-        }) }}
-      {% else %}
-      <p>No appointments.</p>
-      {% endif %}
-    </div>
-
-  </li>
-  {% endfor %}
-  </ol>
 {% endblock %}
