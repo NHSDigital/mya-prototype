@@ -3,9 +3,17 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      {{ panel({ titleText: 'Clinic updated' }) }}
+      {{ panel({ titleText: titleText or 'Clinic updated' }) }}
+      {% if primaryHref %}
+      <p class="nhsuk-body"><a href="{{ primaryHref }}">{{ primaryText or 'Continue' }}</a></p>
+      {% elif sessionId %}
       <p class="nhsuk-body"><a href="/site/{{ site_id }}/clinics/edit/{{ sessionId }}">Make another change</a></p>
+      {% endif %}
+      {% if secondaryHref %}
+      <p class="nhsuk-body"><a href="{{ secondaryHref }}">{{ secondaryText }}</a></p>
+      {% elif not primaryHref or sessionId %}
       <p class="nhsuk-body"><a href="/site/{{ site_id }}/clinics">Back to clinics</a></p>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

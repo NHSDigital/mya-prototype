@@ -32,6 +32,7 @@
           value: data.newSession.name
         }) }}
 
+        {% if not hideDateFields %}
         {{ dateInput({
           id: "start-date",
           namePrefix: "newSession[startDate]",
@@ -93,9 +94,10 @@
             }
           ]
         }) }}
+        {% endif %}
 
         {{ button({
-          text: "Continue"
+          text: buttonText or "Continue"
         }) }}
       </form>
 

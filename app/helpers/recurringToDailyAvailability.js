@@ -67,10 +67,12 @@ function createSessionFromRecurring(recurring, dateISO) {
     ? applyServiceOperations(recurring.services, childSession.services)
     : asArray(recurring.services);
   const capacity = childSession?.capacity ?? recurring.capacity;
+  const label = childSession?.label || recurring.label;
 
   return {
     id: stableId(`${recurring.id}-${dateISO}-${from}-${until}`),
     recurringId: recurring.id,
+    label,
     from,
     until,
     services,

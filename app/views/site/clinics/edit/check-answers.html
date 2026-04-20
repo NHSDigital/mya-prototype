@@ -9,7 +9,7 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <h1 class="nhsuk-heading-l">Check your answers</h1>
+      <h1 class="nhsuk-heading-l">{{ pageName or 'Check your answers' }}</h1>
 
       {% set allRows = rows %}
       {% if affectedCount > 0 %}
@@ -18,7 +18,7 @@
           value: { text: bookingActionText },
           actions: {
             items: [{
-              href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/affected-bookings',
+              href: affectedActionHref or ('/site/' + site_id + '/clinics/edit/' + sessionId + '/affected-bookings'),
               text: 'Change',
               visuallyHiddenText: ' booked appointments action'
             }]
@@ -28,8 +28,8 @@
 
       {{ summaryList({ rows: allRows }) }}
 
-      <form action="/site/{{ site_id }}/clinics/edit/{{ sessionId }}/check-answers" method="post">
-        {{ button({ text: 'Save changes' }) }}
+      <form action="{{ formAction or ('/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId ~ '/check-answers') }}" method="post">
+        {{ button({ text: buttonText or 'Save changes' }) }}
       </form>
     </div>
   </div>

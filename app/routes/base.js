@@ -1071,7 +1071,7 @@ function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, serv
         })),
         bookedTotal,
         unbookedTotal: Math.max(0, totalSlots - bookedTotal),
-        actionHref: day < today ? null : `/site/${siteId}/change/session/${session.id}`
+        actionHref: day < today || !session?.recurringId ? null : `/site/${siteId}/change/session/${session.id}`
       };
     });
 

@@ -45,6 +45,7 @@ Used as the stored clinic model.
   "childSessions": [
     {
       "date": "YYYY-MM-DD",
+      "label": "string" || undefined,
       "from": "HH:mm" || undefined,
       "until": "HH:mm" || undefined,
       "services": [
@@ -85,6 +86,7 @@ Used as the stored clinic model.
 - Child session is single-per-date (no nested `sessions` array).
 - Service operations use service IDs.
 - Time overrides require both `from` and `until` together.
+- Child session label override is optional.
 - Child session does not support `slotLength` override.
 - Closure label is optional.
 

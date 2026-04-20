@@ -5,6 +5,9 @@
 {% if not backUrl %}{% set backUrl = '/site/' + site_id + '/clinics/clinic-times' %}{% endif %}
 {% if not formAction %}{% set formAction = '/site/' + site_id + '/clinics/services' %}{% endif %}
 {% if not captionText %}{% set captionText = 'Create clinic series' %}{% endif %}
+{% if not capacityLabel %}{% set capacityLabel = "How many vaccinators are in this clinic?" %}{% endif %}
+{% if not capacitySuffixText %}{% set capacitySuffixText = "vaccinators" %}{% endif %}
+{% if hideDuration and not fixedDuration %}{% set fixedDuration = data.newSession.duration %}{% endif %}
 
 {% set startHour = data.newSession.startTime.hour or '09' %}
 {% set startMinute = data.newSession.startTime.minute or '00' %}
@@ -24,6 +27,9 @@
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
       <form action="{{ formAction }}" method="post" id="appointments-calculator-form" data-start-hour="{{ startHour }}" data-start-minute="{{ startMinute }}" data-end-hour="{{ endHour }}" data-end-minute="{{ endMinute }}">
 
+        {% if hideDuration %}
+        <input type="hidden" id="duration" name="newSession[duration]" value="{{ fixedDuration }}">
+        {% else %}
         {{ input({
           label: {
             text: "How long do you need for each appointment?",
@@ -40,10 +46,11 @@
           spellcheck: false,
           value: data.newSession.duration
         }) }}
+        {% endif %}
 
         {{ input({
           label: {
-            text: "How many vaccinators are in this clinic?",
+            text: capacityLabel,
             classes: "nhsuk-label--m"
           },
           id: "capacity",
@@ -53,7 +60,7 @@
           inputmode: "numeric",
           spellcheck: false,
           suffix: {
-            text: "vaccinators"
+            text: capacitySuffixText
           }
         }) }}
 
@@ -68,7 +75,7 @@
         }) }}
 
         {{ button({
-          text: "Continue"
+          text: buttonText or "Continue"
         }) }}
       </form>
 
