@@ -125,7 +125,6 @@
               <th scope="col" class="nhsuk-table__header" role="columnheader">Days</th>
               <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
               <th scope="col" class="nhsuk-table__header" role="columnheader">Appointment length</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
             </tr>
           </thead>
           <tbody class="nhsuk-table__body" role="rowgroup">
@@ -137,7 +136,6 @@
                 <td class="nhsuk-table__cell" role="cell">{{ daysLabel(session) }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ session.slotLength or session.duration }} minutes</td>
-                <td class="nhsuk-table__cell" role="cell"><a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">Edit</a> <a href="/not-in-this-prototype">Remove</a></td>
               </tr>
             {% endfor %}
           </tbody>
