@@ -39,8 +39,11 @@ function generateSlots(availability) {
         for (let i = 0; i < capacity; i++) {
           slots.push({
             datetimeISO: cursor.toISO({ suppressSeconds: true, suppressMilliseconds: true }),
+            slotKey: cursor.toFormat("yyyy-MM-dd'T'HH:mm"),
             services: session.services || [],
-            site_id: day.site_id
+            site_id: day.site_id,
+            sessionId: session.id || null,
+            recurringSessionId: session.recurringId || null
           });
         }
         cursor = cursor.plus({ minutes: slotLength });

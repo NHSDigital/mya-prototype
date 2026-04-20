@@ -1,8 +1,9 @@
 {% extends '../../../layouts/layout.html' %}
 
-{% set pageName = "Clinic times" %}
-
-{% set backUrl = '/site/' + site_id + '/clinics/days' %}
+{% if not pageName %}{% set pageName = "Clinic times" %}{% endif %}
+{% if not backUrl %}{% set backUrl = '/site/' + site_id + '/clinics/days' %}{% endif %}
+{% if not formAction %}{% set formAction = '/site/' + site_id + '/clinics/appointments-calculator' %}{% endif %}
+{% if not captionText %}{% set captionText = 'Create clinic series' %}{% endif %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -13,10 +14,10 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Create clinic series</span>
+      <span class="nhsuk-caption-l">{{ captionText }}</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
-      <form action="/site/{{ site_id }}/clinics/appointments-calculator" method="post">
+      <form action="{{ formAction }}" method="post">
         {{ dateInput({
           id: "start-time",
           namePrefix: "newSession[startTime]",

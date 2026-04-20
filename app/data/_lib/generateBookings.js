@@ -75,6 +75,9 @@ function generateBookings({
     bookings[id] = {
       id,
       site_id,
+      recurringSessionId: slot.recurringSessionId || null,
+      sessionId: slot.sessionId || null,
+      slotKey: slot.slotKey || dt.toFormat("yyyy-MM-dd'T'HH:mm"),
       service,
       datetime: dt.toISO({ suppressSeconds: true, suppressMilliseconds: true }),
       name,

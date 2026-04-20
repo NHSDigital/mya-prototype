@@ -355,6 +355,162 @@ function clearEditState(data) {
   delete data.editClinic;
 }
 
+function resetEditOutcome(state) {
+  state.bookingAction = null;
+  state.affectedBookingIds = [];
+}
+
+function editFieldsForStep(step, isSeries) {
+  switch (step) {
+    case 'details':
+      return ['name', 'date'];
+    case 'days':
+      return isSeries ? ['days'] : ['date'];
+    case 'clinic-times':
+      return ['time'];
+    case 'appointments-calculator':
+      return ['capacity', 'duration'];
+    case 'services':
+      return ['services'];
+    case 'clinic-closures':
+      return isSeries ? ['closures'] : ['date'];
+    default:
+      return [];
+  }
+}
+
+function currentEditableFields(state) {
+  const isSeries = state?.draft?.type === 'Clinic series';
+
+  if (state?.currentEditStep) {
+    const fields = editFieldsForStep(state.currentEditStep, isSeries);
+    if (fields.length > 0) return fields;
+  }
+
+  if (state?.currentEditField) {
+    return [state.currentEditField];
+  }
+
+  return [];
+}
+
+function setCurrentEditField(state, field) {
+  state.currentEditField = field || null;
+  state.currentEditStep = editStepForField(field, state?.draft?.type === 'Clinic series');
+  resetEditOutcome(state);
+}
+
+function setCurrentEditStep(state, step) {
+  state.currentEditStep = step || null;
+  state.currentEditField = null;
+  resetEditOutcome(state);
+}
+
+function editSummaryPath(siteId, sessionId) {
+  return `/site/${siteId}/clinics/edit/${sessionId}`;
+}
+
+function editStepPath(siteId, sessionId, step) {
+  return `${editSummaryPath(siteId, sessionId)}/${step}`;
+}
+
+function editCaptionText(draft) {
+  return draft?.type === 'Clinic series' ? 'Edit clinic series' : 'Edit single clinic';
+}
+
+function editStepForField(field, isSeries) {
+  switch (field) {
+    case 'name':
+    case 'date':
+      return 'details';
+    case 'days':
+      return isSeries ? 'days' : 'details';
+    case 'time':
+      return 'clinic-times';
+    case 'capacity':
+    case 'duration':
+      return 'appointments-calculator';
+    case 'services':
+      return 'services';
+    case 'closures':
+      return isSeries ? 'clinic-closures' : 'details';
+    default:
+      return null;
+  }
+}
+
+function setEditTemplateData(res, data, state) {
+  res.locals.data = {
+    ...data,
+    newSession: draftToNewSession(state.draft)
+  };
+}
+
+function updateDraftFromDetails(state, newSession = {}) {
+  const editableFields = currentEditableFields(state);
+
+  if (editableFields.length === 0 || editableFields.includes('name')) {
+    state.draft.name = String(newSession.name || '').trim();
+  }
+
+  if (state.draft.type === 'Clinic series') {
+    if (editableFields.length === 0 || editableFields.includes('date')) {
+      const startISO = parseDateInputToISO(newSession.startDate || {});
+      const endISO = parseDateInputToISO(newSession.endDate || {});
+      if (startISO && endISO) {
+        state.draft.startDate = startISO;
+        state.draft.endDate = endISO;
+        state.draft.startDateInput = toDateParts(startISO);
+        state.draft.endDateInput = toDateParts(endISO);
+      }
+    }
+    return;
+  }
+
+  if (editableFields.length === 0 || editableFields.includes('date')) {
+    const singleISO = parseDateInputToISO(newSession.singleDate || {});
+    if (singleISO) {
+      state.draft.startDate = singleISO;
+      state.draft.endDate = singleISO;
+      state.draft.singleDate = singleISO;
+      state.draft.singleDateInput = toDateParts(singleISO);
+    }
+  }
+}
+
+function updateDraftFromDays(state, newSession = {}) {
+  state.draft.days = asArray(newSession.days);
+}
+
+function updateDraftFromTimes(state, newSession = {}) {
+  const startHour = String(newSession.startTime?.hour || '').padStart(2, '0');
+  const startMinute = String(newSession.startTime?.minute || '').padStart(2, '0');
+  const endHour = String(newSession.endTime?.hour || '').padStart(2, '0');
+  const endMinute = String(newSession.endTime?.minute || '').padStart(2, '0');
+
+  state.draft.startTime = { hour: startHour, minute: startMinute };
+  state.draft.endTime = { hour: endHour, minute: endMinute };
+  state.draft.from = `${startHour}:${startMinute}`;
+  state.draft.until = `${endHour}:${endMinute}`;
+}
+
+function updateDraftFromAppointments(state, newSession = {}) {
+  const editableFields = currentEditableFields(state);
+
+  if (editableFields.length === 0 || editableFields.includes('capacity')) {
+    state.draft.capacity = Math.max(1, Number(newSession.capacity) || 1);
+  }
+
+  if (editableFields.length === 0 || editableFields.includes('duration')) {
+    const duration = Number(newSession.duration) || 10;
+    state.draft.duration = Math.min(60, Math.max(1, duration));
+  }
+}
+
+function updateDraftFromServices(state, newSession = {}) {
+  state.draft.services = asArray(newSession.services);
+}
+
 function normalizeIsoMinute(datetimeISO) {
   const dt = DateTime.fromISO(datetimeISO || '', { zone: 'Europe/London' });
   if (!dt.isValid) return null;
@@ -381,6 +537,7 @@ function modelToDraft(model) {
     capacity: Number(model.capacity) || 1,
     duration: Number(model.slotLength) || 10,
     services: asArray(model.services),
+    childSessions: clone(asArray(model.childSessions)),
     closures: asArray(model.closures)
       .filter((closure) => closure?.startDate && closure?.endDate)
       .map((closure) => ({
@@ -415,7 +572,52 @@ function draftToModel(draft) {
   const model = buildRecurringSessionModel(draftToNewSession(draft));
   model.id = draft.id;
   model.type = draft.type;
+  model.childSessions = clone(asArray(draft.childSessions));
   return model;
+}
+
+function normalizedBookingImpact(model = {}) {
+  const normalizeServiceOps = (ops = []) => asArray(ops).map((op) => {
+    if (typeof op === 'string') return op;
+    if (!op || typeof op !== 'object') return op;
+    return {
+      operation: op.operation || '',
+      service: op.service || '',
+      values: asArray(op.values).slice().sort()
+    };
+  });
+
+  return {
+    startDate: model.startDate || '',
+    endDate: model.endDate || '',
+    recurrencePattern: {
+      frequency: model.recurrencePattern?.frequency || '',
+      interval: Number(model.recurrencePattern?.interval) || 1,
+      byDay: asArray(model.recurrencePattern?.byDay).slice().sort()
+    },
+    from: model.from || '',
+    until: model.until || '',
+    slotLength: Number(model.slotLength) || 10,
+    capacity: Number(model.capacity) || 1,
+    services: asArray(model.services).slice().sort(),
+    childSessions: asArray(model.childSessions)
+      .map((child) => ({
+        date: child?.date || '',
+        from: child?.from || '',
+        until: child?.until || '',
+        capacity: child?.capacity ?? null,
+        services: normalizeServiceOps(child?.services)
+      }))
+      .sort((a, b) => `${a.date}-${a.from}-${a.until}`.localeCompare(`${b.date}-${b.from}-${b.until}`)),
+    closures: asArray(model.closures)
+      .filter((closure) => closure?.startDate && closure?.endDate)
+      .map((closure) => ({
+        startDate: closure.startDate,
+        endDate: closure.endDate,
+        label: closure.label || ''
+      }))
+      .sort((a, b) => `${a.startDate}-${a.endDate}-${a.label}`.localeCompare(`${b.startDate}-${b.endDate}-${b.label}`))
+  };
 }
 
 function ensureEditStateForSession(data, siteId, sessionId) {
@@ -451,7 +653,7 @@ function parseDateInputToISO(input = {}) {
   return dt.isValid ? dt.toISODate() : null;
 }
 
-function buildSummaryRowsForEdit(draft, siteId, sessionId, data) {
+function buildSummaryRowMap(draft, siteId, sessionId, data) {
   const isSeries = draft.type === 'Clinic series';
   const startDateText = DateTime.fromISO(draft.startDate).toFormat('d MMM yyyy');
   const endDateText = DateTime.fromISO(draft.endDate).toFormat('d MMM yyyy');
@@ -462,82 +664,253 @@ function buildSummaryRowsForEdit(draft, siteId, sessionId, data) {
     .join(', ');
   const closuresText = draft.closures?.length ? `${draft.closures.length} added` : 'None added';
 
-  const rows = [
-    {
+  return {
+    name: {
       key: { text: 'Name' },
       value: { text: draft.name || 'Not provided' },
       actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/name`, text: 'Change', visuallyHiddenText: ' name' }] }
     },
-    {
+    date: {
       key: { text: isSeries ? 'Dates' : 'Date' },
       value: { text: dateText },
       actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/date`, text: 'Change', visuallyHiddenText: ' dates' }] }
     },
-    ...(isSeries ? [{
-      key: { text: 'Days' },
-      value: { text: asArray(draft.days).join(', ') },
-      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/days`, text: 'Change', visuallyHiddenText: ' days' }] }
-    }] : []),
-    {
+    ...(isSeries ? {
+      days: {
+        key: { text: 'Days' },
+        value: { text: asArray(draft.days).join(', ') },
+        actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/days`, text: 'Change', visuallyHiddenText: ' days' }] }
+      },
+      closures: {
+        key: { text: 'Clinic closures' },
+        value: { text: closuresText },
+        actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/closures`, text: 'Change', visuallyHiddenText: ' clinic closures' }] }
+      }
+    } : {}),
+    time: {
       key: { text: 'Time' },
       value: { text: `${draft.from} to ${draft.until}` },
       actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/time`, text: 'Change', visuallyHiddenText: ' time' }] }
     },
-    {
+    capacity: {
       key: { text: 'Vaccinators and capacity' },
       value: { text: String(draft.capacity) },
       actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/capacity`, text: 'Change', visuallyHiddenText: ' vaccinators and capacity' }] }
     },
-    {
+    duration: {
       key: { text: 'Appointment length' },
       value: { text: `${draft.duration} minutes` },
       actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/duration`, text: 'Change', visuallyHiddenText: ' appointment length' }] }
     },
-    {
+    services: {
       key: { text: 'Services' },
       value: { text: services || 'None selected' },
       actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/services`, text: 'Change', visuallyHiddenText: ' services' }] }
-    },
-    ...(isSeries ? [{
-      key: { text: 'Clinic closures' },
-      value: { text: closuresText },
-      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/closures`, text: 'Change', visuallyHiddenText: ' clinic closures' }] }
-    }] : [])
+    }
+  };
+}
+
+function buildSummaryRowsForEdit(draft, siteId, sessionId, data) {
+  const rowsByField = buildSummaryRowMap(draft, siteId, sessionId, data);
+  const orderedFields = [
+    'name',
+    'date',
+    'days',
+    'time',
+    'capacity',
+    'duration',
+    'services',
+    'closures'
   ];
 
-  return rows;
+  return orderedFields
+    .map((field) => rowsByField[field])
+    .filter(Boolean);
+}
+
+function hasEditFieldChanged(original, draft, field) {
+  switch (field) {
+    case 'name':
+      return String(original?.label || '') !== String(draft?.name || '');
+    case 'date':
+      if (draft?.type === 'Clinic series') {
+        return String(original?.startDate || '') !== String(draft?.startDate || '')
+          || String(original?.endDate || '') !== String(draft?.endDate || '');
+      }
+      return String(original?.startDate || '') !== String(draft?.startDate || '');
+    case 'days':
+      return JSON.stringify(asArray(original?.recurrencePattern?.byDay).slice().sort())
+        !== JSON.stringify(asArray(draft?.days).slice().sort());
+    case 'time':
+      return String(original?.from || '') !== String(draft?.from || '')
+        || String(original?.until || '') !== String(draft?.until || '');
+    case 'capacity':
+      return (Number(original?.capacity) || 1) !== (Number(draft?.capacity) || 1);
+    case 'duration':
+      return (Number(original?.slotLength) || 10) !== (Number(draft?.duration) || 10);
+    case 'services':
+      return JSON.stringify(asArray(original?.services).slice().sort())
+        !== JSON.stringify(asArray(draft?.services).slice().sort());
+    case 'closures': {
+      const normalizeClosures = (closures) => asArray(closures)
+        .filter((closure) => closure?.startDate && closure?.endDate)
+        .map((closure) => ({
+          startDate: closure.startDate,
+          endDate: closure.endDate,
+          label: closure.label || ''
+        }))
+        .sort((a, b) => `${a.startDate}-${a.endDate}-${a.label}`.localeCompare(`${b.startDate}-${b.endDate}-${b.label}`));
+
+      return JSON.stringify(normalizeClosures(original?.closures))
+        !== JSON.stringify(normalizeClosures(draft?.closures));
+    }
+    default:
+      return false;
+  }
+}
+
+function buildChangedRowsForEdit(original, draft, state, siteId, sessionId, data) {
+  const rowsByField = buildSummaryRowMap(draft, siteId, sessionId, data);
+  const editableFields = currentEditableFields(state);
+  const candidateFields = editableFields.length > 0
+    ? editableFields
+    : ['name', 'date', 'days', 'time', 'capacity', 'duration', 'services', 'closures'];
+
+  const changedRows = candidateFields
+    .filter((field) => rowsByField[field] && hasEditFieldChanged(original, draft, field))
+    .map((field) => rowsByField[field]);
+
+  if (changedRows.length > 0) {
+    return changedRows;
+  }
+
+  if (editableFields.length > 0) {
+    return editableFields
+      .filter((field) => rowsByField[field])
+      .map((field) => rowsByField[field]);
+  }
+
+  return buildSummaryRowsForEdit(draft, siteId, sessionId, data);
+}
+
+function reviewBackPath(siteId, sessionId, state) {
+  if (asArray(state?.affectedBookingIds).length > 0) {
+    return `${editSummaryPath(siteId, sessionId)}/affected-bookings`;
+  }
+
+  const step = state?.currentEditStep
+    || editStepForField(state?.currentEditField, state?.draft?.type === 'Clinic series');
+  if (step) {
+    return editStepPath(siteId, sessionId, step);
+  }
+
+  return editSummaryPath(siteId, sessionId);
+}
+
+function prepareReviewAfterEdit(data, siteId, state) {
+  const updatedModel = draftToModel(state.draft);
+  updatedModel.site_id = siteId;
+  const originalModel = { ...state.original, site_id: siteId };
+  const siteBookings = data?.bookings?.[siteId] || {};
+  const affectedIds = calculateAffectedBookings(originalModel, updatedModel, siteBookings);
+
+  state.affectedBookingIds = affectedIds;
+  if (affectedIds.length === 0) {
+    state.bookingAction = null;
+  }
+
+  setEditState(data, state);
+  return affectedIds.length > 0
+    ? `${editSummaryPath(siteId, state.sessionId)}/affected-bookings`
+    : `${editSummaryPath(siteId, state.sessionId)}/check-answers`;
 }
 
 function calculateAffectedBookings(originalModel, updatedModel, siteBookings) {
-  const originalByMinute = new Map();
-  const updatedByMinute = new Map();
+  if (JSON.stringify(normalizedBookingImpact(originalModel)) === JSON.stringify(normalizedBookingImpact(updatedModel))) {
+    return [];
+  }
 
-  const collect = (target, model) => {
+  const collectMinuteSlots = (model) => {
+    const slotsByMinute = new Map();
     const merged = mergeDailyAvailability({}, String(model.site_id || ''), { [model.id]: model });
+
     for (const [date, day] of Object.entries(merged || {})) {
       for (const session of (day.sessions || [])) {
         const start = DateTime.fromISO(`${date}T${session.from}`, { zone: 'Europe/London' });
         const end = DateTime.fromISO(`${date}T${session.until}`, { zone: 'Europe/London' });
         const slotLength = Number(session.slotLength) || 10;
         const capacity = Number(session.capacity) || 1;
+        const services = asArray(session.services).slice().sort();
 
         for (let dt = start; dt < end; dt = dt.plus({ minutes: slotLength })) {
           const key = dt.toFormat("yyyy-MM-dd'T'HH:mm");
-          target.set(key, (target.get(key) || 0) + capacity);
+          const minuteSlots = slotsByMinute.get(key) || [];
+          minuteSlots.push({
+            sessionId: session.id || null,
+            recurringSessionId: session.recurringId || model.id,
+            slotKey: key,
+            services,
+            capacity
+          });
+          slotsByMinute.set(key, minuteSlots);
         }
       }
     }
+
+    return slotsByMinute;
   };
 
-  collect(originalByMinute, originalModel);
-  collect(updatedByMinute, updatedModel);
+  const bookingFitsSlot = (booking, slot) => {
+    return slot.remaining > 0 && slot.services.includes(booking.service);
+  };
 
-  const updatedServices = new Set(asArray(updatedModel.services));
+  const assignBookingsToSlots = (bookings, slots) => {
+    const survivors = new Set();
+    const workingSlots = (slots || []).map((slot) => ({
+      services: slot.services,
+      remaining: Number(slot.capacity) || 0
+    }));
+
+    for (const booking of bookings) {
+      const candidates = workingSlots
+        .filter((slot) => bookingFitsSlot(booking, slot))
+        .sort((a, b) => {
+          if (a.services.length !== b.services.length) {
+            return a.services.length - b.services.length;
+          }
+          return a.remaining - b.remaining;
+        });
+
+      const chosen = candidates[0];
+      if (!chosen) continue;
+
+      chosen.remaining -= 1;
+      survivors.add(String(booking.id));
+    }
+
+    return survivors;
+  };
+
+  const originalSlotsByMinute = collectMinuteSlots(originalModel);
+  const updatedSlotsByMinute = collectMinuteSlots(updatedModel);
   const bookingsByMinute = new Map();
 
   for (const booking of Object.values(siteBookings || {})) {
-    const key = normalizeIsoMinute(booking?.datetime);
-    if (!key || !originalByMinute.has(key)) continue;
+    if (booking?.status !== 'scheduled') continue;
+
+    const key = booking?.slotKey || normalizeIsoMinute(booking?.datetime);
+    if (!key) continue;
+
+    const originalSlots = originalSlotsByMinute.get(key) || [];
+    const belongsToOriginal = booking?.recurringSessionId
+      ? String(booking.recurringSessionId) === String(originalModel.id)
+      : originalSlots.some((slot) => asArray(slot.services).includes(booking.service));
+    if (!belongsToOriginal) continue;
+
+    const fitsOriginal = booking?.sessionId
+      ? originalSlots.some((slot) => String(slot.sessionId) === String(booking.sessionId) && asArray(slot.services).includes(booking.service))
+      : originalSlots.some((slot) => asArray(slot.services).includes(booking.service));
+    if (!fitsOriginal) continue;
 
     const bucket = bookingsByMinute.get(key) || [];
     bucket.push(booking);
@@ -547,32 +920,20 @@ function calculateAffectedBookings(originalModel, updatedModel, siteBookings) {
   const affectedIds = [];
 
   for (const [minute, minuteBookings] of bookingsByMinute.entries()) {
-    const newCapacity = updatedByMinute.get(minute) || 0;
-
-    const serviceMismatched = minuteBookings.filter((booking) => !updatedServices.has(booking.service));
-    for (const booking of serviceMismatched) {
-      affectedIds.push(booking.id);
-    }
-
-    const serviceMatched = minuteBookings
-      .filter((booking) => updatedServices.has(booking.service))
+    const sortedBookings = minuteBookings
+      .slice()
       .sort((a, b) => Number(a.id) - Number(b.id));
+    const updatedSlots = updatedSlotsByMinute.get(minute) || [];
+    const survivors = assignBookingsToSlots(sortedBookings, updatedSlots);
 
-    if (newCapacity <= 0) {
-      for (const booking of serviceMatched) {
-        affectedIds.push(booking.id);
-      }
-      continue;
-    }
-
-    if (serviceMatched.length > newCapacity) {
-      for (const booking of serviceMatched.slice(newCapacity)) {
-        affectedIds.push(booking.id);
+    for (const booking of sortedBookings) {
+      if (!survivors.has(String(booking.id))) {
+        affectedIds.push(String(booking.id));
       }
     }
   }
 
-  return Array.from(new Set(affectedIds.map((id) => String(id))));
+  return Array.from(new Set(affectedIds));
 }
 
 function applyAffectedBookingAction(siteBookings, affectedIds, action) {
@@ -799,6 +1160,279 @@ router.get('/site/:id/clinics/edit/:sessionId', (req, res) => {
   });
 });
 
+router.all('/site/:id/clinics/edit/:sessionId/details', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  if (state.currentEditStep !== 'details') {
+    setCurrentEditStep(state, 'details');
+    setEditState(data, state);
+  }
+
+  if (req.method === 'POST') {
+    updateDraftFromDetails(state, req.body?.newSession || {});
+    return res.redirect(prepareReviewAfterEdit(data, req.site_id, state));
+  }
+
+  setEditTemplateData(res, data, state);
+  return res.render(`site/clinics/${state.draft.type === 'Clinic series' ? 'series' : 'single'}/details`, {
+    backUrl: editSummaryPath(req.site_id, req.params.sessionId),
+    captionText: editCaptionText(state.draft),
+    formAction: editStepPath(req.site_id, req.params.sessionId, 'details')
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/days', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state || state.draft.type !== 'Clinic series') {
+    return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
+  }
+
+  if (state.currentEditStep !== 'days') {
+    setCurrentEditStep(state, 'days');
+    setEditState(data, state);
+  }
+
+  if (req.method === 'POST') {
+    updateDraftFromDays(state, req.body?.newSession || {});
+    return res.redirect(prepareReviewAfterEdit(data, req.site_id, state));
+  }
+
+  setEditTemplateData(res, data, state);
+  return res.render('site/clinics/series/days', {
+    backUrl: editSummaryPath(req.site_id, req.params.sessionId),
+    captionText: editCaptionText(state.draft),
+    formAction: editStepPath(req.site_id, req.params.sessionId, 'days')
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/clinic-times', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  if (state.currentEditStep !== 'clinic-times') {
+    setCurrentEditStep(state, 'clinic-times');
+    setEditState(data, state);
+  }
+
+  if (req.method === 'POST') {
+    updateDraftFromTimes(state, req.body?.newSession || {});
+    return res.redirect(prepareReviewAfterEdit(data, req.site_id, state));
+  }
+
+  setEditTemplateData(res, data, state);
+  return res.render(`site/clinics/${state.draft.type === 'Clinic series' ? 'series' : 'single'}/clinic-times`, {
+    backUrl: editSummaryPath(req.site_id, req.params.sessionId),
+    captionText: editCaptionText(state.draft),
+    formAction: editStepPath(req.site_id, req.params.sessionId, 'clinic-times')
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/appointments-calculator', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  if (state.currentEditStep !== 'appointments-calculator') {
+    setCurrentEditStep(state, 'appointments-calculator');
+    setEditState(data, state);
+  }
+
+  if (req.method === 'POST') {
+    updateDraftFromAppointments(state, req.body?.newSession || {});
+    return res.redirect(prepareReviewAfterEdit(data, req.site_id, state));
+  }
+
+  setEditTemplateData(res, data, state);
+  return res.render(`site/clinics/${state.draft.type === 'Clinic series' ? 'series' : 'single'}/appointments-calculator`, {
+    backUrl: editSummaryPath(req.site_id, req.params.sessionId),
+    captionText: editCaptionText(state.draft),
+    formAction: editStepPath(req.site_id, req.params.sessionId, 'appointments-calculator')
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/services', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  if (state.currentEditStep !== 'services') {
+    setCurrentEditStep(state, 'services');
+    setEditState(data, state);
+  }
+
+  if (req.method === 'POST') {
+    updateDraftFromServices(state, req.body?.newSession || {});
+    return res.redirect(prepareReviewAfterEdit(data, req.site_id, state));
+  }
+
+  setEditTemplateData(res, data, state);
+  return res.render(`site/clinics/${state.draft.type === 'Clinic series' ? 'series' : 'single'}/services`, {
+    backUrl: editSummaryPath(req.site_id, req.params.sessionId),
+    captionText: editCaptionText(state.draft),
+    formAction: editStepPath(req.site_id, req.params.sessionId, 'services')
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/clinic-closures', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state || state.draft.type !== 'Clinic series') {
+    return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
+  }
+
+  if (state.currentEditStep !== 'clinic-closures') {
+    setCurrentEditStep(state, 'clinic-closures');
+    setEditState(data, state);
+  }
+
+  const closures = asArray(state.draft.closures);
+
+  if (req.method === 'POST') {
+    const addAnother = req.body?.addAnother;
+    if (addAnother === 'yes') {
+      return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-closures/add'));
+    }
+
+    if (addAnother === 'no') {
+      return res.redirect(prepareReviewAfterEdit(data, req.site_id, state));
+    }
+  }
+
+  return res.render('site/clinics/series/clinic-closures', {
+    backUrl: editSummaryPath(req.site_id, req.params.sessionId),
+    captionText: editCaptionText(state.draft),
+    formAction: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
+    closures
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/add', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state || state.draft.type !== 'Clinic series') {
+    return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
+  }
+
+  if (req.method === 'POST') {
+    const parsed = parseClosureFromBody(req.body?.closure || {});
+    if (!parsed) {
+      return res.render('site/clinics/series/clinic-closures-form', {
+        pageName: 'Add clinic closure',
+        backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
+        captionText: editCaptionText(state.draft),
+        actionHref: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures/add'),
+        mode: 'add',
+        closure: toClosureFormInput(req.body?.closure || {}),
+        error: 'Enter valid closure start and end dates'
+      });
+    }
+
+    state.draft.closures = asArray(state.draft.closures);
+    state.draft.closures.push(parsed);
+    setEditState(data, state);
+    return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'));
+  }
+
+  return res.render('site/clinics/series/clinic-closures-form', {
+    pageName: 'Add clinic closure',
+    backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
+    captionText: editCaptionText(state.draft),
+    actionHref: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures/add'),
+    mode: 'add',
+    closure: toClosureFormInput({
+      name: '',
+      startDate: { day: '', month: '', year: '' },
+      endDate: { day: '', month: '', year: '' }
+    })
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/change', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state || state.draft.type !== 'Clinic series') {
+    return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
+  }
+
+  const index = Number(req.params.index);
+  const closures = asArray(state.draft.closures);
+  const current = closures[index];
+  if (!Number.isInteger(index) || index < 0 || !current) {
+    return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'));
+  }
+
+  if (req.method === 'POST') {
+    const parsed = parseClosureFromBody(req.body?.closure || {});
+    if (!parsed) {
+      return res.render('site/clinics/series/clinic-closures-form', {
+        pageName: 'Change clinic closure',
+        backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
+        captionText: editCaptionText(state.draft),
+        actionHref: editStepPath(req.site_id, req.params.sessionId, `clinic-closures/${index}/change`),
+        mode: 'change',
+        closure: toClosureFormInput(req.body?.closure || toEditableClosure(current)),
+        error: 'Enter valid closure start and end dates'
+      });
+    }
+
+    closures[index] = parsed;
+    state.draft.closures = closures;
+    setEditState(data, state);
+    return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'));
+  }
+
+  return res.render('site/clinics/series/clinic-closures-form', {
+    pageName: 'Change clinic closure',
+    backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
+    captionText: editCaptionText(state.draft),
+    actionHref: editStepPath(req.site_id, req.params.sessionId, `clinic-closures/${index}/change`),
+    mode: 'change',
+    closure: toClosureFormInput(toEditableClosure(current))
+  });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/remove', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state || state.draft.type !== 'Clinic series') {
+    return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
+  }
+
+  const index = Number(req.params.index);
+  const closures = asArray(state.draft.closures);
+  const current = closures[index];
+  if (!Number.isInteger(index) || index < 0 || !current) {
+    return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'));
+  }
+
+  if (req.method === 'POST') {
+    closures.splice(index, 1);
+    state.draft.closures = closures;
+    setEditState(data, state);
+    return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'));
+  }
+
+  return res.render('site/clinics/series/clinic-closures-remove', {
+    backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
+    captionText: editCaptionText(state.draft),
+    formAction: editStepPath(req.site_id, req.params.sessionId, `clinic-closures/${index}/remove`),
+    index,
+    closure: current
+  });
+});
+
 router.all('/site/:id/clinics/edit/:sessionId/change/:field', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
@@ -806,94 +1440,14 @@ router.all('/site/:id/clinics/edit/:sessionId/change/:field', (req, res) => {
     return res.redirect(`/site/${req.site_id}/clinics`);
   }
 
-  const { field } = req.params;
-  const isSeries = state.draft.type === 'Clinic series';
-
-  if (req.method === 'POST') {
-    if (field === 'name') {
-      state.draft.name = String(req.body?.draft?.name || '').trim();
-    }
-
-    if (field === 'date') {
-      if (isSeries) {
-        const startISO = parseDateInputToISO(req.body?.draft?.startDate || {});
-        const endISO = parseDateInputToISO(req.body?.draft?.endDate || {});
-        if (startISO && endISO) {
-          state.draft.startDate = startISO;
-          state.draft.endDate = endISO;
-          state.draft.startDateInput = toDateParts(startISO);
-          state.draft.endDateInput = toDateParts(endISO);
-        }
-      } else {
-        const singleISO = parseDateInputToISO(req.body?.draft?.singleDate || {});
-        if (singleISO) {
-          state.draft.startDate = singleISO;
-          state.draft.endDate = singleISO;
-          state.draft.singleDate = singleISO;
-          state.draft.singleDateInput = toDateParts(singleISO);
-        }
-      }
-    }
-
-    if (field === 'days' && isSeries) {
-      state.draft.days = asArray(req.body?.draft?.days);
-    }
-
-    if (field === 'time') {
-      const startHour = String(req.body?.draft?.startTime?.hour || '').padStart(2, '0');
-      const startMinute = String(req.body?.draft?.startTime?.minute || '').padStart(2, '0');
-      const endHour = String(req.body?.draft?.endTime?.hour || '').padStart(2, '0');
-      const endMinute = String(req.body?.draft?.endTime?.minute || '').padStart(2, '0');
-
-      state.draft.startTime = { hour: startHour, minute: startMinute };
-      state.draft.endTime = { hour: endHour, minute: endMinute };
-      state.draft.from = `${startHour}:${startMinute}`;
-      state.draft.until = `${endHour}:${endMinute}`;
-    }
-
-    if (field === 'capacity') {
-      state.draft.capacity = Math.max(1, Number(req.body?.draft?.capacity) || 1);
-    }
-
-    if (field === 'duration') {
-      const duration = Number(req.body?.draft?.duration) || 10;
-      state.draft.duration = Math.min(60, Math.max(1, duration));
-    }
-
-    if (field === 'services') {
-      state.draft.services = asArray(req.body?.draft?.services);
-    }
-
-    if (field === 'closures' && isSeries) {
-      const closures = asArray(state.draft.closures);
-      const addAnother = req.body?.addAnother;
-      const removeIndex = Number(req.body?.removeIndex);
-      if (Number.isInteger(removeIndex) && removeIndex >= 0 && closures[removeIndex]) {
-        closures.splice(removeIndex, 1);
-      }
-
-      if (addAnother === 'yes') {
-        const parsed = parseClosureFromBody(req.body?.closure || {});
-        if (parsed) {
-          closures.push(parsed);
-        }
-      }
-
-      state.draft.closures = closures;
-    }
-
-    setEditState(data, state);
-    return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/any-other-changes`);
+  const step = editStepForField(req.params.field, state.draft.type === 'Clinic series');
+  if (!step) {
+    return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
   }
 
-  return res.render('site/clinics/edit/change-field', {
-    field,
-    isSeries,
-    sessionId: req.params.sessionId,
-    draft: state.draft,
-    serviceGroups: data.serviceGroups,
-    services: data.services
-  });
+  setCurrentEditField(state, req.params.field);
+  setEditState(data, state);
+  return res.redirect(editStepPath(req.site_id, req.params.sessionId, step));
 });
 
 router.all('/site/:id/clinics/edit/:sessionId/any-other-changes', (req, res) => {
@@ -903,55 +1457,7 @@ router.all('/site/:id/clinics/edit/:sessionId/any-other-changes', (req, res) => 
     return res.redirect(`/site/${req.site_id}/clinics`);
   }
 
-  if (req.method === 'POST') {
-    if (req.body?.moreChanges === 'yes') {
-      return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/what-change`);
-    }
-
-    const updatedModel = draftToModel(state.draft);
-    updatedModel.site_id = req.site_id;
-    const originalModel = { ...state.original, site_id: req.site_id };
-    const siteBookings = data?.bookings?.[req.site_id] || {};
-    const affectedIds = calculateAffectedBookings(originalModel, updatedModel, siteBookings);
-    state.affectedBookingIds = affectedIds;
-    setEditState(data, state);
-
-    if (affectedIds.length > 0) {
-      return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/affected-bookings`);
-    }
-
-    return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/check-answers`);
-  }
-
-  return res.render('site/clinics/edit/any-other-changes', {
-    sessionId: req.params.sessionId,
-    isSeries: state.draft.type === 'Clinic series'
-  });
-});
-
-router.all('/site/:id/clinics/edit/:sessionId/what-change', (req, res) => {
-  const data = req.session.data;
-  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
-  if (!state) {
-    return res.redirect(`/site/${req.site_id}/clinics`);
-  }
-
-  const isSeries = state.draft.type === 'Clinic series';
-
-  if (req.method === 'POST') {
-    const field = req.body?.field;
-    const valid = editFieldOptions(isSeries).some((item) => item.value === field);
-    if (!valid) {
-      return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/what-change`);
-    }
-    return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/change/${field}`);
-  }
-
-  return res.render('site/clinics/edit/what-change', {
-    sessionId: req.params.sessionId,
-    options: editFieldOptions(isSeries),
-    isSeries
-  });
+  return res.redirect(prepareReviewAfterEdit(data, req.site_id, state));
 });
 
 router.all('/site/:id/clinics/edit/:sessionId/affected-bookings', (req, res) => {
@@ -978,7 +1484,12 @@ router.all('/site/:id/clinics/edit/:sessionId/affected-bookings', (req, res) => 
   return res.render('site/clinics/edit/affected-bookings', {
     sessionId: req.params.sessionId,
     isSeries: state.draft.type === 'Clinic series',
-    affectedCount
+    affectedCount,
+    selectedBookingAction: state.bookingAction || null,
+    backHref: reviewBackPath(req.site_id, req.params.sessionId, {
+      ...state,
+      affectedBookingIds: []
+    })
   });
 });
 
@@ -1006,14 +1517,17 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
   return res.render('site/clinics/edit/check-answers', {
     sessionId: req.params.sessionId,
     isSeries: state.draft.type === 'Clinic series',
-    rows: buildSummaryRowsForEdit(state.draft, req.site_id, req.params.sessionId, data),
+    rows: buildChangedRowsForEdit(state.original, state.draft, state, req.site_id, req.params.sessionId, data),
     affectedCount: asArray(state.affectedBookingIds).length,
-    bookingActionText
+    bookingActionText,
+    backHref: reviewBackPath(req.site_id, req.params.sessionId, state)
   });
 });
 
 router.get('/site/:id/clinics/edit/:sessionId/success', (req, res) => {
-  return res.render('site/clinics/edit/success');
+  return res.render('site/clinics/edit/success', {
+    sessionId: req.params.sessionId
+  });
 });
 
 router.get('/site/:id/clinics/:sessionId/edit', (req, res) => {

@@ -2,7 +2,7 @@
 
 {% block beforeContent %}
 {{ backLink({
-  href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/any-other-changes'
+  href: backHref
 }) }}
 {% endblock %}
 
@@ -19,11 +19,19 @@
           items: [
             {
               value: 'orphan',
-              text: 'Keep booked appointments (make them orphaned)'
+              text: 'Keep booked appointments',
+              hint: {
+                text: 'These will stay in your appointments list'
+              },
+              checked: selectedBookingAction == 'orphan'
             },
             {
               value: 'cancel',
-              text: 'Cancel appointments (cancel them)'
+              text: 'Cancel booked appointments',
+              hint: {
+                text: 'We will email or text people to confirm the cancellation'
+              },
+              checked: selectedBookingAction == 'cancel'
             }
           ]
         }) }}

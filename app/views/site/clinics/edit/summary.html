@@ -46,7 +46,7 @@
         {{ appCard({
           title: 'Session details',
           action: {
-            href: editBasePath ~ '/what-change',
+            href: editBasePath ~ '/details',
             text: 'Change',
             visuallyHiddenText: ' session details'
           },
@@ -69,7 +69,7 @@
         {{ appCard({
           title: 'Session details',
           action: {
-            href: editBasePath ~ '/change/name',
+            href: editBasePath ~ '/details',
             text: 'Change',
             visuallyHiddenText: ' session details'
           },
@@ -86,26 +86,12 @@
         }) }}
       {% endif %}
 
-      {{ appCard({
-        title: 'Vaccinators',
-        action: {
-          href: editBasePath ~ '/change/capacity',
-          text: 'Change',
-          visuallyHiddenText: ' vaccinators'
-        },
-        items: [
-          {
-            key: 'Vaccinators',
-            value: vaccinatorText
-          }
-        ]
-      }) }}
 
       {% if isSeries %}
         {{ appCard({
           title: 'Day pattern',
           action: {
-            href: editBasePath ~ '/change/days',
+            href: editBasePath ~ '/days',
             text: 'Change',
             visuallyHiddenText: ' day pattern'
           },
@@ -121,7 +107,7 @@
       {{ appCard({
         title: 'Session times',
         action: {
-          href: editBasePath ~ '/change/time',
+          href: editBasePath ~ '/clinic-times',
           text: 'Change',
           visuallyHiddenText: ' session times'
         },
@@ -134,9 +120,9 @@
       }) }}
 
       {{ appCard({
-        title: 'Booking length',
+        title: 'Appointments calculation',
         action: {
-          href: editBasePath ~ '/change/duration',
+          href: editBasePath ~ '/appointments-calculator',
           text: 'Change',
           visuallyHiddenText: ' booking length'
         },
@@ -144,6 +130,10 @@
           {
             key: 'Booking length',
             value: draft.duration ~ ' minutes'
+          },
+          {
+            key: 'Vaccinators',
+            value: vaccinatorText
           }
         ]
       }) }}
@@ -151,7 +141,7 @@
       {{ appCard({
         title: 'Services',
         action: {
-          href: editBasePath ~ '/change/services',
+          href: editBasePath ~ '/services',
           text: 'Change',
           visuallyHiddenText: ' services'
         },
@@ -167,7 +157,7 @@
         {{ appCard({
           title: 'Exceptions',
           action: {
-            href: editBasePath ~ '/change/closures',
+            href: editBasePath ~ '/clinic-closures',
             text: 'Change',
             visuallyHiddenText: ' exceptions'
           },
@@ -180,9 +170,6 @@
         }) }}
       {% endif %}
 
-      <form action="/site/{{ site_id }}/clinics/edit/{{ sessionId }}/what-change" method="get">
-        {{ button({ text: 'Continue' }) }}
-      </form>
     </div>
   </div>
 {% endblock %}

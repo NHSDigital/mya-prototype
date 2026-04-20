@@ -1,6 +1,9 @@
 {% extends '../../../layouts/layout.html' %}
 
-{% set pageName = "Clinic closures" %}
+{% if not pageName %}{% set pageName = "Clinic closures" %}{% endif %}
+{% if not backUrl %}{% set backUrl = '/site/' + site_id + '/clinics/services' %}{% endif %}
+{% if not formAction %}{% set formAction = '/site/' + site_id + '/clinics/clinic-closures' %}{% endif %}
+{% if not captionText %}{% set captionText = 'Create clinic series' %}{% endif %}
 
 {% macro closureText(closure) %}
   {% set closureStart = closure.startDate | formatDate('d MMM yyyy') %}
@@ -17,14 +20,14 @@
 
 {% block beforeContent %}
 {{ backLink({
-  href: '/site/' + site_id + '/clinics/services'
+  href: backUrl
 }) }}
 {% endblock %}
 
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      <span class="nhsuk-caption-l">Create clinic series</span>
+      <span class="nhsuk-caption-l">{{ captionText }}</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       {% if closures | length > 0 %}
@@ -46,12 +49,12 @@
             actions: {
               items: [
                 {
-                  href: "/site/" + site_id + "/clinics/clinic-closures/" + loop.index0 + "/change",
+                  href: formAction + "/" + loop.index0 + "/change",
                   text: "Change",
                   visuallyHiddenText: " closure " + loop.index
                 },
                 {
-                  href: "/site/" + site_id + "/clinics/clinic-closures/" + loop.index0 + "/remove",
+                  href: formAction + "/" + loop.index0 + "/remove",
                   text: "Remove",
                   visuallyHiddenText: " closure " + loop.index
                 }
@@ -71,7 +74,7 @@
         {% set questionText = "Are there any dates when this clinic will not take place?" %}
       {% endif %}
 
-      <form action="/site/{{ site_id }}/clinics/clinic-closures" method="post">
+      <form action="{{ formAction }}" method="post">
         <input type="hidden" name="newSession[type]" value="Clinic series">
         {{ radios({
           idPrefix: "add-another-closure",

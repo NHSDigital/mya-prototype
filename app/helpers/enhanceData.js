@@ -5,6 +5,30 @@ function bookingKeyFromISO(datetime, timezone) {
   return DateTime.fromISO(datetime, { zone: timezone }).toFormat("yyyy-MM-dd'T'HH:mm");
 }
 
+function bookingBucketKey({ slotKey, sessionId, recurringSessionId }) {
+  if (sessionId) return `session:${sessionId}:${slotKey}`;
+  if (recurringSessionId) return `recurring:${recurringSessionId}:${slotKey}`;
+  return `time:${slotKey}`;
+}
+
+function bookingBucketKeysForSlot(slot) {
+  const keys = [];
+
+  if (slot?.sessionId && slot?.slotKey) {
+    keys.push(bookingBucketKey({ slotKey: slot.slotKey, sessionId: slot.sessionId }));
+  }
+
+  if (slot?.recurringSessionId && slot?.slotKey) {
+    keys.push(bookingBucketKey({ slotKey: slot.slotKey, recurringSessionId: slot.recurringSessionId }));
+  }
+
+  if (slot?.slotKey) {
+    keys.push(bookingBucketKey({ slotKey: slot.slotKey }));
+  }
+
+  return keys;
+}
+
 /**
  * Build slot structures for each site and date.
  * - Expands all sessions into time slots.
@@ -25,7 +49,11 @@ function enhanceData({ daily_availability, bookings, timezone = 'Europe/London' 
     const bookingBuckets = new Map();
     for (const [id, b] of Object.entries(bookings?.[site_id] || {})) {
       if (!b?.datetime) continue;
-      const key = bookingKeyFromISO(b.datetime, timezone);
+      const key = bookingBucketKey({
+        slotKey: b.slotKey || bookingKeyFromISO(b.datetime, timezone),
+        sessionId: b.sessionId,
+        recurringSessionId: b.recurringSessionId
+      });
       const existing = bookingBuckets.get(key) || [];
       existing.push({ id, ...b });
       bookingBuckets.set(key, existing);
@@ -42,21 +70,36 @@ function enhanceData({ daily_availability, bookings, timezone = 'Europe/London' 
         const capacity = session.capacity || 1;
 
         for (let dt = start; dt < end; dt = dt.plus({ minutes: slotLength })) {
-          const key = dt.toFormat("yyyy-MM-dd'T'HH:mm");
-          const bucket = bookingBuckets.get(key) || [];
+          const slotKey = dt.toFormat("yyyy-MM-dd'T'HH:mm");
 
           for (let c = 0; c < capacity; c++) {
             const datetime = dt.toISO({ suppressSeconds: true, suppressMilliseconds: true });
-            const booking = bucket.length > 0 ? bucket.shift() : null;
+            const slotDescriptor = {
+              slotKey,
+              sessionId: session.id || null,
+              recurringSessionId: session.recurringId || null
+            };
+
+            let booking = null;
+            for (const bucketKey of bookingBucketKeysForSlot(slotDescriptor)) {
+              const bucket = bookingBuckets.get(bucketKey) || [];
+              if (bucket.length > 0) {
+                booking = bucket.shift();
+                break;
+              }
+            }
 
             slots[site_id][date].push({
               datetime,
+              slotKey,
               date,
               group: {
                 id: generateGroupId(session),
                 start: session.from,
                 end: session.until
               },
+              sessionId: session.id || null,
+              recurringSessionId: session.recurringId || null,
               site_id,
               slotLength,
               capacity,

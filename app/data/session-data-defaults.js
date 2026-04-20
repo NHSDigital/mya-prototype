@@ -257,10 +257,58 @@ function toArray(value) {
   return [value];
 }
 
-function applyBookingOverrides(generatedBookings, bookingOverrides, site_id, timezone = 'Europe/London') {
+function buildSlotLookup(slots = [], timezone = 'Europe/London') {
+  const lookup = new Map();
+
+  for (const slot of slots) {
+    const slotKey = slot?.slotKey || normalizeBookingDatetime(slot?.datetimeISO, timezone);
+    if (!slotKey) continue;
+
+    const bucket = lookup.get(slotKey) || [];
+    bucket.push({
+      recurringSessionId: slot.recurringSessionId || null,
+      sessionId: slot.sessionId || null,
+      slotKey
+    });
+    lookup.set(slotKey, bucket);
+  }
+
+  return lookup;
+}
+
+function findBookingSlotIdentity(bookingLike = {}, slotLookup = new Map(), timezone = 'Europe/London') {
+  const slotKey = bookingLike?.slotKey || normalizeBookingDatetime(bookingLike?.datetime || bookingLike?.datetimeISO, timezone);
+  if (!slotKey) {
+    return {
+      recurringSessionId: bookingLike?.recurringSessionId || null,
+      sessionId: bookingLike?.sessionId || null,
+      slotKey: null
+    };
+  }
+
+  if (bookingLike?.sessionId || bookingLike?.recurringSessionId) {
+    return {
+      recurringSessionId: bookingLike?.recurringSessionId || null,
+      sessionId: bookingLike?.sessionId || null,
+      slotKey
+    };
+  }
+
+  const candidates = slotLookup.get(slotKey) || [];
+  const match = candidates[0] || null;
+
+  return {
+    recurringSessionId: match?.recurringSessionId || null,
+    sessionId: match?.sessionId || null,
+    slotKey
+  };
+}
+
+function applyBookingOverrides(generatedBookings, bookingOverrides, site_id, slots = [], timezone = 'Europe/London') {
   const output = { ...(generatedBookings || {}) };
   const overrideList = toArray(bookingOverrides);
   if (overrideList.length === 0) return output;
+  const slotLookup = buildSlotLookup(slots, timezone);
 
   const bookingsById = Object.values(output);
   const datetimeToId = new Map();
@@ -297,12 +345,24 @@ function applyBookingOverrides(generatedBookings, bookingOverrides, site_id, tim
 
     const existing = output[targetId] || {};
     const status = override?.status || existing.status || 'scheduled';
+    const slotIdentity = findBookingSlotIdentity(
+      {
+        ...existing,
+        ...override,
+        datetime: normalizedDatetime
+      },
+      slotLookup,
+      timezone
+    );
 
     output[targetId] = {
       ...existing,
       ...override,
       id: targetId,
       site_id,
+      recurringSessionId: slotIdentity.recurringSessionId || existing.recurringSessionId || null,
+      sessionId: slotIdentity.sessionId || existing.sessionId || null,
+      slotKey: slotIdentity.slotKey || existing.slotKey || null,
       datetime: normalizedDatetime,
       status,
       name: override?.name || existing.name || 'Manual booking',
@@ -387,7 +447,8 @@ for (const cfg of sitesConfig) {
   const bookingData = applyBookingOverrides(
     generatedBookings,
     [...toArray(bookingOverrides), ...toArray(manualBookingOverrides)],
-    site_id
+    site_id,
+    slots
   );
 
   daily_availability[site_id] = availability;
