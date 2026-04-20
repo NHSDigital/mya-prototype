@@ -101,8 +101,8 @@ const base = {
     ],
     site: [
       {
-        text: 'View availability',
-        description: 'View and manage available appointments for your site',
+        text: 'View appointments',
+        description: 'View and manage appointments for your site',
         hrefTemplate: '/site/:id/availability/day'
       },
       {
