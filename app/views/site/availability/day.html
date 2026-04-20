@@ -60,7 +60,7 @@
          {# calculate if there's any booked appointments of this type #}
         {% set hasBookedAppointments = false %}
         {% for slot in slots[date] %}
-          {% if slot.booking_status == opts.status %}
+          {% if slot.booking_status == opts.status or slot.booking_status in opts.status %}
             {% set hasBookedAppointments = true %}
           {% endif %}
         {% endfor %}
@@ -87,11 +87,25 @@
             
 
             {% for slot in slots[date] %}
-            {% if slot.booking_status == opts.status %}
+            {% if slot.booking_status == opts.status or slot.booking_status in opts.status %}
             {% set booking = data.bookings[site_id][slot.booking_id] %}
+            {% set clinicName = 'Clinic' %}
+            {% if data.recurring_sessions and data.recurring_sessions[site_id] and slot.recurringSessionId and data.recurring_sessions[site_id][slot.recurringSessionId] %}
+              {% set clinicName = data.recurring_sessions[site_id][slot.recurringSessionId].label %}
+            {% endif %}
+            {% set bookingStatusText = 'Scheduled' %}
+            {% if slot.booking_status == 'orphaned' %}
+              {% set bookingStatusText = 'Orphaned' %}
+            {% elif slot.booking_status == 'cancelled' %}
+              {% set bookingStatusText = 'Cancelled' %}
+            {% endif %}
             <tr class="nhsuk-table__row" role="row">
               <td class="nhsuk-table__cell">{{ booking.datetime | formatDate('h:mm a') | lower  }}</td>
-              <td class="nhsuk-table__cell">{{ booking.name }}<br>{{ booking.nhsNumber | nhsNumber | safe }}</td>
+              <td class="nhsuk-table__cell">
+                {{ booking.name }}<br>
+                {{ booking.nhsNumber | nhsNumber | safe }}<br>
+                <span class="nhsuk-hint nhsuk-u-margin-bottom-0">{{ bookingStatusText }}</span>
+              </td>
               <td class="nhsuk-table__cell">{{ booking.dob | formatDate }}</td>
               <td class="nhsuk-table__cell nhsuk-u-text-break-word">
                 {% for key, value in booking.contact %}
@@ -125,7 +139,7 @@
           id: "scheduled", 
           panel: { 
             html: appointmentForToday({
-              status: 'scheduled', 
+              status: ['scheduled', 'orphaned'], 
               title: 'Scheduled appointments',
               canCancel: true
             }) 
@@ -138,18 +152,6 @@
               html: appointmentForToday({
                 status: 'cancelled', 
                 title: 'Cancelled appointments'
-              }) 
-            } 
-          }, 
-          { 
-            label: "Manual Cancellations", 
-            id: "manual-cancellations", 
-            panel: { 
-              html: appointmentForToday({
-                status: 'orphaned', 
-                title: 'Appointments you must manually cancel',
-                showOrphanNote: true,
-                canCancel: true
               }) 
             } 
           }
