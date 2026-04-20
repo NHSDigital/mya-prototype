@@ -1,0 +1,66 @@
+@use "nhsuk-frontend/dist/nhsuk" as *;
+
+.app-card {
+  border: 1px solid $nhsuk-border-colour;
+  background-color: nhsuk-colour("white");
+  @include nhsuk-responsive-margin(4, bottom);
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: nhsuk-spacing(3);
+    padding: nhsuk-spacing(3);
+    background-color: nhsuk-colour("grey-5");
+    border-bottom: 1px solid $nhsuk-border-colour;
+  }
+
+  &__title {
+    @include nhsuk-font-size(16);
+    margin: 0;
+    font-weight: $nhsuk-font-bold;
+  }
+
+  &__action {
+    @include nhsuk-font-size(14);
+    white-space: nowrap;
+  }
+
+  &__body {
+    padding: 0 nhsuk-spacing(3);
+  }
+
+  &__table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+  }
+
+  &__row {
+    border-bottom: 1px solid nhsuk-colour("grey-5");
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  &__key,
+  &__value {
+    @include nhsuk-font-size(16);
+    padding: nhsuk-spacing(3) 0;
+    vertical-align: top;
+  }
+
+  &__key {
+    width: 34%;
+    padding-right: nhsuk-spacing(3);
+    font-weight: $nhsuk-font-bold;
+    text-align: left;
+  }
+
+  &__value {
+    > :last-child {
+      margin-bottom: 0;
+    }
+  }
+}

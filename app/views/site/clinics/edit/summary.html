@@ -1,4 +1,5 @@
 {% extends '../../../layouts/layout.html' %}
+{% from '../../../components/app-card.njk' import appCard %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -9,9 +10,175 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
+      {% set editBasePath = '/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId %}
+      {% set isSeries = draft.type == 'Clinic series' %}
+      {% set vaccinatorText = draft.capacity ~ ' vaccinator' %}
+      {% if draft.capacity != 1 %}
+        {% set vaccinatorText = vaccinatorText ~ 's' %}
+      {% endif %}
+
+      {% set servicesHtml %}
+        {%- for serviceId in draft.services %}
+          {%- if data.services[serviceId] -%}
+            {{ data.services[serviceId].name }}
+          {%- else -%}
+            {{ serviceId }}
+          {%- endif -%}
+          {%- if not loop.last %}<br>{% endif -%}
+        {%- endfor %}
+      {% endset %}
+
+      {% set closuresHtml %}
+        {%- if draft.closures and draft.closures.length %}
+          {%- for closure in draft.closures %}
+            {%- if closure.label %}{{ closure.label }}: {% endif -%}
+            {{ closure.startDate | nhsDateRange(closure.endDate) }}
+            {%- if not loop.last %}<br>{% endif -%}
+          {%- endfor %}
+        {%- else -%}
+          None added
+        {%- endif %}
+      {% endset %}
+
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
-      {{ summaryList({ rows: rows }) }}
+      {% if isSeries %}
+        {{ appCard({
+          title: 'Session details',
+          action: {
+            href: editBasePath ~ '/what-change',
+            text: 'Change',
+            visuallyHiddenText: ' session details'
+          },
+          items: [
+            {
+              key: 'Session name',
+              value: draft.name or 'Not provided'
+            },
+            {
+              key: 'Start date',
+              value: draft.startDate | nhsDate
+            },
+            {
+              key: 'End date',
+              value: draft.endDate | nhsDate
+            }
+          ]
+        }) }}
+      {% else %}
+        {{ appCard({
+          title: 'Session details',
+          action: {
+            href: editBasePath ~ '/change/name',
+            text: 'Change',
+            visuallyHiddenText: ' session details'
+          },
+          items: [
+            {
+              key: 'Session name',
+              value: draft.name or 'Not provided'
+            },
+            {
+              key: 'Date',
+              value: draft.startDate | nhsDate
+            }
+          ]
+        }) }}
+      {% endif %}
+
+      {{ appCard({
+        title: 'Vaccinators',
+        action: {
+          href: editBasePath ~ '/change/capacity',
+          text: 'Change',
+          visuallyHiddenText: ' vaccinators'
+        },
+        items: [
+          {
+            key: 'Vaccinators',
+            value: vaccinatorText
+          }
+        ]
+      }) }}
+
+      {% if isSeries %}
+        {{ appCard({
+          title: 'Day pattern',
+          action: {
+            href: editBasePath ~ '/change/days',
+            text: 'Change',
+            visuallyHiddenText: ' day pattern'
+          },
+          items: [
+            {
+              key: 'Days',
+              value: draft.days | join(', ')
+            }
+          ]
+        }) }}
+      {% endif %}
+
+      {{ appCard({
+        title: 'Session times',
+        action: {
+          href: editBasePath ~ '/change/time',
+          text: 'Change',
+          visuallyHiddenText: ' session times'
+        },
+        items: [
+          {
+            key: 'Time periods',
+            value: draft.from ~ ' to ' ~ draft.until
+          }
+        ]
+      }) }}
+
+      {{ appCard({
+        title: 'Booking length',
+        action: {
+          href: editBasePath ~ '/change/duration',
+          text: 'Change',
+          visuallyHiddenText: ' booking length'
+        },
+        items: [
+          {
+            key: 'Booking length',
+            value: draft.duration ~ ' minutes'
+          }
+        ]
+      }) }}
+
+      {{ appCard({
+        title: 'Services',
+        action: {
+          href: editBasePath ~ '/change/services',
+          text: 'Change',
+          visuallyHiddenText: ' services'
+        },
+        items: [
+          {
+            key: 'Services',
+            html: servicesHtml
+          }
+        ]
+      }) }}
+
+      {% if isSeries %}
+        {{ appCard({
+          title: 'Exceptions',
+          action: {
+            href: editBasePath ~ '/change/closures',
+            text: 'Change',
+            visuallyHiddenText: ' exceptions'
+          },
+          items: [
+            {
+              key: 'Exceptions',
+              html: closuresHtml
+            }
+          ]
+        }) }}
+      {% endif %}
 
       <form action="/site/{{ site_id }}/clinics/edit/{{ sessionId }}/what-change" method="get">
         {{ button({ text: 'Continue' }) }}

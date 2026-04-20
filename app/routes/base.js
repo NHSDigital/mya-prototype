@@ -794,7 +794,7 @@ router.get('/site/:id/clinics/edit/:sessionId', (req, res) => {
   const heading = state.draft.type === 'Clinic series' ? 'Edit clinic series' : 'Edit single clinic';
   return res.render('site/clinics/edit/summary', {
     pageName: heading,
-    rows: buildSummaryRowsForEdit(state.draft, req.site_id, req.params.sessionId, data),
+    draft: state.draft,
     sessionId: req.params.sessionId
   });
 });

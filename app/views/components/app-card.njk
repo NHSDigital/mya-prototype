@@ -1,0 +1,50 @@
+{%- from "nhsuk/macros/attributes.njk" import nhsukAttributes -%}
+{%- macro appCard(params) -%}
+<section class="app-card{%- if params.classes %} {{ params.classes }}{% endif -%}" {{- nhsukAttributes(params.attributes) -}}>
+  {%- if params.title or params.action %}
+  <div class="app-card__header">
+    {%- if params.title %}
+    <h2 class="app-card__title">{{ params.title }}</h2>
+    {%- endif %}
+
+    {%- if params.action and params.action.href %}
+    <a class="app-card__action" href="{{ params.action.href }}">
+      {{ params.action.text or 'Change' }}
+      {%- if params.action.visuallyHiddenText %}
+      <span class="nhsuk-u-visually-hidden"> {{ params.action.visuallyHiddenText }}</span>
+      {%- endif %}
+    </a>
+    {%- endif %}
+  </div>
+  {%- endif %}
+
+  <div class="app-card__body">
+    {%- if params.html %}
+      {{ params.html | safe }}
+    {%- elif params.items %}
+    <table class="app-card__table">
+      <tbody>
+      {%- for item in params.items %}
+        <tr class="app-card__row">
+          <th scope="row" class="app-card__key">
+            {%- if item.keyHtml %}
+              {{ item.keyHtml | safe }}
+            {%- else %}
+              {{ item.key }}
+            {%- endif %}
+          </th>
+          <td class="app-card__value">
+            {%- if item.html %}
+              {{ item.html | safe }}
+            {%- else %}
+              {{ item.value }}
+            {%- endif %}
+          </td>
+        </tr>
+      {%- endfor %}
+      </tbody>
+    </table>
+    {%- endif %}
+  </div>
+</section>
+{%- endmacro -%}

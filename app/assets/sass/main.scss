@@ -1,6 +1,7 @@
 @use "sass:color";
 @use "nhsuk-frontend/dist/nhsuk" as *;
 
+@forward "components/app-card";
 @forward "components/secondary-navigation";
 @forward "components/appointments-summary";
 
@@ -148,42 +149,6 @@
 
   &-service-count {
     color: $nhsuk-secondary-text-colour;
-  }
-
-  &-summary-card {
-    border: 1px solid nhsuk-colour("grey-4");
-    @include nhsuk-responsive-margin(5, bottom);
-    background-color: #ffffff;
-
-    &__title-wrapper {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: nowrap;
-      @include nhsuk-responsive-padding(3, all);
-      background-color: nhsuk-colour("grey-5");
-    }
-
-    &__content {
-      @include nhsuk-responsive-padding(3, all);
-
-      //special overrides for the summary list
-      >.nhsuk-summary-list {
-        margin-bottom: 0;
-      }
-      >.nhsuk-summary-list .nhsuk-summary-list__row:last-child {
-        border-bottom: none;
-      }
-      >.nhsuk-table {
-        margin-bottom: 0;
-      }
-    }
-
-    &__title,
-    &__action {
-      @include nhsuk-font-size(19);
-      margin: 0;
-    }
-
   }
 
 }
