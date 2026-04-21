@@ -61,8 +61,9 @@ function findChildSessionForDate(dateISO, childSessions = []) {
 
 function createSessionFromRecurring(recurring, dateISO) {
   const childSession = findChildSessionForDate(dateISO, recurring.childSessions);
-  const from = childSession?.from || recurring.from;
-  const until = childSession?.until || recurring.until;
+  const hasChildTimePair = Boolean(childSession?.from && childSession?.until);
+  const from = hasChildTimePair ? childSession.from : recurring.from;
+  const until = hasChildTimePair ? childSession.until : recurring.until;
   const services = childSession?.services
     ? applyServiceOperations(recurring.services, childSession.services)
     : asArray(recurring.services);

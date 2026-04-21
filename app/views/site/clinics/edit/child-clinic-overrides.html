@@ -1,0 +1,97 @@
+{% extends '../../../layouts/layout.html' %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: backHref
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      {% set clinicWord = 'clinic' if warning.count == 1 else 'clinics' %}
+      {% set pronoun = 'this clinic' if warning.count == 1 else 'these clinics' %}
+
+      {% set headingPrefix = 'Child clinics' %}
+      {% if warning.hasTimeChange and not warning.hasCapacityChange and not warning.hasServicesChange %}
+        {% set headingPrefix = 'Clinic times' %}
+      {% elif warning.hasCapacityChange and not warning.hasTimeChange and not warning.hasServicesChange %}
+        {% set headingPrefix = 'Number of vaccinators' %}
+      {% elif warning.hasServicesChange and not warning.hasTimeChange and not warning.hasCapacityChange %}
+        {% set headingPrefix = 'Services' %}
+      {% endif %}
+
+      <h1 class="nhsuk-heading-l">{{ headingPrefix }} have already been edited for {{ warning.count }} {{ clinicWord }} in this series</h1>
+
+      <table class="nhsuk-table-responsive" role="table">
+        <thead class="nhsuk-table__head" role="rowgroup">
+          <tr class="nhsuk-table__row" role="row">
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Date</th>
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Name</th>
+            {% if warning.hasTimeChange %}
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
+            {% endif %}
+            {% if warning.hasCapacityChange %}
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Vaccinators</th>
+            {% endif %}
+            {% if warning.hasServicesChange %}
+            <th scope="col" class="nhsuk-table__header" role="columnheader">Services this clinic will have</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody class="nhsuk-table__body" role="rowgroup">
+          {% for row in rows %}
+          <tr class="nhsuk-table__row" role="row">
+            <td class="nhsuk-table__cell" role="cell">
+              {{ row.dateISO | nhsDate }}
+            </td>
+            <td class="nhsuk-table__cell" role="cell">
+              {% if row.childLabel %}
+              {{ row.childLabel }}
+              {% else %}
+              No name change
+              <span class="nhsuk-hint nhsuk-u-margin-bottom-0">{{ row.parentLabel }}</span>
+              {% endif %}
+            </td>
+            {% if warning.hasTimeChange %}
+            <td class="nhsuk-table__cell" role="cell">{{ row.from }} to {{ row.until }}</td>
+            {% endif %}
+            {% if warning.hasCapacityChange %}
+            <td class="nhsuk-table__cell" role="cell">{{ row.capacity }}</td>
+            {% endif %}
+            {% if warning.hasServicesChange %}
+            <td class="nhsuk-table__cell" role="cell">
+              {% if row.effectiveServiceIds and row.effectiveServiceIds.length %}
+                <ul class="nhsuk-list">
+                {% for serviceId in row.effectiveServiceIds %}
+                  <li>{{ data.services[serviceId].name if data.services[serviceId] else serviceId }}</li>
+                {% endfor %}
+                </ul>
+              {% else %}
+              None selected
+              {% endif %}
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% if warning.hasTimeChange %}
+      <p class="nhsuk-body">The start and end times for {{ pronoun }} will not be updated as part of this change.</p>
+      {% endif %}
+
+      {% if warning.hasCapacityChange %}
+      <p class="nhsuk-body">The number of vaccinators for {{ pronoun }} will not be updated as part of this change.</p>
+      {% endif %}
+
+      {% if warning.hasServicesChange %}
+      <p class="nhsuk-body">Services will be removed and added from these clinics. Changes will be preserved.</p>
+      {% endif %}
+
+      <form action="{{ formAction }}" method="post">
+        {{ button({ text: 'Continue' }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

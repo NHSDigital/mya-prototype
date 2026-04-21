@@ -17,6 +17,11 @@
 <!-- Edit the footer -->
 <!-- Footer code examples can be found at https://service-manual.nhs.uk/design-system/components/footer -->
 {% block footer %}
+  {% set returnPage = (currentPage or '/') %}
+  {% set footerDateText = '' %}
+  {% if data and data.today %}
+    {% set footerDateText = 'Today is ' ~ (data.today | nhsDate) %}
+  {% endif %}
   {{ footer({
     meta: {
       items: [
@@ -25,7 +30,7 @@
           text: "Home"
         },
         {
-          href: "/prototype-admin/reset?returnPage=" + (currentPage | urlencode),
+          href: "/prototype-admin/reset?returnPage=" + (returnPage | urlencode),
           text: "Reset data"
         },
         {
@@ -35,7 +40,7 @@
       ]
     },
     copyright: {
-      text: 'Today is ' ~ (data.today | nhsDate)
+      text: footerDateText
     }
   }) }}
 {% endblock %}
@@ -49,7 +54,7 @@
   {% block scripts %}
     <!-- Custom JavaScript files can be added to this file -->
     {% include "includes/scripts.html" %}
-    <script id="global-page-data-json" type="application/json">{{ data | toJson | safe }}</script>
+    <script id="global-page-data-json" type="application/json">{{ (data or {}) | toJson | safe }}</script>
     <script>
       const pageDataElement = document.getElementById("global-page-data-json");
       const pageData = pageDataElement ? JSON.parse(pageDataElement.textContent || "{}") : {};

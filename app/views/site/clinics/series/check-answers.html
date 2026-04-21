@@ -67,6 +67,18 @@
           {% endfor %}
         {% endif %}
 
+          {% set servicesSummaryHtml %}
+            {% if servicesAvailable and (servicesAvailable | length > 0) %}
+              <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+                {% for serviceName in servicesAvailable %}
+                  <li>{{ serviceName }}</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              None selected
+            {% endif %}
+          {% endset %}
+
         {% set closuresSummaryHtml %}
           {% if data.newSession.closures and (data.newSession.closures | length > 0) %}
             <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
@@ -182,7 +194,7 @@
                 text: "Services available"
               },
               value: {
-                text: servicesAvailable or [] | join(", ")
+                  html: servicesSummaryHtml
               },
               actions: {
                 items: [
