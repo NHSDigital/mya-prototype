@@ -73,7 +73,7 @@ const clinics = [
     ]
   },
   {
-    label: 'Ongoing clinic series 11 to 3pm',
+    label: 'Adult Flu and Covid clinics',
     startDate: ongoingSeriesStart,
     endDate: ongoingSeriesEnd,
     recurrencePattern: {
@@ -84,9 +84,23 @@ const clinics = [
     from: '11:00',
     until: '15:00',
     slotLength: 20,
-    services: [SERVICE_IDS.COVID_ADULT, SERVICE_IDS.RSV_ADULT],
+    services: [
+      SERVICE_IDS.COVID_ADULT, 
+      SERVICE_IDS.COVID_FLU_18_64,
+      SERVICE_IDS.COVID_FLU_65_PLUS,
+      SERVICE_IDS.FLU_18_64,
+      SERVICE_IDS.FLU_65_PLUS
+    ],
     capacity: 2,
-    childSessions: [],
+    childSessions: [{
+      date: today.plus({ days: 1 }).toISODate(),
+      label: 'Afternoon off',
+      until: '12:00'
+    }, {
+      date: today.plus({ days: 2 }).toISODate(),
+      label: 'Morning clash',
+      from: '12:00'
+    }],
     closures: [
       {
         startDate: today.plus({ days: 7 }).toISODate(),
