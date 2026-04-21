@@ -28,6 +28,8 @@
       <form action="{{ formAction }}" method="post" id="appointments-calculator-form" data-start-hour="{{ startHour }}" data-start-minute="{{ startMinute }}" data-end-hour="{{ endHour }}" data-end-minute="{{ endMinute }}">
 
         {% if hideDuration %}
+        <h2 class="nhsuk-heading-m">How long do you need for each appointment?</h2>
+        <p>{{ data.newSession.duration }} minutes <br><span class="nhsuk-hint nhsuk-u-margin-bottom-0">You cannot edit this value</span></p>
         <input type="hidden" id="duration" name="newSession[duration]" value="{{ fixedDuration }}">
         {% else %}
         {{ input({

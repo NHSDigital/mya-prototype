@@ -11,6 +11,7 @@
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
       {% set changeBasePath = '/site/' ~ site_id ~ '/change/session/' ~ itemId %}
+      {% set bookingLengthText = (draft.duration or 'Not provided') ~ ' minutes' %}
       {% set vaccinatorText = draft.capacity ~ ' vaccinator' %}
       {% if draft.capacity != 1 %}
         {% set vaccinatorText = vaccinatorText ~ 's' %}
@@ -46,7 +47,7 @@
       }) }}
 
       {{ appCard({
-        title: 'Vaccinators',
+        title: 'Capacity calculation',
         action: {
           href: changeBasePath ~ '/appointments-calculator',
           text: 'Change',
@@ -54,6 +55,9 @@
         },
         items: [
           {
+            key: 'Booking length',
+            value: bookingLengthText
+          }, {
             key: 'Number of vaccinators',
             value: vaccinatorText
           }
