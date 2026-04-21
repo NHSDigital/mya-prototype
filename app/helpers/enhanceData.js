@@ -29,6 +29,25 @@ function bookingBucketKeysForSlot(slot) {
   return keys;
 }
 
+function bookingBucketKeysForBooking(booking, timezone) {
+  const slotKey = booking?.slotKey || bookingKeyFromISO(booking?.datetime, timezone);
+  if (!slotKey) return [];
+
+  const keys = [];
+
+  if (booking?.sessionId) {
+    keys.push(bookingBucketKey({ slotKey, sessionId: booking.sessionId }));
+  }
+
+  if (booking?.recurringSessionId) {
+    keys.push(bookingBucketKey({ slotKey, recurringSessionId: booking.recurringSessionId }));
+  }
+
+  keys.push(bookingBucketKey({ slotKey }));
+
+  return keys;
+}
+
 /**
  * Build slot structures for each site and date.
  * - Expands all sessions into time slots.
@@ -47,21 +66,89 @@ function enhanceData({ daily_availability, bookings, timezone = 'Europe/London' 
     slots[site_id] = {};
 
     const bookingBuckets = new Map();
+    const bookingById = new Map();
+    const assignedBookingIds = new Set();
     for (const [id, b] of Object.entries(bookings?.[site_id] || {})) {
       if (!b?.datetime) continue;
-      const key = bookingBucketKey({
-        slotKey: b.slotKey || bookingKeyFromISO(b.datetime, timezone),
-        sessionId: b.sessionId,
-        recurringSessionId: b.recurringSessionId
-      });
-      const existing = bookingBuckets.get(key) || [];
-      existing.push({ id, ...b });
-      bookingBuckets.set(key, existing);
+
+      const booking = { id, ...b };
+      bookingById.set(String(id), booking);
+
+      for (const key of bookingBucketKeysForBooking(booking, timezone)) {
+        const existing = bookingBuckets.get(key) || [];
+        existing.push(String(id));
+        bookingBuckets.set(key, existing);
+      }
     }
 
-    for (const [date, day] of Object.entries(availability)) {
-      if (!day?.sessions?.length) continue;
-      slots[site_id][date] = [];
+    const assignBookingToSlot = (slotDescriptor) => {
+      for (const bucketKey of bookingBucketKeysForSlot(slotDescriptor)) {
+        const bookingIds = bookingBuckets.get(bucketKey) || [];
+
+        for (const bookingId of bookingIds) {
+          if (assignedBookingIds.has(String(bookingId))) continue;
+
+          assignedBookingIds.add(String(bookingId));
+          return bookingById.get(String(bookingId)) || null;
+        }
+      }
+
+      return null;
+    };
+
+    const addUnmatchedBookingsToSlots = () => {
+      for (const [bookingId, booking] of bookingById.entries()) {
+        if (assignedBookingIds.has(bookingId)) continue;
+
+        const slotKey = booking.slotKey || bookingKeyFromISO(booking.datetime, timezone);
+        if (!slotKey) continue;
+
+        const date = booking.datetime.slice(0, 10);
+        if (!slots[site_id][date]) {
+          slots[site_id][date] = [];
+        }
+
+        slots[site_id][date].push({
+          datetime: booking.datetime,
+          slotKey,
+          date,
+          group: null,
+          sessionId: null,
+          recurringSessionId: null,
+          site_id,
+          slotLength: null,
+          capacity: 0,
+          capacity_index: null,
+          services: booking.service ? [booking.service] : [],
+          booked: true,
+          booking_id: booking.id,
+          booking_status: booking.status
+        });
+
+        assignedBookingIds.add(bookingId);
+      }
+
+      for (const dateSlots of Object.values(slots[site_id])) {
+        dateSlots.sort((a, b) => String(a.datetime || '').localeCompare(String(b.datetime || '')));
+      }
+    };
+
+    const allDates = new Set([
+      ...Object.keys(availability || {}),
+      ...Object.values(bookingById)
+        .filter((booking) => booking?.datetime)
+        .map((booking) => String(booking.datetime).slice(0, 10))
+    ]);
+
+    for (const date of allDates) {
+      const day = availability?.[date];
+      if (!slots[site_id][date]) {
+        slots[site_id][date] = [];
+      }
+
+      if (!day?.sessions?.length) {
+        continue;
+      }
 
       for (const session of day.sessions) {
         const start = DateTime.fromISO(`${date}T${session.from}`, { zone: timezone });
@@ -80,14 +167,7 @@ function enhanceData({ daily_availability, bookings, timezone = 'Europe/London' 
               recurringSessionId: session.recurringId || null
             };
 
-            let booking = null;
-            for (const bucketKey of bookingBucketKeysForSlot(slotDescriptor)) {
-              const bucket = bookingBuckets.get(bucketKey) || [];
-              if (bucket.length > 0) {
-                booking = bucket.shift();
-                break;
-              }
-            }
+            const booking = assignBookingToSlot(slotDescriptor);
 
             slots[site_id][date].push({
               datetime,
@@ -113,6 +193,8 @@ function enhanceData({ daily_availability, bookings, timezone = 'Europe/London' 
         }
       }
     }
+
+    addUnmatchedBookingsToSlots();
   }
 
   return slots;
