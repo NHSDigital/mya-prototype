@@ -50,7 +50,7 @@ const clinics = [
     ]
   },
   {
-    label: 'Single clinic 09:00',
+    label: 'One off RSV',
     startDate: pastSingleDate,
     endDate: pastSingleDate,
     recurrencePattern: {
@@ -131,7 +131,7 @@ const clinics = [
     ]
   },
   {
-    label: 'Future single clinic 13:00',
+    label: 'One off RSV',
     startDate: futureSingleDate,
     endDate: futureSingleDate,
     recurrencePattern: {
@@ -142,7 +142,7 @@ const clinics = [
     from: '13:00',
     until: '16:00',
     slotLength: 15,
-    services: [SERVICE_IDS.FLU_18_64],
+    services: [SERVICE_IDS.RSV_ADULT],
     capacity: 1
   }
 ];

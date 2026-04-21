@@ -20,15 +20,26 @@
 {% endmacro %}
 
 {% macro typeLabel(session) %}
-  {% if session.type == 'Single clinic' %}
-    Single
-  {% elif session.type == 'Clinic series' %}
-    Series
-  {% elif session.date and session.endDate and session.date == session.endDate %}
-    Single
-  {% else %}
-    Series
+  {% set text = "Single" %}
+  {% set colour = "grey" %}
+
+  {% set isSeries = false %}
+  {% if session.type == 'Clinic series' %}
+    {% set isSeries = true %}
+  {% elif session.date and session.endDate and session.endDate != session.date %}
+    {% set isSeries = true %}
   {% endif %}
+
+  {% if isSeries %}
+    {% set text = "Series" %}
+    {% set colour = "blue" %}
+  {% endif %}
+
+  {{ tag({
+    text: text,
+    classes: "nhsuk-tag--" ~ colour
+  }) }}
+
 {% endmacro %}
 
 {% macro daysLabel(session) %}
@@ -52,8 +63,8 @@
   {% else %}
     {{ session.date | formatDate('d MMM yyyy') }}
   {% endif %}
-  {{ timeLabel(session) }}
 {% endmacro %}
+
 
 {% block content %}
   <div class="nhsuk-grid-row">
@@ -82,10 +93,8 @@
             <tr role="row">
               <th scope="col" class="nhsuk-table__header" role="columnheader">Name</th>
               <th scope="col" class="nhsuk-table__header" role="columnheader">Type</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Dates and times</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Days</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Appointment length</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Date</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
               <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
             </tr>
           </thead>
@@ -93,12 +102,10 @@
             {% for session in sessionHistory %}
               <tr class="nhsuk-table__row" role="row">
                 <td class="nhsuk-table__cell" role="cell">{{ session.label or 'Clinic' }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) }}</td>
+                <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) | safe }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ dateLabel(session) }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ daysLabel(session) }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ session.slotLength or session.duration }} minutes</td>
-                <td class="nhsuk-table__cell" role="cell"><a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">Edit</a> <a href="/not-in-this-prototype">Remove</a></td>
+                <td class="nhsuk-table__cell" role="cell">{{ timeLabel(session) }}</td>
+                <td class="nhsuk-table__cell" role="cell"><a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">Edit</a><br><a href="/not-in-this-prototype">Remove</a></td>
               </tr>
             {% endfor %}
           </tbody>
@@ -121,10 +128,8 @@
             <tr role="row">
               <th scope="col" class="nhsuk-table__header" role="columnheader">Name</th>
               <th scope="col" class="nhsuk-table__header" role="columnheader">Type</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Date(s)</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Days</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Appointment length</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Date</th>
+              <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
             </tr>
           </thead>
           <tbody class="nhsuk-table__body" role="rowgroup">
@@ -133,9 +138,7 @@
                 <td class="nhsuk-table__cell" role="cell">{{ session.label or 'Clinic' }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) }}</td>
                 <td class="nhsuk-table__cell" role="cell">{{ dateLabel(session) }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ daysLabel(session) }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ session.slotLength or session.duration }} minutes</td>
+                <td class="nhsuk-table__cell" role="cell">{{ timeLabel(session) }}</td>
               </tr>
             {% endfor %}
           </tbody>

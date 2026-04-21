@@ -28,17 +28,27 @@
         {%- endfor %}
       {% endset %}
 
-      {% set closuresHtml %}
-        {%- if draft.closures and draft.closures.length %}
-          {%- for closure in draft.closures %}
-            {%- if closure.label %}{{ closure.label }}: {% endif -%}
-            {{ closure.startDate | nhsDateRange(closure.endDate) }}
-            {%- if not loop.last %}<br>{% endif -%}
-          {%- endfor %}
-        {%- else -%}
-          None added
-        {%- endif %}
-      {% endset %}
+      {% set closuresItems = [] %}
+      {% if draft.closures and draft.closures.length %}
+        {% for closure in draft.closures %}
+          {% set closureKeyHtml %}
+            {% if closure.label %}
+              {{ closure.label }}
+            {% else %}
+              <span class="nhsuk-hint nhsuk-u-margin-bottom-0">No label</span>
+            {% endif %}
+          {% endset %}
+          {% set closuresItems = closuresItems.concat([{
+            keyHtml: closureKeyHtml,
+            value: closure.startDate | nhsDateRange(closure.endDate)
+          }]) %}
+        {% endfor %}
+      {% else %}
+        {% set closuresItems = [{
+          keyHtml: '<span class="nhsuk-hint nhsuk-u-margin-bottom-0">No closures</span>',
+          value: 'None added'
+        }] %}
+      {% endif %}
 
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
@@ -155,18 +165,13 @@
 
       {% if isSeries %}
         {{ appCard({
-          title: 'Exceptions',
+          title: 'Closures',
           action: {
             href: editBasePath ~ '/clinic-closures',
             text: 'Change',
-            visuallyHiddenText: ' exceptions'
+            visuallyHiddenText: ' closures'
           },
-          items: [
-            {
-              key: 'Exceptions',
-              html: closuresHtml
-            }
-          ]
+          items: closuresItems
         }) }}
       {% endif %}
 

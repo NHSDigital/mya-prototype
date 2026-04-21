@@ -11,11 +11,25 @@
     <div class="nhsuk-grid-column-two-thirds">
       <h1 class="nhsuk-heading-l">{{ pageName or 'Check your answers' }}</h1>
 
+      {% set resolvedBookingActionText = 'No booking action selected' %}
+      {% if bookingAction == 'cancel' %}
+        {% set resolvedBookingActionText = 'Cancel appointments' %}
+      {% elif bookingAction == 'orphan' %}
+        {% set resolvedBookingActionText = 'Keep booked appointments' %}
+      {% endif %}
+
+      {% set resolvedButtonText = buttonText or 'Save changes' %}
+      {% set resolvedButtonClasses = '' %}
+      {% if bookingAction == 'cancel' %}
+        {% set resolvedButtonText = 'Save changes and cancel bookings' %}
+        {% set resolvedButtonClasses = 'nhsuk-button--warning' %}
+      {% endif %}
+
       {% set allRows = rows %}
       {% if affectedCount > 0 %}
         {% set allRows = allRows.concat([{
           key: { text: 'Booked appointments' },
-          value: { text: bookingActionText },
+          value: { text: resolvedBookingActionText },
           actions: {
             items: [{
               href: affectedActionHref or ('/site/' + site_id + '/clinics/edit/' + sessionId + '/affected-bookings'),
@@ -29,7 +43,10 @@
       {{ summaryList({ rows: allRows }) }}
 
       <form action="{{ formAction or ('/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId ~ '/check-answers') }}" method="post">
-        {{ button({ text: buttonText or 'Save changes' }) }}
+        {{ button({
+          text: resolvedButtonText,
+          classes: resolvedButtonClasses
+        }) }}
       </form>
     </div>
   </div>

@@ -768,17 +768,13 @@ router.all('/site/:id/change/session/:itemId/check-answers', (req, res) => {
     return res.redirect(`${changeSummaryPath(req.site_id, req.params.itemId)}/success?date=${redirectDate}`);
   }
 
-  const bookingActionText = state.bookingAction === 'cancel'
-    ? 'Cancel appointments (cancel them)'
-    : (state.bookingAction === 'orphan' ? 'Keep booked appointments (make them orphaned)' : 'No booking action selected');
-
   return res.render('site/clinics/edit/check-answers', {
     pageName: 'Check your answers',
     sessionId: req.params.itemId,
     isSeries: false,
     rows: buildChangedRowsForCheckAnswers(state, req.site_id, req.params.itemId, data),
     affectedCount: asArray(state.affectedBookingIds).length,
-    bookingActionText,
+    bookingAction: state.bookingAction,
     formAction: `${changeSummaryPath(req.site_id, req.params.itemId)}/check-answers`,
     affectedActionHref: `${changeSummaryPath(req.site_id, req.params.itemId)}/affected-bookings`,
     backHref: reviewBackPath(req.site_id, req.params.itemId, state)

@@ -27,6 +27,13 @@
       <span class="nhsuk-caption-l">Create clinic series</span>
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
+      {% set resolvedButtonText = buttonText or 'Publish clinic series' %}
+      {% set resolvedButtonClasses = '' %}
+      {% if bookingAction == 'cancel' %}
+        {% set resolvedButtonText = 'Publish clinic series and cancel bookings' %}
+        {% set resolvedButtonClasses = 'nhsuk-button--warning' %}
+      {% endif %}
+
       <form action="/site/{{ site_id }}/clinics/process-new-session" method="post">
         {% set startDate -%}
           {{ data.newSession.startDate.year }}-{{ data.newSession.startDate.month }}-{{ data.newSession.startDate.day }}
@@ -229,7 +236,8 @@
         <p class="nhsuk-body">By publishing this clinic series, you confirm that your site is assured to deliver the services you have selected.</p>
 
         {{ button({
-          text: "Publish clinic series"
+          text: resolvedButtonText,
+          classes: resolvedButtonClasses
         }) }}
       </form>
     </div>

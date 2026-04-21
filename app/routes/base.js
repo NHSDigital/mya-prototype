@@ -1843,16 +1843,12 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
     return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/success`);
   }
 
-  const bookingActionText = state.bookingAction === 'cancel'
-    ? 'Cancel appointments (cancel them)'
-    : (state.bookingAction === 'orphan' ? 'Keep booked appointments (make them orphaned)' : 'No booking action selected');
-
   return res.render('site/clinics/edit/check-answers', {
     sessionId: req.params.sessionId,
     isSeries: state.draft.type === 'Clinic series',
     rows: buildChangedRowsForEdit(state.original, state.draft, state, req.site_id, req.params.sessionId, data),
     affectedCount: asArray(state.affectedBookingIds).length,
-    bookingActionText,
+    bookingAction: state.bookingAction,
     backHref: reviewBackPath(req.site_id, req.params.sessionId, state)
   });
 });

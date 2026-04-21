@@ -27,7 +27,6 @@
         <thead class="nhsuk-table__head" role="rowgroup">
           <tr class="nhsuk-table__row" role="row">
             <th scope="col" class="nhsuk-table__header" role="columnheader">Date</th>
-            <th scope="col" class="nhsuk-table__header" role="columnheader">Name</th>
             {% if warning.hasTimeChange %}
             <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
             {% endif %}
@@ -44,14 +43,6 @@
           <tr class="nhsuk-table__row" role="row">
             <td class="nhsuk-table__cell" role="cell">
               {{ row.dateISO | nhsDate }}
-            </td>
-            <td class="nhsuk-table__cell" role="cell">
-              {% if row.childLabel %}
-              {{ row.childLabel }}
-              {% else %}
-              No name change
-              <span class="nhsuk-hint nhsuk-u-margin-bottom-0">{{ row.parentLabel }}</span>
-              {% endif %}
             </td>
             {% if warning.hasTimeChange %}
             <td class="nhsuk-table__cell" role="cell">{{ row.from }} to {{ row.until }}</td>
@@ -85,9 +76,6 @@
       <p class="nhsuk-body">The number of vaccinators for {{ pronoun }} will not be updated as part of this change.</p>
       {% endif %}
 
-      {% if warning.hasServicesChange %}
-      <p class="nhsuk-body">Services will be removed and added from these clinics. Changes will be preserved.</p>
-      {% endif %}
 
       <form action="{{ formAction }}" method="post">
         {{ button({ text: 'Continue' }) }}
