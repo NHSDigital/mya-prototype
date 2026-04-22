@@ -2,6 +2,7 @@ const express = require('express');
 const { DateTime } = require('luxon');
 
 const router = express.Router();
+const { buildCancelledBookingsSummary } = require('../helpers/cancelledBookingsSummary');
 const mergeDailyAvailability = require('../helpers/recurringToDailyAvailability');
 
 function asArray(value) {
@@ -146,6 +147,18 @@ function setChangeState(data, state) {
 
 function clearChangeState(data) {
   delete data.changeSessionEdit;
+}
+
+function getChangeSuccessState(data) {
+  return data.changeSessionSuccess || null;
+}
+
+function setChangeSuccessState(data, state) {
+  data.changeSessionSuccess = state;
+}
+
+function bookingCountText(count) {
+  return `${count} booking${count === 1 ? '' : 's'}`
 }
 
 function resetChangeOutcome(state) {
@@ -583,7 +596,7 @@ router.get('/site/:id/change/:type/:itemId', (req, res) => {
   }
 
   return res.render('site/change-session/summary', {
-    pageName: 'Change session',
+    pageName: 'Change clinic',
     itemId: req.params.itemId,
     draft: state.draft,
     date: state.date,
@@ -610,7 +623,7 @@ router.all('/site/:id/change/session/:itemId/details', (req, res) => {
 
   setChangeTemplateData(res, req.session.data, state);
   return res.render('site/clinics/series/details', {
-    pageName: 'Session name',
+    pageName: 'Clinic name',
     backUrl: changeSummaryPath(req.site_id, req.params.itemId),
     captionText: formatDisplayDate(state.date),
     formAction: changeStepPath(req.site_id, req.params.itemId, 'details'),
@@ -636,7 +649,7 @@ router.all('/site/:id/change/session/:itemId/clinic-times', (req, res) => {
 
   setChangeTemplateData(res, req.session.data, state);
   return res.render('site/clinics/series/clinic-times', {
-    pageName: 'Session times',
+    pageName: 'Clinic times',
     backUrl: changeSummaryPath(req.site_id, req.params.itemId),
     captionText: formatDisplayDate(state.date),
     formAction: changeStepPath(req.site_id, req.params.itemId, 'clinic-times')
@@ -762,6 +775,21 @@ router.all('/site/:id/change/session/:itemId/check-answers', (req, res) => {
     data.recurring_sessions[req.site_id][updatedParent.id] = updatedParent;
 
     const siteBookings = data?.bookings?.[req.site_id] || {};
+    const cancelledBookingsSummary = state.bookingAction === 'cancel'
+      ? buildCancelledBookingsSummary({
+        siteBookings,
+        affectedBookingIds: state.affectedBookingIds,
+        servicesById: data.services
+      })
+      : null;
+
+    setChangeSuccessState(data, {
+      siteId: req.site_id,
+      itemId: req.params.itemId,
+      date: state.date,
+      cancelledBookingsSummary
+    });
+
     applyAffectedBookingAction(siteBookings, state.affectedBookingIds, state.bookingAction);
     const redirectDate = state.date;
     clearChangeState(data);
@@ -783,13 +811,39 @@ router.all('/site/:id/change/session/:itemId/check-answers', (req, res) => {
 
 router.get('/site/:id/change/session/:itemId/success', (req, res) => {
   const date = req.query.date || getChangeState(req.session.data)?.date || DateTime.now().toISODate();
+  const successState = getChangeSuccessState(req.session.data);
+  const matchingSuccessState = successState
+    && String(successState.siteId) === String(req.site_id)
+    && String(successState.itemId) === String(req.params.itemId)
+    ? successState
+    : null;
+  const cancelledBookingsSummary = matchingSuccessState?.cancelledBookingsSummary;
+  const cancelSummary = cancelledBookingsSummary
+    ? {
+      titleText: `Clinic updated and ${bookingCountText(cancelledBookingsSummary.cancelledCount)} cancelled`,
+      cancelledCount: cancelledBookingsSummary.cancelledCount,
+      unnotifiedCount: cancelledBookingsSummary.unnotifiedCount,
+      unnotifiedBookings: cancelledBookingsSummary.unnotifiedBookings,
+      nextActions: [
+        {
+          href: weekViewHref(req.site_id, date),
+          text: 'Back to week view'
+        },
+        {
+          href: dayViewHref(req.site_id, date),
+          text: 'View this day'
+        }
+      ]
+    }
+    : null;
 
   return res.render('site/clinics/edit/success', {
-    titleText: 'Session updated',
+    titleText: 'Clinic updated',
     primaryHref: weekViewHref(req.site_id, date),
     primaryText: 'Back to week view',
     secondaryHref: dayViewHref(req.site_id, date),
-    secondaryText: 'View this day'
+    secondaryText: 'View this day',
+    cancelSummary
   });
 });
 

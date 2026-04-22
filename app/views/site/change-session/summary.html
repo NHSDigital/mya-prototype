@@ -32,15 +32,15 @@
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       {{ appCard({
-        title: 'Session details',
+        title: 'Clinic details',
         action: {
           href: changeBasePath ~ '/details',
           text: 'Change',
-          visuallyHiddenText: ' session name'
+          visuallyHiddenText: ' clinic name'
         },
         items: [
           {
-            key: 'Session name',
+            key: 'Clinic name',
             value: draft.name or 'Not provided'
           }
         ]
@@ -65,11 +65,11 @@
       }) }}
 
       {{ appCard({
-        title: 'Session times',
+        title: 'Clinic times',
         action: {
           href: changeBasePath ~ '/clinic-times',
           text: 'Change',
-          visuallyHiddenText: ' session times'
+          visuallyHiddenText: ' clinic times'
         },
         items: [
           {

@@ -13,13 +13,13 @@
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
-      <p class="nhsuk-body">Use this page to inspect how one recurring session expands into day-level availability.</p>
+      <p class="nhsuk-body">Use this page to inspect how one recurring clinic expands into day-level availability.</p>
 
       <h2 class="nhsuk-heading-m">Summary</h2>
       {{ summaryList({
         rows: [
           {
-            key: { text: 'Recurring sessions for site' },
+            key: { text: 'Recurring clinics for site' },
             value: { text: sessionCount }
           },
           {
@@ -35,13 +35,13 @@
 
       {% if not selected %}
         {{ warningCallout({
-          heading: 'No recurring session found',
+          heading: 'No recurring clinic found',
           text: 'Clinics first, then return to this debug page.'
         }) }}
       {% else %}
         <h2 class="nhsuk-heading-m">Expanded dates</h2>
         {% if expandedDates | length == 0 %}
-          <p class="nhsuk-body">No dates were expanded for this recurring session.</p>
+          <p class="nhsuk-body">No dates were expanded for this recurring clinic.</p>
         {% else %}
           <ul class="nhsuk-list nhsuk-list--bullet">
             {% for date in expandedDates %}
@@ -50,7 +50,7 @@
           </ul>
         {% endif %}
 
-        <h2 class="nhsuk-heading-m">Selected recurring session JSON</h2>
+        <h2 class="nhsuk-heading-m">Selected recurring clinic JSON</h2>
         <pre class="nhsuk-u-padding-3 nhsuk-u-margin-bottom-0" style="background:#f0f4f5; overflow:auto;">{{ selectedJson }}</pre>
       {% endif %}
     </div>

@@ -101,6 +101,11 @@ const base = {
     ],
     site: [
       {
+        text: 'Home',
+        hrefTemplate: '/site/:id',
+        hideCard: true
+      },
+      {
         text: 'View appointments',
         description: 'View and manage appointments for your site',
         hrefTemplate: '/site/:id/availability/day'

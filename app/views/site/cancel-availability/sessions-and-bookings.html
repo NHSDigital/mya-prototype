@@ -52,7 +52,7 @@
 {% macro sessionsAndBookings(sessions, bookings) %}
 <table class="nhsuk-table-responsive" role="table">
   <caption class="nhsuk-table__caption">
-    Sessions details
+    Clinic details
   </caption>
   <thead class="nhsuk-table__head" role="rowgroup">
     <tr class="nhsuk-table__row" role="row">
@@ -102,7 +102,7 @@
 </table>
 {% endmacro %}
 
-{% set pageName = "You are about to cancel " ~affectedSessions|length~ " "~ 'session' | plural(affectedSessions | length) %}
+{% set pageName = "You are about to cancel " ~affectedSessions|length~ " "~ 'clinic' | plural(affectedSessions | length) %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -115,10 +115,10 @@
   <div class="nhsuk-grid-column-full">
     <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
     {% if affectedBookings|length > 0 %}
-    <p class="nhsuk-u-width-two-thirds">There are {{ affectedBookings | length }} bookings for these {{ 'session' | plural(affectedSessions | length) }}</p>
+    <p class="nhsuk-u-width-two-thirds">There are {{ affectedBookings | length }} bookings for these {{ 'clinic' | plural(affectedSessions | length) }}</p>
 
     {% call details({
-      summaryText: "View sessions and bookings",
+      summaryText: "View clinics and bookings",
       classes: "nhsuk-expander"
     }) %}
       {{ sessionsAndBookings(affectedSessions, affectedBookings) }}
@@ -162,9 +162,9 @@
 
     {% else %}
 
-      <p>There are no bookings for these sessions.</p>
+      <p>There are no bookings for these clinics.</p>
       {% call details({
-        summaryText: "View sessions",
+        summaryText: "View clinics",
         classes: "nhsuk-expander"
       }) %}
         {{ sessionsAndBookings(affectedSessions, affectedBookings) }}

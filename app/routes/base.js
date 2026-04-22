@@ -5,6 +5,7 @@ const { DateTime } = require('luxon');
 const { randomUUID } = require('crypto');
 
 const enhanceData = require('../helpers/enhanceData');
+const { buildCancelledBookingsSummary } = require('../helpers/cancelledBookingsSummary');
 const mergeDailyAvailability = require('../helpers/recurringToDailyAvailability');
 
 const override_today = process.env.OVERRIDE_TODAY || null;
@@ -389,6 +390,18 @@ function setEditState(data, state) {
 
 function clearEditState(data) {
   delete data.editClinic;
+}
+
+function getEditSuccessState(data) {
+  return data.editClinicSuccess || null;
+}
+
+function setEditSuccessState(data, state) {
+  data.editClinicSuccess = state;
+}
+
+function bookingCountText(count) {
+  return `${count} booking${count === 1 ? '' : 's'}`
 }
 
 function resetEditOutcome(state) {
@@ -1838,6 +1851,21 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
     persistRecurringSession(data, req.site_id, updatedModel);
 
     const siteBookings = data?.bookings?.[req.site_id] || {};
+    const cancelledBookingsSummary = state.bookingAction === 'cancel'
+      ? buildCancelledBookingsSummary({
+        siteBookings,
+        affectedBookingIds: state.affectedBookingIds,
+        servicesById: data.services
+      })
+      : null;
+
+    setEditSuccessState(data, {
+      siteId: req.site_id,
+      sessionId: req.params.sessionId,
+      isSeries: state.draft.type === 'Clinic series',
+      cancelledBookingsSummary
+    });
+
     applyAffectedBookingAction(siteBookings, state.affectedBookingIds, state.bookingAction);
     clearEditState(data);
     return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/success`);
@@ -1854,8 +1882,35 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
 });
 
 router.get('/site/:id/clinics/edit/:sessionId/success', (req, res) => {
+  const successState = getEditSuccessState(req.session.data);
+  const matchingSuccessState = successState
+    && String(successState.siteId) === String(req.site_id)
+    && String(successState.sessionId) === String(req.params.sessionId)
+    ? successState
+    : null;
+  const cancelledBookingsSummary = matchingSuccessState?.cancelledBookingsSummary;
+  const cancelSummary = cancelledBookingsSummary
+    ? {
+      titleText: `${matchingSuccessState?.isSeries ? 'Clinic series' : 'Clinic'} updated and ${bookingCountText(cancelledBookingsSummary.cancelledCount)} cancelled`,
+      cancelledCount: cancelledBookingsSummary.cancelledCount,
+      unnotifiedCount: cancelledBookingsSummary.unnotifiedCount,
+      unnotifiedBookings: cancelledBookingsSummary.unnotifiedBookings,
+      nextActions: [
+        {
+          href: `/site/${req.site_id}/clinics/edit/${req.params.sessionId}`,
+          text: 'Make another change'
+        },
+        {
+          href: `/site/${req.site_id}/clinics`,
+          text: 'Back to clinics'
+        }
+      ]
+    }
+    : null;
+
   return res.render('site/clinics/edit/success', {
-    sessionId: req.params.sessionId
+    sessionId: req.params.sessionId,
+    cancelSummary
   });
 });
 

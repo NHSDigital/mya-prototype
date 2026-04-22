@@ -54,15 +54,15 @@
 
       {% if isSeries %}
         {{ appCard({
-          title: 'Session details',
+          title: 'Clinic details',
           action: {
             href: editBasePath ~ '/details',
             text: 'Change',
-            visuallyHiddenText: ' session details'
+            visuallyHiddenText: ' clinic details'
           },
           items: [
             {
-              key: 'Session name',
+              key: 'Clinic name',
               value: draft.name or 'Not provided'
             },
             {
@@ -77,15 +77,15 @@
         }) }}
       {% else %}
         {{ appCard({
-          title: 'Session details',
+          title: 'Clinic details',
           action: {
             href: editBasePath ~ '/details',
             text: 'Change',
-            visuallyHiddenText: ' session details'
+            visuallyHiddenText: ' clinic details'
           },
           items: [
             {
-              key: 'Session name',
+              key: 'Clinic name',
               value: draft.name or 'Not provided'
             },
             {
@@ -115,11 +115,11 @@
       {% endif %}
 
       {{ appCard({
-        title: 'Session times',
+        title: 'Clinic times',
         action: {
           href: editBasePath ~ '/clinic-times',
           text: 'Change',
-          visuallyHiddenText: ' session times'
+          visuallyHiddenText: ' clinic times'
         },
         items: [
           {

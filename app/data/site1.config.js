@@ -183,7 +183,8 @@ module.exports = {
         datetime: `${nextTuesdayDate}T11:00`,
         service: SERVICE_IDS.COVID_ADULT,
         name: 'Alex Example',
-        status: 'scheduled'
+        status: 'scheduled',
+        contact: {}
       },
       {
         datetime: `${nextTuesdayDate}T11:20`,
@@ -196,6 +197,15 @@ module.exports = {
         service: SERVICE_IDS.COVID_ADULT,
         name: 'Taylor Example',
         status: 'scheduled'
+      },
+      {
+        datetime: `${futureSingleDate}T13:00`,
+        service: SERVICE_IDS.RSV_ADULT,
+        name: 'Morgan Example',
+        status: 'scheduled',
+        contact: {
+          landline: '01234 111222'
+        }
       }
     ]
   }

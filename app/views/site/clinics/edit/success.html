@@ -3,16 +3,36 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
-      {{ panel({ titleText: titleText or 'Clinic updated' }) }}
-      {% if primaryHref %}
-      <p class="nhsuk-body"><a href="{{ primaryHref }}">{{ primaryText or 'Continue' }}</a></p>
-      {% elif sessionId %}
-      <p class="nhsuk-body"><a href="/site/{{ site_id }}/clinics/edit/{{ sessionId }}">Make another change</a></p>
-      {% endif %}
-      {% if secondaryHref %}
-      <p class="nhsuk-body"><a href="{{ secondaryHref }}">{{ secondaryText }}</a></p>
-      {% elif not primaryHref or sessionId %}
-      <p class="nhsuk-body"><a href="/site/{{ site_id }}/clinics">Back to clinics</a></p>
+      {% if cancelSummary %}
+        {{ panel({ titleText: cancelSummary.titleText }) }}
+
+        <p>We have sent a text message or email to everyone we have contact details for to confirm the cancellation.</p>
+
+        {% if cancelSummary.unnotifiedCount > 0 %}
+          {% set hasHaveText = 'has' if cancelSummary.unnotifiedCount == 1 else 'have' %}
+          <h2 class="nhsuk-heading-m">{{ cancelSummary.unnotifiedCount }} {{ 'person' if cancelSummary.unnotifiedCount == 1 else 'people' }} {{ hasHaveText }} not been notified</h2>
+          <p>These people did not provide an email address or mobile number. If you can, you should contact them to tell them their booking is cancelled.</p>
+          <p><a href="/not-in-this-prototype">View the list of people who have not been notified</a></p>
+        {% endif %}
+
+        <h2 class="nhsuk-heading-m">What would you like to do next?</h2>
+
+        {% for action in cancelSummary.nextActions %}
+          <p class="nhsuk-body"><a href="{{ action.href }}">{{ action.text }}</a></p>
+        {% endfor %}
+
+      {% else %}
+        {{ panel({ titleText: titleText or 'Clinic updated' }) }}
+        {% if primaryHref %}
+        <p class="nhsuk-body"><a href="{{ primaryHref }}">{{ primaryText or 'Continue' }}</a></p>
+        {% elif sessionId %}
+        <p class="nhsuk-body"><a href="/site/{{ site_id }}/clinics/edit/{{ sessionId }}">Make another change</a></p>
+        {% endif %}
+        {% if secondaryHref %}
+        <p class="nhsuk-body"><a href="{{ secondaryHref }}">{{ secondaryText }}</a></p>
+        {% elif not primaryHref or sessionId %}
+        <p class="nhsuk-body"><a href="/site/{{ site_id }}/clinics">Back to clinics</a></p>
+        {% endif %}
       {% endif %}
     </div>
   </div>

@@ -40,10 +40,10 @@
               }
             }, {
               key: {
-                text: "Number of sessions"
+                text: "Number of clinics"
               },
               value: {
-                html: data.cancelAvailability.affectedSessions ~ " sessions"
+                html: data.cancelAvailability.affectedSessions ~ " clinics"
               }
             }, {
               key: {
@@ -66,9 +66,9 @@
           ]
         }) }}
 
-        {% set buttonText = "Cancel sessions" %}
+        {% set buttonText = "Cancel clinics" %}
         {% if data.cancelAvailability.affectedBookings | int > 0 and data.cancelAvailability.keepOrCancelBookings == 'cancel' %}
-          {% set buttonText = "Cancel sessions and bookings" %}
+          {% set buttonText = "Cancel clinics and bookings" %}
         {% endif %}
 
 
