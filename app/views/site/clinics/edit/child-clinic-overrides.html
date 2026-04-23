@@ -12,7 +12,7 @@
       {% set clinicWord = 'clinic' if warning.count == 1 else 'clinics' %}
       {% set pronoun = 'this clinic' if warning.count == 1 else 'these clinics' %}
 
-      {% set headingPrefix = 'Child clinics' %}
+      {% set headingPrefix = 'Clinics' %}
       {% if warning.hasTimeChange and not warning.hasCapacityChange and not warning.hasServicesChange %}
         {% set headingPrefix = 'Clinic times' %}
       {% elif warning.hasCapacityChange and not warning.hasTimeChange and not warning.hasServicesChange %}
@@ -21,8 +21,21 @@
         {% set headingPrefix = 'Services' %}
       {% endif %}
 
-      <h1 class="nhsuk-heading-l">{{ headingPrefix }} have already been edited for {{ warning.count }} {{ clinicWord }} in this series</h1>
+      <span class="nhsuk-caption-l">Edit clinic series</span>
+      <h1 class="nhsuk-heading-l">{{ warning.count }} {{ clinicWord }} in this series will not be updated</h1>
 
+      {% if warning.hasTimeChange %}
+      <p class="nhsuk-body">You already edited the times for {{ pronoun }}. The start and end times for {{ pronoun }} will not be updated as part of the changes to the series.</p>
+      {% endif %}
+
+      {% if warning.hasCapacityChange %}
+      <p class="nhsuk-body">You already edited the number of vaccinators for {{ pronoun }}. The number of vaccinators for {{ pronoun }} will not be updated as part of the changes to the series.</p>
+      {% endif %}
+
+      {% call details({
+        summaryText: "View clinics that will not be updated",
+        classes: "nhsuk-expander"
+      }) %}
       <table class="nhsuk-table-responsive" role="table">
         <thead class="nhsuk-table__head" role="rowgroup">
           <tr class="nhsuk-table__row" role="row">
@@ -67,14 +80,7 @@
           {% endfor %}
         </tbody>
       </table>
-
-      {% if warning.hasTimeChange %}
-      <p class="nhsuk-body">The start and end times for {{ pronoun }} will not be updated as part of this change.</p>
-      {% endif %}
-
-      {% if warning.hasCapacityChange %}
-      <p class="nhsuk-body">The number of vaccinators for {{ pronoun }} will not be updated as part of this change.</p>
-      {% endif %}
+      {% endcall %}
 
 
       <form action="{{ formAction }}" method="post">
