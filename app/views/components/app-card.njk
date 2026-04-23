@@ -25,6 +25,7 @@
     <table class="app-card__table">
       <tbody>
       {%- for item in params.items %}
+        {%- if item %}
         <tr class="app-card__row">
           <th scope="row" class="app-card__key">
             {%- if item.keyHtml %}
@@ -41,6 +42,7 @@
             {%- endif %}
           </td>
         </tr>
+        {%- endif %}
       {%- endfor %}
       </tbody>
     </table>

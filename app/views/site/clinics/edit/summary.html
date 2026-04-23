@@ -12,10 +12,24 @@
     <div class="nhsuk-grid-column-two-thirds">
       {% set editBasePath = '/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId %}
       {% set isSeries = draft.type == 'Clinic series' %}
+      {% set pageName = 'Edit clinic series' if isSeries else 'Edit single clinic' %}
+      {% set detailsTitle = 'Series details' if isSeries else 'Clinic details' %}
       {% set vaccinatorText = draft.capacity ~ ' vaccinator' %}
       {% if draft.capacity != 1 %}
         {% set vaccinatorText = vaccinatorText ~ 's' %}
       {% endif %}
+
+      {# slots calculation #}
+      {% set fromParts = draft.from.split(':') %}
+      {% set untilParts = draft.until.split(':') %}
+      {% set startMinutes = (fromParts[0] | int * 60) + (fromParts[1] | int) %}
+      {% set endMinutes = (untilParts[0] | int * 60) + (untilParts[1] | int) %}
+      {% set sessionMinutes = endMinutes - startMinutes %}
+      {% set totalAppointments = 0 %}
+      {% if sessionMinutes > 0 and (draft.duration | int) > 0 and (draft.capacity | int) > 0 %}
+        {% set totalAppointments = (sessionMinutes // (draft.duration | int)) * (draft.capacity | int) %}
+      {% endif %}
+      {# end:slots calculation #}
 
       {% set servicesHtml %}
         {%- for serviceId in draft.services %}
@@ -52,49 +66,29 @@
 
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
-      {% if isSeries %}
-        {{ appCard({
-          title: 'Clinic details',
-          action: {
-            href: editBasePath ~ '/details',
-            text: 'Change',
-            visuallyHiddenText: ' clinic details'
+      {{ appCard({
+        title: detailsTitle,
+        action: {
+          href: editBasePath ~ '/details',
+          text: 'Change',
+          visuallyHiddenText: ' clinic details'
+        },
+        items: [
+          {
+            key: 'Clinic name',
+            value: draft.name or 'Not provided'
           },
-          items: [
-            {
-              key: 'Clinic name',
-              value: draft.name or 'Not provided'
-            },
-            {
-              key: 'Start date',
-              value: draft.startDate | nhsDate
-            },
-            {
-              key: 'End date',
-              value: draft.endDate | nhsDate
-            }
-          ]
-        }) }}
-      {% else %}
-        {{ appCard({
-          title: 'Clinic details',
-          action: {
-            href: editBasePath ~ '/details',
-            text: 'Change',
-            visuallyHiddenText: ' clinic details'
+          {
+            key: 'Start date',
+            value: draft.startDate | nhsDate
           },
-          items: [
-            {
-              key: 'Clinic name',
-              value: draft.name or 'Not provided'
-            },
-            {
-              key: 'Date',
-              value: draft.startDate | nhsDate
-            }
-          ]
-        }) }}
-      {% endif %}
+          {
+            key: 'End date',
+            value: draft.endDate | nhsDate
+          } if isSeries
+        ]
+      }) }}
+      
 
 
       {% if isSeries %}
@@ -115,22 +109,26 @@
       {% endif %}
 
       {{ appCard({
-        title: 'Clinic times',
+        title: 'Start and end times',
         action: {
           href: editBasePath ~ '/clinic-times',
           text: 'Change',
-          visuallyHiddenText: ' clinic times'
+          visuallyHiddenText: ' start and end times'
         },
         items: [
           {
-            key: 'Time periods',
-            value: draft.from ~ ' to ' ~ draft.until
+            key: 'Start time',
+            value: draft.from | nhsTime
+          },
+          {
+            key: 'End time',
+            value: draft.until | nhsTime
           }
         ]
       }) }}
 
       {{ appCard({
-        title: 'Appointments calculation',
+        title: 'Capacity',
         action: {
           href: editBasePath ~ '/appointments-calculator',
           text: 'Change',
@@ -144,6 +142,10 @@
           {
             key: 'Vaccinators',
             value: vaccinatorText
+          },
+          {
+            key: 'Total appointments per clinic',
+            value: totalAppointments
           }
         ]
       }) }}
