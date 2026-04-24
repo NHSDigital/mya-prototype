@@ -103,6 +103,7 @@ const base = {
       {
         text: 'Home',
         hrefTemplate: '/site/:id',
+        exact: true,
         hideCard: true
       },
       {

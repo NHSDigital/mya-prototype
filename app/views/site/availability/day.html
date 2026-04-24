@@ -93,18 +93,11 @@
             {% if data.recurring_sessions and data.recurring_sessions[site_id] and slot.recurringSessionId and data.recurring_sessions[site_id][slot.recurringSessionId] %}
               {% set clinicName = data.recurring_sessions[site_id][slot.recurringSessionId].label %}
             {% endif %}
-            {% set bookingStatusText = 'Scheduled' %}
-            {% if slot.booking_status == 'orphaned' %}
-              {% set bookingStatusText = 'Orphaned' %}
-            {% elif slot.booking_status == 'cancelled' %}
-              {% set bookingStatusText = 'Cancelled' %}
-            {% endif %}
             <tr class="nhsuk-table__row" role="row">
               <td class="nhsuk-table__cell">{{ booking.datetime | formatDate('h:mm a') | lower  }}</td>
               <td class="nhsuk-table__cell">
                 {{ booking.name }}<br>
-                {{ booking.nhsNumber | nhsNumber | safe }}<br>
-                <span class="nhsuk-hint nhsuk-u-margin-bottom-0">{{ bookingStatusText }}</span>
+                {{ booking.nhsNumber | nhsNumber | safe }}
               </td>
               <td class="nhsuk-table__cell">{{ booking.dob | formatDate }}</td>
               <td class="nhsuk-table__cell nhsuk-u-text-break-word">

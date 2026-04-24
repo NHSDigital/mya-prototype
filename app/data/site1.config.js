@@ -92,31 +92,7 @@ const clinics = [
       SERVICE_IDS.FLU_65_PLUS
     ],
     capacity: 2,
-    childSessions: [{
-      date: today.plus({ days: 1 }).toISODate(),
-      label: 'Afternoon off',
-      from: '11:00',
-      until: '12:00'
-    }, {
-      date: today.plus({ days: 2 }).toISODate(),
-      label: 'Morning clash',
-      from: '12:00',
-      until: '15:00'
-    }, {
-      date: today.plus({ days: 3 }).toISODate(),
-      label: 'Chance services',
-      services: [{
-        operation: 'add',
-        service: SERVICE_IDS.RSV_ADULT
-      }, {
-        operation: 'remove',
-        service: SERVICE_IDS.FLU_18_64
-      }] 
-    }, {
-      date: today.plus({ days: 4 }).toISODate(),
-      label: 'Fewer vaccinators',
-      capacity: 1
-    }],
+    childSessions: [],
     closures: [
       {
         startDate: today.plus({ days: 7 }).toISODate(),

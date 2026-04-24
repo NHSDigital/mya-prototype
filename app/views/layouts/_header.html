@@ -61,6 +61,8 @@
           {% if itemPath and itemPath != '#' %}
             {% if itemPath == '/' %}
               {% set isCurrent = currentPath == '/' %}
+            {% elif item.exact %}
+              {% set isCurrent = currentPath == itemPath %}
             {% elif currentPath == itemPath or currentPath.indexOf(itemPath + '/') == 0 %}
               {% set isCurrent = true %}
             {% endif %}
