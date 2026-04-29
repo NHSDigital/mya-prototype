@@ -27,6 +27,10 @@ const SERVICE_GROUPS = {
   RSV_AND_COVID: {
     id: 'RSV_AND_COVID',
     title: 'RSV and COVID-19 co-admin services'
+  },
+  MENB: {
+    id: 'MENB',
+    title: 'MenB services'
   }
 };
 
@@ -41,7 +45,8 @@ const serviceDefinitions = [
   { id: 'COVID_FLU:65+', name: 'COVID and Flu 65+', vaccine: 'COVID-19 and Flu', group: 'FLU_AND_COVID', age: '65+', type: 'Adult' },
   { id: 'RSV:Adult', name: 'RSV Adult', vaccine: 'RSV', group: 'RSV', age: '18+', type: 'Adult' },
   { id: 'RSV_COVID:12-17', name: 'RSV and COVID 12-17', vaccine: 'RSV and COVID', group: 'RSV_AND_COVID', age: '12-17', type: 'Child' },
-  { id: 'RSV_COVID:18+', name: 'RSV and COVID 18+', vaccine: 'RSV and COVID', group: 'RSV_AND_COVID', age: '18+', type: 'Adult' }
+  { id: 'RSV_COVID:18+', name: 'RSV and COVID 18+', vaccine: 'RSV and COVID', group: 'RSV_AND_COVID', age: '18+', type: 'Adult' },
+  { id: 'MENB:16-18', name: 'MenB', vaccine: 'Meningitis B', group: 'MENB', age: '17-18', type: 'Child' }
 ];
 
 const SERVICES = Object.fromEntries(
