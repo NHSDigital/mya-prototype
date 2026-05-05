@@ -107,6 +107,14 @@ function changeStepPath(siteId, itemId, step) {
   return `${changeSummaryPath(siteId, itemId)}/${step}`;
 }
 
+function normalizeBackHref(back) {
+  if (typeof back !== 'string') return null;
+  const value = back.trim();
+  if (!value.startsWith('/')) return null;
+  if (value.startsWith('//')) return null;
+  return value;
+}
+
 function changeFieldToStep(field) {
   switch (field) {
     case 'name':
@@ -549,9 +557,14 @@ function ensureChangeStateForSession(req, res) {
   const data = req.session.data;
   const siteId = req.site_id;
   const itemId = req.params.itemId;
+  const requestedBackHref = normalizeBackHref(req.query?.back);
   const existing = getChangeState(data);
 
   if (existing && existing.siteId === siteId && existing.itemId === itemId) {
+    if (requestedBackHref) {
+      existing.returnTo = requestedBackHref;
+      setChangeState(data, existing);
+    }
     return existing;
   }
 
@@ -570,6 +583,7 @@ function ensureChangeStateForSession(req, res) {
     originalParent: clone(parentModel),
     originalChild: clone(originalChild),
     draft: buildChildDraft(parentModel, target.session, target.date),
+    returnTo: requestedBackHref || null,
     currentEditStep: null,
     bookingAction: null,
     affectedBookingIds: []
@@ -601,7 +615,7 @@ router.get('/site/:id/change/:type/:itemId', (req, res) => {
     draft: state.draft,
     date: state.date,
     displayDate: formatDisplayDate(state.date),
-    weekHref: weekViewHref(req.site_id, state.date)
+    weekHref: state.returnTo || weekViewHref(req.site_id, state.date)
   });
 });
 

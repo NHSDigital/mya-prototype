@@ -114,9 +114,58 @@
         
       {% endmacro %}
 
+      {% macro clinicsRunningToday() %}
+        {% set sessions = daySummary.sessions or [] %}
+
+        {% if sessions | length %}
+          <table class="nhsuk-table">
+            <thead class="nhsuk-table__head">
+              <tr class="nhsuk-table__row">
+                <th scope="col" class="nhsuk-table__header">Name and time</th>
+                <th scope="col" class="nhsuk-table__header">Services</th>
+                <th scope="col" class="nhsuk-table__header">Booked</th>
+                <th scope="col" class="nhsuk-table__header">Unbooked</th>
+                <th scope="col" class="nhsuk-table__header">Action</th>
+              </tr>
+            </thead>
+            <tbody class="nhsuk-table__body">
+              {% for session in sessions %}
+                <tr class="nhsuk-table__row">
+                  <td class="nhsuk-table__cell">
+                    {% if session.label %}
+                      {{ session.label }}<br>
+                    {% endif %}
+                    <strong>{{ session.from | nhsTime }} to {{ session.until | nhsTime }}</strong>
+                  </td>
+                  <td class="nhsuk-table__cell">
+                    {% for service in session.services %}
+                      {{ service.name }}{% if not loop.last %}<br>{% endif %}
+                    {% endfor %}
+                  </td>
+                  <td class="nhsuk-table__cell">
+                    {% for service in session.services %}
+                      {{ service.bookedCount }} booked{% if not loop.last %}<br>{% endif %}
+                    {% endfor %}
+                  </td>
+                  <td class="nhsuk-table__cell">{{ session.unbookedTotal }} unbooked</td>
+                  <td class="nhsuk-table__cell">
+                    {% if session.actionHref %}
+                      <a href="{{ session.actionHref }}">Change</a>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p>No clinics running today.</p>
+        {% endif %}
+      {% endmacro %}
+
       {% set daySlots = slots[date] or [] %}
       {% set scheduledCount = 0 %}
       {% set cancelledCount = 0 %}
+      {% set clinicsRunningCount = (daySummary.sessions or []) | length %}
       {% for slot in daySlots %}
         {% if slot.booking_status == 'scheduled' or slot.booking_status == 'orphaned' %}
           {% set scheduledCount = scheduledCount + 1 %}
@@ -147,6 +196,13 @@
                 title: 'Cancelled appointments'
               }) 
             } 
+          },
+          {
+            label: "Clinics running today (" ~ clinicsRunningCount ~ ")",
+            id: "clinics-running-today",
+            panel: {
+              html: clinicsRunningToday()
+            }
           }
         ] 
       }) }}

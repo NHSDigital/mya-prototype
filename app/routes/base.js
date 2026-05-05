@@ -1247,7 +1247,7 @@ function slotMatchesSession(slot, session) {
     && (!slot?.recurringSessionId || !session?.recurringId || String(slot.recurringSessionId) === String(session.recurringId));
 }
 
-function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, servicesById, siteBookings, siteId, today, recurringSessionsById = {}) {
+function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, servicesById, siteBookings, siteId, today, recurringSessionsById = {}, backHref = null) {
   return week.map((day) => {
     const sessions = sortSessionsForAvailability(dailyAvailability?.[day]?.sessions);
     const dateSlots = asArray(slotsByDate?.[day]);
@@ -1257,6 +1257,10 @@ function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, serv
       const bookedTotal = sessionSlots.filter((slot) => slot?.booking_status === 'scheduled').length;
       const totalSlots = sessionSlots.length;
       const resolvedLabel = session.label || recurringSessionsById?.[session?.recurringId]?.label || '';
+
+      const changeHrefBase = day < today || !session?.recurringId
+        ? null
+        : `/site/${siteId}/change/session/${session.id}`;
 
       return {
         id: session.id,
@@ -1274,7 +1278,9 @@ function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, serv
         })),
         bookedTotal,
         unbookedTotal: Math.max(0, totalSlots - bookedTotal),
-        actionHref: day < today || !session?.recurringId ? null : `/site/${siteId}/change/session/${session.id}`
+        actionHref: changeHrefBase
+          ? `${changeHrefBase}${backHref ? `?back=${encodeURIComponent(backHref)}` : ''}`
+          : null
       };
     });
 
@@ -1335,7 +1341,8 @@ function buildMonthAvailabilitySummary(weekRanges, dailyAvailability, slotsByDat
       siteBookings,
       siteId,
       today,
-      recurringSessionsById
+        recurringSessionsById,
+        null
     );
 
     const services = new Map();
@@ -2309,16 +2316,88 @@ router.get('/site/:id/debug/recurring-expansion', (req, res) => {
 // VIEW AVAILABILITY
 // -----------------------------------------------------------------------------
 router.get('/site/:id/availability/day', (req, res) => {
+  const data = req.session.data;
+  const site_id = req.site_id;
   const date = req.query.date || getToday();
   const today = getToday();
   const tomorrow = DateTime.fromISO(date).plus({ days: 1 }).toISODate();
   const yesterday = DateTime.fromISO(date).minus({ days: 1 }).toISODate();
+  const daySummary = buildWeekAvailabilitySummary(
+    [date],
+    res.locals.dailyAvailability,
+    res.locals.slots,
+    data.services || {},
+    data?.bookings?.[site_id] || {},
+    site_id,
+    today,
+    data?.recurring_sessions?.[site_id] || {},
+    `/site/${site_id}/availability/day?date=${date}`
+  )[0] || {
+    date,
+    sessions: [],
+    totalAppointments: 0,
+    bookedAppointments: 0,
+    unbookedAppointments: 0,
+    isToday: date === today,
+    isPast: date < today,
+    dayViewHref: `/site/${site_id}/availability/day?date=${date}`
+  };
+
+  if ((daySummary.sessions || []).length === 0 && (res.locals.dailyAvailability?.[date]?.sessions || []).length > 0) {
+    const dateSlots = asArray(res.locals.slots?.[date]);
+    const sessions = sortSessionsForAvailability(res.locals.dailyAvailability?.[date]?.sessions);
+    const siteBookings = data?.bookings?.[site_id] || {};
+    const servicesById = data.services || {};
+
+    const fallbackSessions = sessions.map((session) => {
+      const sessionSlots = dateSlots.filter((slot) => (
+        (slot?.sessionId && session?.id && String(slot.sessionId) === String(session.id))
+        || (
+          !slot?.sessionId
+          && slot?.group?.start === session?.from
+          && slot?.group?.end === session?.until
+          && (!slot?.recurringSessionId || !session?.recurringId || String(slot.recurringSessionId) === String(session.recurringId))
+        )
+      ));
+
+      const bookedTotal = sessionSlots.filter((slot) => slot?.booking_status === 'scheduled').length;
+      const totalSlots = sessionSlots.length;
+      const resolvedLabel = session.label || data?.recurring_sessions?.[site_id]?.[session?.recurringId]?.label || '';
+
+      return {
+        id: session.id,
+        label: resolvedLabel,
+        from: session.from,
+        until: session.until,
+        services: asArray(session.services).map((serviceId) => ({
+          id: serviceId,
+          name: servicesById?.[serviceId]?.name || serviceId,
+          bookedCount: sessionSlots.filter((slot) => (
+            slot?.booking_status === 'scheduled'
+            && slot?.booking_id
+            && siteBookings?.[slot.booking_id]?.service === serviceId
+          )).length
+        })),
+        bookedTotal,
+        unbookedTotal: Math.max(0, totalSlots - bookedTotal),
+        actionHref: date < today || !session?.recurringId
+          ? null
+          : `/site/${site_id}/change/session/${session.id}?back=${encodeURIComponent(`/site/${site_id}/availability/day?date=${date}`)}`
+      };
+    });
+
+    daySummary.sessions = fallbackSessions;
+    daySummary.totalAppointments = fallbackSessions.reduce((sum, session) => sum + session.bookedTotal + session.unbookedTotal, 0);
+    daySummary.bookedAppointments = fallbackSessions.reduce((sum, session) => sum + session.bookedTotal, 0);
+    daySummary.unbookedAppointments = Math.max(0, daySummary.totalAppointments - daySummary.bookedAppointments);
+  }
 
   res.render('site/availability/day', {
     date,
     today,
     tomorrow,
     yesterday,
+    daySummary,
     dayHeading: getRelativeDayLabel(date, today),
     previousDayLabel: getRelativeDayLabel(yesterday, today),
     nextDayLabel: getRelativeDayLabel(tomorrow, today)
@@ -2357,7 +2436,8 @@ router.get('/site/:id/availability/week', (req, res) => {
     data?.bookings?.[site_id] || {},
     site_id,
     today,
-    data?.recurring_sessions?.[site_id] || {}
+    data?.recurring_sessions?.[site_id] || {},
+    `/site/${site_id}/availability/week?date=${startFromDate}`
   );
 
   res.render('site/availability/week', {
