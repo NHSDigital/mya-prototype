@@ -114,10 +114,21 @@
         
       {% endmacro %}
 
+      {% set daySlots = slots[date] or [] %}
+      {% set scheduledCount = 0 %}
+      {% set cancelledCount = 0 %}
+      {% for slot in daySlots %}
+        {% if slot.booking_status == 'scheduled' or slot.booking_status == 'orphaned' %}
+          {% set scheduledCount = scheduledCount + 1 %}
+        {% elif slot.booking_status == 'cancelled' %}
+          {% set cancelledCount = cancelledCount + 1 %}
+        {% endif %}
+      {% endfor %}
+
       {{ tabs({ 
         items: [ 
         { 
-          label: "Scheduled", 
+          label: "Scheduled (" ~ scheduledCount ~ ")", 
           id: "scheduled", 
           panel: { 
             html: appointmentForToday({
@@ -128,7 +139,7 @@
           } 
         }, 
         { 
-          label: "Cancelled", 
+          label: "Cancelled (" ~ cancelledCount ~ ")", 
           id: "cancelled", 
             panel: { 
               html: appointmentForToday({
