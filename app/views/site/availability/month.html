@@ -3,7 +3,7 @@
 {% from '../../components/action-control-bar.njk' import appActionControlBar %}
 {% from 'nhsuk/components/card/macro.njk' import card %}
 
-{% set pageName = currentDate | formatDate("LLLL yyyy") %}
+{% set pageName = monthHeading or (currentDate | formatDate("LLLL yyyy")) %}
 
 {% block content %}
   <div class="nhsuk-grid-row">
@@ -38,11 +38,11 @@
 
       {{ pagination({
         previous: {
-          labelText: previousMonthDate | formatDate('LLLL yyyy'),
+          labelText: previousMonthLabel or (previousMonthDate | formatDate('LLLL yyyy')),
           href: "/site/" ~ site_id ~ "/availability/month?date=" ~ previousMonthDate
         },
         next: {
-          labelText: nextMonthDate | formatDate('LLLL yyyy'),
+          labelText: nextMonthLabel or (nextMonthDate | formatDate('LLLL yyyy')),
           href: "/site/" ~ site_id ~ "/availability/month?date=" ~ nextMonthDate
         }
       }) }}

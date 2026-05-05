@@ -15,6 +15,42 @@ function getToday() {
   return override_today || DateTime.now().toFormat('yyyy-MM-dd');
 }
 
+function getRelativeDayLabel(dateISO, todayISO) {
+  const target = DateTime.fromISO(dateISO || '').startOf('day');
+  const today = DateTime.fromISO(todayISO || '').startOf('day');
+  if (!target.isValid || !today.isValid) return null;
+
+  const diffDays = Math.round(target.diff(today, 'days').days);
+  if (diffDays === 0) return 'Today';
+  if (diffDays === -1) return 'Yesterday';
+  if (diffDays === 1) return 'Tomorrow';
+  return null;
+}
+
+function getRelativeWeekLabel(weekStartISO, todayISO) {
+  const targetWeek = DateTime.fromISO(weekStartISO || '').startOf('week');
+  const thisWeek = DateTime.fromISO(todayISO || '').startOf('week');
+  if (!targetWeek.isValid || !thisWeek.isValid) return null;
+
+  const diffWeeks = Math.round(targetWeek.diff(thisWeek, 'weeks').weeks);
+  if (diffWeeks === 0) return 'This week';
+  if (diffWeeks === -1) return 'Last week';
+  if (diffWeeks === 1) return 'Next week';
+  return null;
+}
+
+function getRelativeMonthLabel(monthDateISO, todayISO) {
+  const targetMonth = DateTime.fromISO(monthDateISO || '').startOf('month');
+  const thisMonth = DateTime.fromISO(todayISO || '').startOf('month');
+  if (!targetMonth.isValid || !thisMonth.isValid) return null;
+
+  const diffMonths = Math.round(targetMonth.diff(thisMonth, 'months').months);
+  if (diffMonths === 0) return 'This month';
+  if (diffMonths === -1) return 'Last month';
+  if (diffMonths === 1) return 'Next month';
+  return null;
+}
+
 function asArray(value) {
   if (Array.isArray(value)) return value;
   if (value === undefined || value === null || value === '') return [];
@@ -2274,12 +2310,18 @@ router.get('/site/:id/debug/recurring-expansion', (req, res) => {
 // -----------------------------------------------------------------------------
 router.get('/site/:id/availability/day', (req, res) => {
   const date = req.query.date || getToday();
+  const today = getToday();
+  const tomorrow = DateTime.fromISO(date).plus({ days: 1 }).toISODate();
+  const yesterday = DateTime.fromISO(date).minus({ days: 1 }).toISODate();
 
   res.render('site/availability/day', {
     date,
-    today: getToday(),
-    tomorrow: DateTime.fromISO(date).plus({ days: 1 }).toISODate(),
-    yesterday: DateTime.fromISO(date).minus({ days: 1 }).toISODate()
+    today,
+    tomorrow,
+    yesterday,
+    dayHeading: getRelativeDayLabel(date, today),
+    previousDayLabel: getRelativeDayLabel(yesterday, today),
+    nextDayLabel: getRelativeDayLabel(tomorrow, today)
   });
 });
 
@@ -2324,7 +2366,10 @@ router.get('/site/:id/availability/week', (req, res) => {
     week,
     weekDays,
     previousWeek,
-    nextWeek
+    nextWeek,
+    weekHeading: getRelativeWeekLabel(week[0], today),
+    previousWeekLabel: getRelativeWeekLabel(previousWeek.start, today),
+    nextWeekLabel: getRelativeWeekLabel(nextWeek.start, today)
   });
 });
 
@@ -2349,7 +2394,10 @@ router.get('/site/:id/availability/month', (req, res) => {
     currentDate: monthData.currentDate,
     previousMonthDate: monthData.previousMonthDate,
     nextMonthDate: monthData.nextMonthDate,
-    monthWeeks
+    monthWeeks,
+    monthHeading: getRelativeMonthLabel(monthData.currentDate, today),
+    previousMonthLabel: getRelativeMonthLabel(monthData.previousMonthDate, today),
+    nextMonthLabel: getRelativeMonthLabel(monthData.nextMonthDate, today)
   });
 });
 

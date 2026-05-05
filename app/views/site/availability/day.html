@@ -2,7 +2,7 @@
 {% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
 {% from '../../components/action-control-bar.njk' import appActionControlBar %}
 
-{% set pageName = date | formatDate('EEEE, d LLLL yyyy') %}
+{% set pageName = dayHeading or (date | formatDate('EEEE, d LLLL yyyy')) %}
 
 {% block content %}
 
@@ -37,11 +37,11 @@
 
       {{ pagination({
         previous: {
-          labelText: yesterday | formatDate('EEE, d LLL'),
+          labelText: previousDayLabel or (yesterday | formatDate('EEE, d LLL')),
           href: "/site/"~site_id~"/availability/day?date="~yesterday
         },
         next: {
-          labelText: tomorrow | formatDate('EEE, d LLL'),
+          labelText: nextDayLabel or (tomorrow | formatDate('EEE, d LLL')),
           href: "/site/"~site_id~"/availability/day?date="~tomorrow
         }
       }) }}
