@@ -1179,6 +1179,7 @@ function buildSessionHistory(siteRecurringSessions, startDate = null, endDate = 
       from: session.from,
       until: session.until,
       services: session.services || [],
+      childSessions: asArray(session.childSessions || []).slice().sort((a, b) => String(a?.date || '').localeCompare(String(b?.date || ''))),
       capacity: Number(session.capacity) || 0,
       slotLength: Number(session.slotLength) || 0
     });

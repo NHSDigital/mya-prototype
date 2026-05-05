@@ -1,0 +1,119 @@
+@use "nhsuk-frontend/dist/nhsuk" as *;
+
+// Support both class names while templates are being refined.
+.app-clinic,
+.app-clinc {
+  border: 1px solid $nhsuk-border-colour;
+  background-color: nhsuk-colour("white");
+  @include nhsuk-responsive-margin(4, "bottom");
+
+  &__header,
+  .app-clinic__header {
+    display: flex;
+    gap: nhsuk-spacing(3);
+    align-items: flex-start;
+    justify-content: space-between;
+    @include nhsuk-responsive-padding(4);
+
+    @include nhsuk-media-query($until: tablet) {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  &__title,
+  .app-clinic__title {
+    .nhsuk-tag {
+      @include nhsuk-responsive-margin(2, "bottom");
+    }
+
+    .nhsuk-heading-xs {
+      margin-bottom: 0;
+    }
+  }
+
+  &__nav,
+  .app-clinic__nav {
+    margin-left: auto;
+
+    @include nhsuk-media-query($until: tablet) {
+      margin-left: 0;
+    }
+  }
+
+  &__nav-list,
+  .app-clinic__nav-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    gap: nhsuk-spacing(3);
+
+    @include nhsuk-media-query($until: tablet) {
+      flex-wrap: wrap;
+    }
+  }
+
+  &__nav-item,
+  .app-clinic__nav-item {
+    margin: 0;
+  }
+
+  &__content,
+  .app-clinic__content {
+    @include nhsuk-font-size(19);
+    @include nhsuk-responsive-padding(4);
+    padding-top: 0;
+    border-bottom: 1px solid $nhsuk-border-colour;
+  }
+
+  &__footer,
+  .app-clinic__footer {
+    @include nhsuk-responsive-padding(4);
+    padding-top: 0;
+    padding-bottom: 0;
+    background-color: nhsuk-colour("grey-5");
+
+    .nhsuk-body-s {
+      margin-top: 0;
+    }
+
+    .app-clinic__changes-table {
+      margin-bottom: 0;
+
+      .nhsuk-table__header,
+      .nhsuk-table__cell {
+        @include nhsuk-font-size(16);
+        line-height: 1.35;
+      }
+
+      .nhsuk-table__body .nhsuk-table__row:last-child .nhsuk-table__cell {
+        border-bottom: 0;
+      }
+    }
+
+    .app-clinic__changes-definitions {
+      margin: 0;
+    }
+
+    .app-clinic__changes-pair {
+      @include nhsuk-responsive-margin(2, "bottom");
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .app-clinic__changes-term {
+      @include nhsuk-font-size(16);
+      color: $nhsuk-secondary-text-colour;
+      margin: 0;
+    }
+
+    .app-clinic__changes-description {
+      @include nhsuk-font-size(16);
+      line-height: 1.35;
+      margin: 0;
+    }
+  }
+}
