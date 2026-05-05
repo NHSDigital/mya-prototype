@@ -1,4 +1,4 @@
-// app/data/site1.config.js
+// app/data/site2.config.js
 const { DateTime } = require('luxon');
 
 const today = DateTime.now().startOf('day');
@@ -9,8 +9,6 @@ const pastSingleDate = today.minus({ days: 45 }).toISODate();
 const ongoingSeriesStart = today.minus({ days: 21 }).toISODate();
 const ongoingSeriesEnd = today.plus({ months: 2 }).toISODate();
 const futureSingleDate = today.plus({ days: 3 }).toISODate();
-const childSessionIn2Days = today.plus({ days: 2 }).toISODate();
-const childSessionIn3Days = today.plus({ days: 3 }).toISODate();
 const nextTuesdayDate = today.plus({ days: (2 - today.weekday + 7) % 7 }).toISODate();
 
 const SERVICE_IDS = {
@@ -94,20 +92,7 @@ const clinics = [
       SERVICE_IDS.FLU_65_PLUS
     ],
     capacity: 2,
-    childSessions: [
-      {
-        date: childSessionIn2Days,
-        from: '10:00',
-        until: '16:00',
-        label: 'Adult Flu and Covid clinics (extended)'
-      },
-      {
-        date: childSessionIn3Days,
-        from: '10:00',
-        until: '16:30',
-        label: 'Adult Flu and Covid clinics (extended)'
-      }
-    ],
+    childSessions: [],
     closures: [
       {
         startDate: today.plus({ days: 7 }).toISODate(),
@@ -141,18 +126,23 @@ const clinics = [
 module.exports = {
   // ---- Static site data ----
   site: {
-    id: 1,
+    id: 2,
     status_id: 'online',
-    name: 'Dean’s Pharmacy',
+    name: 'Cedar Lane Pharmacy',
     address: [
-      '123 Fake Street',
-      'Faketown',
-      'FK1 2AB'
+      '64 Cedar Lane',
+      'Brighton',
+      'BN1 1AG'
     ],
     phone: '01234 567890',
-    ods: 'A123458',
-    icb: 'South East London Integrated Care Board',
-    region: 'London'
+    ods: 'FCVFR42',
+    icb: 'NHS Sussex Integrated Care Board',
+    region: 'South East'
+  },
+
+  user: {
+    name: 'Rima Patel',
+    email: 'rima.patel@nhs.net'
   },
 
   // ---- Clinics ----

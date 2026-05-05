@@ -7,6 +7,7 @@ const { randomUUID } = require('crypto');
 const enhanceData = require('../helpers/enhanceData');
 const { buildCancelledBookingsSummary } = require('../helpers/cancelledBookingsSummary');
 const mergeDailyAvailability = require('../helpers/recurringToDailyAvailability');
+const sessionDataDefaults = require('../data/session-data-defaults');
 
 const override_today = process.env.OVERRIDE_TODAY || null;
 
@@ -1369,6 +1370,19 @@ router.use('/site/:id', (req, res, next) => {
 
   data.today = today;
 
+  // Backfill new user override maps for existing sessions started before this feature.
+  if (!data.default_user && sessionDataDefaults.default_user) {
+    data.default_user = clone(sessionDataDefaults.default_user);
+  }
+
+  if (!data.users_by_site && sessionDataDefaults.users_by_site) {
+    data.users_by_site = clone(sessionDataDefaults.users_by_site);
+  }
+
+  const defaultUser = data.default_user || data.user;
+  const siteUser = data.users_by_site?.[site_id];
+  data.user = clone(siteUser || defaultUser);
+
 
   if (!data?.sites?.[site_id]) {
     console.warn(`⚠️ Site ${site_id} not found in session data`);
@@ -1432,6 +1446,10 @@ router.get('/sites', (req, res) => {
   transientKeys.forEach((key) => {
     delete req.session.data[key];
   });
+
+  if (req.session.data.default_user) {
+    req.session.data.user = clone(req.session.data.default_user);
+  }
 
   res.render('sites');
 });

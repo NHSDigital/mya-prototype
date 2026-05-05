@@ -1,9 +1,10 @@
 const generateAvailability = require('./_lib/generateAvailability');
 const generateSlots = require('./_lib/generateSlots');
 const generateBookings = require('./_lib/generateBookings');
+const fs = require('fs');
+const path = require('path');
 const { stableId } = require('./_lib/utils');
 const catNames = require('./_lib/catNames');
-const site1Config = require('./site1.config');
 const mergeDailyAvailability = require('../helpers/recurringToDailyAvailability');
 const { DateTime } = require('luxon');
 
@@ -34,19 +35,26 @@ const SERVICE_GROUPS = {
   }
 };
 
+const vaccineTypes = {
+  COVID: 'COVID-19',
+  FLU: 'Flu',
+  RSV: 'RSV',
+  MENB: 'Meningitis B'
+};
+
 const serviceDefinitions = [
-  { id: 'COVID:5-11', name: 'COVID 5-11', vaccine: 'COVID-19', group: 'COVID', age: '5-11', type: 'Child' },
-  { id: 'COVID:12-17', name: 'COVID 12-17', vaccine: 'COVID-19', group: 'COVID', age: '12-17', type: 'Child' },
-  { id: 'COVID:18+', name: 'COVID 18+', vaccine: 'COVID-19', group: 'COVID', age: '18+', type: 'Adult' },
-  { id: 'FLU:2-3', name: 'Flu 2-3', vaccine: 'Flu', group: 'FLU', age: '2-3', type: 'Child' },
-  { id: 'FLU:18-64', name: 'Flu 18-64', vaccine: 'Flu', group: 'FLU', age: '18-64', type: 'Adult' },
-  { id: 'FLU:65+', name: 'Flu 65+', vaccine: 'Flu', group: 'FLU', age: '65+', type: 'Adult' },
-  { id: 'COVID_FLU:18-64', name: 'COVID and Flu 18-64', vaccine: 'COVID-19 and Flu', group: 'FLU_AND_COVID', age: '18-64', type: 'Adult' },
-  { id: 'COVID_FLU:65+', name: 'COVID and Flu 65+', vaccine: 'COVID-19 and Flu', group: 'FLU_AND_COVID', age: '65+', type: 'Adult' },
-  { id: 'RSV:Adult', name: 'RSV Adult', vaccine: 'RSV', group: 'RSV', age: '18+', type: 'Adult' },
-  { id: 'RSV_COVID:12-17', name: 'RSV and COVID 12-17', vaccine: 'RSV and COVID', group: 'RSV_AND_COVID', age: '12-17', type: 'Child' },
-  { id: 'RSV_COVID:18+', name: 'RSV and COVID 18+', vaccine: 'RSV and COVID', group: 'RSV_AND_COVID', age: '18+', type: 'Adult' },
-  { id: 'MENB:16-18', name: 'MenB', vaccine: 'Meningitis B', group: 'MENB', age: '17-18', type: 'Child' }
+  { id: 'COVID:5-11', name: 'COVID 5 to 11', vaccine: vaccineTypes.COVID, group: 'COVID', age: '5-11', type: 'Child' },
+  { id: 'COVID:12-17', name: 'COVID 12 to 17', vaccine: vaccineTypes.COVID, group: 'COVID', age: '12-17', type: 'Child' },
+  { id: 'COVID:18+', name: 'COVID 18+', vaccine: vaccineTypes.COVID, group: 'COVID', age: '18+', type: 'Adult' },
+  { id: 'FLU:2-3', name: 'Flu 2 to 3', vaccine: vaccineTypes.FLU, group: 'FLU', age: '2-3', type: 'Child' },
+  { id: 'FLU:18-64', name: 'Flu 18 to 64', vaccine: vaccineTypes.FLU, group: 'FLU', age: '18-64', type: 'Adult' },
+  { id: 'FLU:65+', name: 'Flu 65+', vaccine: vaccineTypes.FLU, group: 'FLU', age: '65+', type: 'Adult' },
+  { id: 'COVID_FLU:18-64', name: 'COVID and Flu 18 to 64', vaccine: [vaccineTypes.COVID, vaccineTypes.FLU], group: 'FLU_AND_COVID', age: '18-64', type: 'Adult' },
+  { id: 'COVID_FLU:65+', name: 'COVID and Flu 65+', vaccine: [vaccineTypes.COVID, vaccineTypes.FLU], group: 'FLU_AND_COVID', age: '65+', type: 'Adult' },
+  { id: 'RSV:Adult', name: 'RSV Adult', vaccine: vaccineTypes.RSV, group: 'RSV', age: '18+', type: 'Adult' },
+  { id: 'RSV_COVID:12-17', name: 'RSV and COVID 12 to 17', vaccine: [vaccineTypes.RSV, vaccineTypes.COVID], group: 'RSV_AND_COVID', age: '12-17', type: 'Child' },
+  { id: 'RSV_COVID:18+', name: 'RSV and COVID 18+', vaccine: [vaccineTypes.RSV, vaccineTypes.COVID], group: 'RSV_AND_COVID', age: '18+', type: 'Adult' },
+  { id: 'MENB:16-18', name: 'MenB 17 to 18', vaccine: vaccineTypes.MENB, group: 'MENB', age: '17-18', type: null }
 ];
 
 const SERVICES = Object.fromEntries(
@@ -152,15 +160,106 @@ const base = {
   services: SERVICES
 }
 
-// Strip-mode dataset: keep one site only.
-const sitesConfig = [site1Config];
+function loadSiteConfigs() {
+  const siteConfigFiles = fs.readdirSync(__dirname)
+    .filter((fileName) => /^site.*\.config\.js$/.test(fileName))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+  return siteConfigFiles.map((fileName) => require(path.join(__dirname, fileName)));
+}
+
+const sitesConfig = loadSiteConfigs();
 
 const daily_availability = {};
 const bookings = {};
 const sites = {};
 const recurring_sessions = {};
+const users_by_site = {};
 const DEFAULT_WINDOW_PAST_DAYS = 14;
 const DEFAULT_WINDOW_FUTURE_DAYS = 90;
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function deepClone(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => deepClone(item));
+  }
+
+  if (isPlainObject(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, deepClone(item)])
+    );
+  }
+
+  return value;
+}
+
+function mergeWithDefaults(defaults, overrides) {
+  if (overrides === undefined) {
+    return deepClone(defaults);
+  }
+
+  if (Array.isArray(defaults) && Array.isArray(overrides)) {
+    return deepClone(overrides);
+  }
+
+  if (isPlainObject(defaults) && isPlainObject(overrides)) {
+    const keys = new Set([...Object.keys(defaults), ...Object.keys(overrides)]);
+    const merged = {};
+
+    for (const key of keys) {
+      merged[key] = mergeWithDefaults(defaults[key], overrides[key]);
+    }
+
+    return merged;
+  }
+
+  return deepClone(overrides);
+}
+
+function normalizeUserOverride(user = {}) {
+  const normalized = deepClone(user || {});
+  const email = String(normalized.email || '').trim();
+
+  if (!email) {
+    return normalized;
+  }
+
+  normalized.links = isPlainObject(normalized.links) ? normalized.links : {};
+
+  if (!Array.isArray(normalized.links.overview)) {
+    normalized.links.overview = [
+      {
+        text: email
+      },
+      {
+        text: 'Log out',
+        href: '/login'
+      }
+    ];
+  }
+
+  if (!Array.isArray(normalized.links.site)) {
+    normalized.links.site = [
+      {
+        isSiteName: true
+      },
+      {
+        text: email
+      },
+      {
+        text: 'Log out',
+        href: '/login'
+      }
+    ];
+  }
+
+  return normalized;
+}
+
+const default_user = deepClone(base.user);
 
 function buildRecurringDefaults({ site_id, start, end, patterns = {} }) {
   const grouped = new Map();
@@ -403,6 +502,7 @@ function filterAvailabilityByDateWindow(availability, startISO, endISO) {
 for (const cfg of sitesConfig) {
   const {
     site,
+    user,
     start,
     end,
     patterns,
@@ -472,11 +572,14 @@ for (const cfg of sitesConfig) {
   bookings[site_id] = bookingData;
   sites[site_id] = site;
   recurring_sessions[site_id] = recurringSessionsForSite;
+  users_by_site[site_id] = mergeWithDefaults(default_user, normalizeUserOverride(user));
 }
 
 
 module.exports = {
   ...base,
+  default_user,
+  users_by_site,
   sites,
   daily_availability,
   bookings,
