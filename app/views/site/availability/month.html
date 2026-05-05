@@ -1,5 +1,6 @@
 {% extends '../../layouts/layout.html' %}
 {% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
+{% from '../../components/action-control-bar.njk' import appActionControlBar %}
 {% from 'nhsuk/components/card/macro.njk' import card %}
 
 {% set pageName = currentDate | formatDate("LLLL yyyy") %}
@@ -24,19 +25,16 @@
               current: true
             },
             {
-              text: 'Clinics',
-              href: '/site/' ~ site_id ~ '/clinics',
-              primary: true
-            } if features.allAvailability
+              text: 'All clinics',
+              href: '/site/' ~ site_id ~ '/clinics'
+            }
           ]
         })
       }}
 
-      {% if features.cancelDateRange %}
-      {% include "../../includes/addCancelButtons.njk" %}
-      {% endif %}
+      {{ appActionControlBar({ siteId: site_id }) }}
 
-      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
 
       {{ pagination({
         previous: {

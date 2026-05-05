@@ -120,14 +120,9 @@ const base = {
         hideCard: true
       },
       {
-        text: 'View appointments',
-        description: 'View and manage appointments for your site',
+        text: 'Clinics',
+        description: 'View appointments for your site',
         hrefTemplate: '/site/:id/availability/day'
-      },
-      {
-        text: 'Manage clinics',
-        description: 'Create clinics and review recently created clinic series',
-        hrefTemplate: '/site/:id/clinics'
       },
       {
         text: 'Change site details',

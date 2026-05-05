@@ -1,5 +1,6 @@
 {% extends '../../layouts/layout.html' %}
 {% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
+{% from '../../components/action-control-bar.njk' import appActionControlBar %}
 
 {% set pageName = date | formatDate('EEEE, d LLLL yyyy') %}
 
@@ -24,18 +25,15 @@
               href: '/site/' ~ site_id ~ '/availability/month'
             },
             {
-              text: 'Clinics',
-              href: '/site/' ~ site_id ~ '/clinics',
-              primary: true
-            } if features.allAvailability
+              text: 'All clinics',
+              href: '/site/' ~ site_id ~ '/clinics'
+            }
           ]
         })
       }}
 
-      {% if features.cancelDateRange %}
-      {% include "../../includes/addCancelButtons.njk" %}
-      {% endif %}
-      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      {{ appActionControlBar({ siteId: site_id, print: '#' }) }}
+      <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
 
       {{ pagination({
         previous: {
@@ -47,14 +45,6 @@
           href: "/site/"~site_id~"/availability/day?date="~tomorrow
         }
       }) }}
-      
-
-      {% macro orphanNote(count) -%}
-        {% set isAre = 'is' if count == 1 else 'are' %}
-        {% set appointmentAppointments = 'appointment' if count == 1 else 'appointments' %}
-        {% set itThem = 'it' if count == 1 else 'them' %}
-        {{ count }} booked {{appointmentAppointments}} {{isAre}} still scheduled until you cancel {{itThem}}.
-      {%- endmacro %}
 
       {% macro appointmentForToday(opts) %}
          {# calculate if there's any booked appointments of this type #}
@@ -68,7 +58,6 @@
         <h2 class="nhsuk-heading-m">{{ opts.title }}</h2>
        
         {% if hasBookedAppointments %}
-        <a href="#" class="nhsuk-button nhsuk-button--secondary nhsuk-button--small">Print {{ opts.title | lower }}</a>
         <table class="nhsuk-table-responsive" role="table">
           <thead class="nhsuk-table__head" role="rowgroup">
             <tr>
