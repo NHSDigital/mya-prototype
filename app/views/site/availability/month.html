@@ -25,16 +25,15 @@
               current: true
             },
             {
-              text: 'All clinics',
+              text: 'Clinics list',
               href: '/site/' ~ site_id ~ '/clinics'
             }
           ]
         })
       }}
 
-      {{ appActionControlBar({ siteId: site_id }) }}
-
       <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
+      {{ appActionControlBar({ siteId: site_id }) }}
 
       {{ pagination({
         previous: {

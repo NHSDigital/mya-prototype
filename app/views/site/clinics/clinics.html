@@ -2,7 +2,7 @@
 {% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
 {% from '../../components/action-control-bar.njk' import appActionControlBar %}
 
-{% set pageName = "Clinics" %}
+{% set pageName = "Clinics list" %}
 
 {% macro services(service_ids) %}
   {% set serviceTypes = [] %}
@@ -120,17 +120,17 @@
               href: '/site/' ~ site_id ~ '/availability/month'
             },
             {
-              text: 'All clinics',
+              text: 'Clinics list',
               href: '/site/' ~ site_id ~ '/clinics',
               current: true
             }
           ]
         })
       }}
-
+      <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
       {{ appActionControlBar({ siteId: site_id }) }}
 
-      <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
+      
 
       {% set sessionHistory = sessionHistory or [] %}
       {% set pastSessionHistory = pastSessionHistory or [] %}
