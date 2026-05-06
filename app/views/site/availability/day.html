@@ -78,10 +78,6 @@
             {% for slot in slots[date] %}
             {% if slot.booking_status == opts.status or slot.booking_status in opts.status %}
             {% set booking = data.bookings[site_id][slot.booking_id] %}
-            {% set clinicName = 'Clinic' %}
-            {% if data.recurring_sessions and data.recurring_sessions[site_id] and slot.recurringSessionId and data.recurring_sessions[site_id][slot.recurringSessionId] %}
-              {% set clinicName = data.recurring_sessions[site_id][slot.recurringSessionId].label %}
-            {% endif %}
             <tr class="nhsuk-table__row" role="row">
               <td class="nhsuk-table__cell">{{ booking.datetime | formatDate('h:mm a') | lower  }}</td>
               <td class="nhsuk-table__cell">
@@ -121,7 +117,7 @@
           <table class="nhsuk-table">
             <thead class="nhsuk-table__head">
               <tr class="nhsuk-table__row">
-                <th scope="col" class="nhsuk-table__header">Name and time</th>
+                <th scope="col" class="nhsuk-table__header">Time</th>
                 <th scope="col" class="nhsuk-table__header">Services</th>
                 <th scope="col" class="nhsuk-table__header">Booked</th>
                 <th scope="col" class="nhsuk-table__header">Unbooked</th>
@@ -132,9 +128,6 @@
               {% for session in sessions %}
                 <tr class="nhsuk-table__row">
                   <td class="nhsuk-table__cell">
-                    {% if session.label %}
-                      {{ session.label }}<br>
-                    {% endif %}
                     <strong>{{ session.from | nhsTime }} to {{ session.until | nhsTime }}</strong>
                   </td>
                   <td class="nhsuk-table__cell">

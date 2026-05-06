@@ -32,21 +32,6 @@
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       {{ appCard({
-        title: 'Clinic details',
-        action: {
-          href: changeBasePath ~ '/details',
-          text: 'Change',
-          visuallyHiddenText: ' clinic name'
-        },
-        items: [
-          {
-            key: 'Clinic name',
-            value: draft.name or 'Not provided'
-          }
-        ]
-      }) }}
-
-      {{ appCard({
         title: 'Capacity calculation',
         action: {
           href: changeBasePath ~ '/appointments-calculator',

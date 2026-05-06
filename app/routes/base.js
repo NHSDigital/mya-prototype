@@ -368,7 +368,6 @@ function clone(value) {
 
 function editFieldOptions(isSeries) {
   const options = [
-    { value: 'name', text: 'Name' },
     { value: 'date', text: isSeries ? 'Dates' : 'Date' },
     ...(isSeries ? [{ value: 'days', text: 'Days' }] : []),
     { value: 'time', text: 'Time' },
@@ -413,7 +412,7 @@ function resetEditOutcome(state) {
 function editFieldsForStep(step, isSeries) {
   switch (step) {
     case 'details':
-      return ['name', 'date'];
+      return ['date'];
     case 'days':
       return isSeries ? ['days'] : ['date'];
     case 'clinic-times':
@@ -470,7 +469,6 @@ function editCaptionText(draft) {
 
 function editStepForField(field, isSeries) {
   switch (field) {
-    case 'name':
     case 'date':
       return 'details';
     case 'days':
@@ -499,7 +497,7 @@ function setEditTemplateData(res, data, state) {
 function updateDraftFromDetails(state, newSession = {}) {
   const editableFields = currentEditableFields(state);
 
-  if (editableFields.length === 0 || editableFields.includes('name')) {
+  if ((editableFields.length === 0 || editableFields.includes('name')) && newSession.name !== undefined) {
     state.draft.name = String(newSession.name || '').trim();
   }
 
@@ -729,11 +727,6 @@ function buildSummaryRowMap(draft, siteId, sessionId, data) {
   const closuresText = draft.closures?.length ? `${draft.closures.length} added` : 'None added';
 
   return {
-    name: {
-      key: { text: 'Name' },
-      value: { text: draft.name || 'Not provided' },
-      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/name`, text: 'Change', visuallyHiddenText: ' name' }] }
-    },
     date: {
       key: { text: isSeries ? 'Dates' : 'Date' },
       value: { text: dateText },
@@ -777,7 +770,6 @@ function buildSummaryRowMap(draft, siteId, sessionId, data) {
 function buildSummaryRowsForEdit(draft, siteId, sessionId, data) {
   const rowsByField = buildSummaryRowMap(draft, siteId, sessionId, data);
   const orderedFields = [
-    'name',
     'date',
     'days',
     'time',
@@ -794,8 +786,6 @@ function buildSummaryRowsForEdit(draft, siteId, sessionId, data) {
 
 function hasEditFieldChanged(original, draft, field) {
   switch (field) {
-    case 'name':
-      return String(original?.label || '') !== String(draft?.name || '');
     case 'date':
       if (draft?.type === 'Clinic series') {
         return String(original?.startDate || '') !== String(draft?.startDate || '')
@@ -838,7 +828,7 @@ function buildChangedRowsForEdit(original, draft, state, siteId, sessionId, data
   const editableFields = currentEditableFields(state);
   const candidateFields = editableFields.length > 0
     ? editableFields
-    : ['name', 'date', 'days', 'time', 'capacity', 'duration', 'services', 'closures'];
+    : ['date', 'days', 'time', 'capacity', 'duration', 'services', 'closures'];
 
   const changedRows = candidateFields
     .filter((field) => rowsByField[field] && hasEditFieldChanged(original, draft, field))
