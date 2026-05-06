@@ -11,6 +11,10 @@ const ongoingSeriesEnd = today.plus({ months: 2 }).toISODate();
 const futureSingleDate = today.plus({ days: 3 }).toISODate();
 const childSessionIn2Days = today.plus({ days: 2 }).toISODate();
 const childSessionIn3Days = today.plus({ days: 3 }).toISODate();
+const childSessionIn4Days = today.plus({ days: 4 }).toISODate();
+const childSessionIn5Days = today.plus({ days: 5 }).toISODate();
+const childSessionIn6Days = today.plus({ days: 6 }).toISODate();
+const childSessionIn7Days = today.plus({ days: 7 }).toISODate();
 const nextTuesdayDate = today.plus({ days: (2 - today.weekday + 7) % 7 }).toISODate();
 
 const SERVICE_IDS = {
@@ -106,6 +110,41 @@ const clinics = [
         from: '10:00',
         until: '16:30',
         label: 'Adult Flu and Covid clinics (extended)'
+      },
+      {
+        date: childSessionIn4Days,
+        capacity: 3,
+        from: '10:00',
+        until: '16:30',
+        label: 'Adult Flu and Covid clinics (extra vaccinator and change in times)'
+      },
+      {
+        date: childSessionIn5Days,
+        services: [
+          SERVICE_IDS.COVID_ADULT,
+          SERVICE_IDS.RSV_ADULT
+        ],
+        label: 'Adult Flu and Covid clinics (service replace)'
+      },
+      {
+        date: childSessionIn6Days,
+        services: [
+          {
+            operation: 'add',
+            service: SERVICE_IDS.RSV_ADULT
+          }
+        ],
+        label: 'Adult Flu and Covid clinics (service add)'
+      },
+      {
+        date: childSessionIn7Days,
+        services: [
+          {
+            operation: 'remove',
+            service: SERVICE_IDS.FLU_65_PLUS
+          }
+        ],
+        label: 'Adult Flu and Covid clinics (service remove)'
       }
     ],
     closures: [

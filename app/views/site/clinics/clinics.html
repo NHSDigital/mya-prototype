@@ -77,7 +77,7 @@
     <thead class="nhsuk-table__head" role="rowgroup">
       <tr role="row">
         <th scope="col" class="nhsuk-table__header" role="columnheader">Type</th>
-        <th scope="col" class="nhsuk-table__header" role="columnheader">Date and time</th>
+        <th scope="col" class="nhsuk-table__header" role="columnheader">Time and date</th>
         <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
         {% if includeActions %}
           <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
@@ -88,7 +88,7 @@
       {% for session in sessions %}
         <tr class="nhsuk-table__row" role="row">
           <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) }}</td>
-          <td class="nhsuk-table__cell" role="cell">{{ dateLabel(session) }}<br>{{ timeLabel(session) }}</td>
+          <td class="nhsuk-table__cell" role="cell">{{ timeLabel(session) }}<br>{{ dateLabel(session) }}</td>
           <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
           {% if includeActions %}
             <td class="nhsuk-table__cell" role="cell">

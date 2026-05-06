@@ -4,6 +4,8 @@
   border: 1px solid $nhsuk-border-colour;
   background-color: nhsuk-colour("white");
   @include nhsuk-responsive-margin(4, bottom);
+  //NHS looking shadow
+  box-shadow: 0 2px 0 0 nhsuk-colour("grey-4");
 
   &__header {
     display: flex;
@@ -13,6 +15,7 @@
     padding: nhsuk-spacing(3);
     background-color: nhsuk-colour("grey-5");
     border-bottom: 1px solid $nhsuk-border-colour;
+    
   }
 
   &__title {
@@ -22,45 +25,29 @@
   }
 
   &__action {
-    @include nhsuk-font-size(14);
+    @include nhsuk-font-size(16);
     white-space: nowrap;
   }
 
   &__body {
-    padding: 0 nhsuk-spacing(3);
+    padding: nhsuk-spacing(3);
   }
 
-  &__table {
-    width: 100%;
-    margin: 0;
-    border-collapse: collapse;
-  }
+  &__summary-list {
+    margin-bottom: 0;
 
-  &__row {
-    border-bottom: 1px solid nhsuk-colour("grey-5");
-
-    &:last-child th,
-    &:last-child td {
-      border-bottom: 0;
+    .nhsuk-summary-list__key,
+    .nhsuk-summary-list__value,
+    .nhsuk-summary-list__actions {
+      @include nhsuk-font-size(16);
+      vertical-align: top;
     }
-  }
 
-  &__key,
-  &__value {
-    @include nhsuk-font-size(16);
-    padding: nhsuk-spacing(3) 0;
-    vertical-align: top;
-  }
+    .nhsuk-summary-list__row:last-child {
+      border-bottom: none;
+    }
 
-  &__key {
-    width: 34%;
-    padding-right: nhsuk-spacing(3);
-    font-weight: $nhsuk-font-bold;
-    text-align: left;
-  }
-
-  &__value {
-    > :last-child {
+    .nhsuk-summary-list__value > :last-child {
       margin-bottom: 0;
     }
   }

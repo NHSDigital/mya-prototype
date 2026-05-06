@@ -10,6 +10,54 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
+      {% macro oneOffChangesSummary(childSession) %}
+        {% set hasChange = false %}
+        <dl>
+          {% if childSession.from and childSession.until %}
+            {% set hasChange = true %}
+            <dt class="nhsuk-u-font-weight-bold">Times</dt>
+            <dd class="nhsuk-u-margin-left-0 nhsuk-u-margin-bottom-2">{{ childSession.from | nhsTime }} to {{ childSession.until | nhsTime }}</dd>
+          {% endif %}
+
+          {% if childSession.capacity %}
+            {% set hasChange = true %}
+            <dt class="nhsuk-u-font-weight-bold">Vaccinators</dt>
+            <dd class="nhsuk-u-margin-left-0 nhsuk-u-margin-bottom-2">{{ childSession.capacity }}</dd>
+          {% endif %}
+
+          {% if childSession.services and (childSession.services | length) > 0 %}
+            {% set hasChange = true %}
+            <dt class="nhsuk-u-font-weight-bold">Services</dt>
+            <dd class="nhsuk-u-margin-left-0 nhsuk-u-margin-bottom-2">
+              {% if childSession.services[0] is string %}
+                {% for serviceId in childSession.services %}
+                  {{ data.services[serviceId].name if data.services[serviceId] else serviceId }}{% if not loop.last %}<br>{% endif %}
+                {% endfor %}
+              {% else %}
+                {% for operation in childSession.services %}
+                  {% set serviceName = data.services[operation.service].name if data.services[operation.service] else operation.service %}
+                  {% if operation.operation == 'add' %}
+                    Added {{ serviceName }}
+                  {% elif operation.operation == 'remove' %}
+                    Removed {{ serviceName }}
+                  {% elif operation.operation == 'replace' %}
+                    Services replaced
+                  {% else %}
+                    Updated {{ serviceName }}
+                  {% endif %}
+                  {% if not loop.last %}<br>{% endif %}
+                {% endfor %}
+              {% endif %}
+            </dd>
+          {% endif %}
+
+          {% if not hasChange %}
+            <dt class="nhsuk-u-font-weight-bold">No changes</dt>
+            <dd class="nhsuk-u-margin-left-0 nhsuk-u-margin-bottom-0">No one-off changes recorded</dd>
+          {% endif %}
+        </dl>
+      {% endmacro %}
+
       {% set editBasePath = '/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId %}
       {% set isSeries = draft.type == 'Clinic series' %}
       {% set pageName = 'Edit clinic series' if isSeries else 'Edit single clinic' %}
@@ -171,6 +219,54 @@
           },
           items: closuresItems
         }) }}
+
+        {% set oneOffChangesItems = [] %}
+        {% if draft.childSessions and draft.childSessions.length %}
+          {% for childSession in draft.childSessions %}
+            {% set childDate = childSession.date | formatDate('d MMM yyyy') %}
+            {% set childInstanceId = '' %}
+            {% set daySessions = dailyAvailability[childSession.date].sessions if dailyAvailability and dailyAvailability[childSession.date] and dailyAvailability[childSession.date].sessions else [] %}
+            {% for daySession in daySessions %}
+              {% if daySession.recurringId == sessionId and not childInstanceId %}
+                {% set childInstanceId = daySession.id %}
+              {% endif %}
+            {% endfor %}
+
+            {% set childChangeHref = editBasePath %}
+            {% if childInstanceId %}
+              {% set backHref = editBasePath %}
+              {% set childChangeHref = '/site/' + site_id + '/change/session/' + childInstanceId + '?back=' + (backHref | urlencode) %}
+            {% endif %}
+
+            {% set oneOffChangesItems = oneOffChangesItems.concat([
+              {
+                key: childDate,
+                html: oneOffChangesSummary(childSession),
+                actions: {
+                  items: [
+                    {
+                      href: childChangeHref,
+                      text: 'Change',
+                      visuallyHiddenText: ' one-off changes for ' + childDate
+                    }
+                  ]
+                }
+              }
+            ]) %}
+          {% endfor %}
+        {% endif %}
+
+        {% if oneOffChangesItems | length > 0 %}
+          {{ appCard({
+            title: 'Clinics with changes',
+            items: oneOffChangesItems
+          }) }}
+        {% else %}
+          {{ appCard({
+            title: 'Clinics with changes',
+            html: '<p class="nhsuk-body nhsuk-u-margin-bottom-0">No clinics with one-off changes.</p>'
+          }) }}
+        {% endif %}
       {% endif %}
 
     </div>

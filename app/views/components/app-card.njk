@@ -1,4 +1,5 @@
 {%- from "nhsuk/macros/attributes.njk" import nhsukAttributes -%}
+{%- from "nhsuk/components/summary-list/macro.njk" import summaryList -%}
 {%- macro appCard(params) -%}
 <section class="app-card{%- if params.classes %} {{ params.classes }}{% endif -%}" {{- nhsukAttributes(params.attributes) -}}>
   {%- if params.title or params.action %}
@@ -22,30 +23,31 @@
     {%- if params.html %}
       {{ params.html | safe }}
     {%- elif params.items %}
-    <table class="app-card__table">
-      <tbody>
+      {% set rows = [] %}
       {%- for item in params.items %}
         {%- if item %}
-        <tr class="app-card__row">
-          <th scope="row" class="app-card__key">
-            {%- if item.keyHtml %}
-              {{ item.keyHtml | safe }}
-            {%- else %}
-              {{ item.key }}
-            {%- endif %}
-          </th>
-          <td class="app-card__value">
-            {%- if item.html %}
-              {{ item.html | safe }}
-            {%- else %}
-              {{ item.value }}
-            {%- endif %}
-          </td>
-        </tr>
+          {% set rowKey = { text: item.key } %}
+          {% if item.keyHtml %}
+            {% set rowKey = { html: item.keyHtml } %}
+          {% endif %}
+
+          {% set rowValue = { text: item.value } %}
+          {% if item.html %}
+            {% set rowValue = { html: item.html } %}
+          {% endif %}
+
+          {% set rows = rows.concat([{
+            key: rowKey,
+            value: rowValue,
+            actions: item.actions
+          }]) %}
         {%- endif %}
       {%- endfor %}
-      </tbody>
-    </table>
+
+      {{ summaryList({
+        classes: 'app-card__summary-list',
+        rows: rows
+      }) }}
     {%- endif %}
   </div>
 </section>
