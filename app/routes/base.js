@@ -57,42 +57,6 @@ function asArray(value) {
   return [value];
 }
 
-function applyServiceOperations(baseServices = [], operations = []) {
-  let services = [...asArray(baseServices)];
-
-  for (const change of asArray(operations)) {
-    if (!change || typeof change !== 'object') continue;
-
-    if (change.operation === 'replace') {
-      services = asArray(change.values);
-      continue;
-    }
-
-    if (change.operation === 'add' && change.service) {
-      if (!services.includes(change.service)) {
-        services.push(change.service);
-      }
-      continue;
-    }
-
-    if (change.operation === 'remove' && change.service) {
-      services = services.filter((service) => service !== change.service);
-    }
-  }
-
-  return services;
-}
-
-function sortedStringArray(values = []) {
-  return asArray(values)
-    .map((value) => String(value))
-    .sort((a, b) => a.localeCompare(b));
-}
-
-function servicesEqual(left = [], right = []) {
-  return JSON.stringify(sortedStringArray(left)) === JSON.stringify(sortedStringArray(right));
-}
-
 function normalizeSessionType(type) {
   if (type === 'Single date') return 'Single clinic';
   if (type === 'Weekly session' || type === 'Weekly sessions' || type === 'Weekly repeating') return 'Clinic series';
@@ -444,8 +408,6 @@ function bookingCountText(count) {
 function resetEditOutcome(state) {
   state.bookingAction = null;
   state.affectedBookingIds = [];
-  state.childOverrideWarning = null;
-  state.postWarningPath = null;
 }
 
 function editFieldsForStep(step, isSeries) {
@@ -925,107 +887,8 @@ function prepareReviewAfterEdit(data, siteId, state) {
     ? `${editSummaryPath(siteId, state.sessionId)}/affected-bookings`
     : `${editSummaryPath(siteId, state.sessionId)}/check-answers`;
 
-  const warning = buildChildOverrideWarningContext(
-    state,
-    originalModel,
-    updatedModel
-  );
-
-  state.childOverrideWarning = warning;
-  state.postWarningPath = warning ? nextPath : null;
-
   setEditState(data, state);
-  return warning
-    ? `${editSummaryPath(siteId, state.sessionId)}/child-clinic-overrides`
-    : nextPath;
-}
-
-function buildChildOverrideWarningContext(state, originalModel, updatedModel) {
-  if (state?.draft?.type !== 'Clinic series') return null;
-
-  const editableFields = currentEditableFields(state);
-  const modelChanges = {
-    time: String(originalModel?.from || '') !== String(updatedModel?.from || '')
-      || String(originalModel?.until || '') !== String(updatedModel?.until || ''),
-    capacity: (Number(originalModel?.capacity) || 1) !== (Number(updatedModel?.capacity) || 1),
-    services: !servicesEqual(originalModel?.services, updatedModel?.services)
-  };
-
-  let targetedFields = ['time', 'capacity', 'services'].filter((field) => editableFields.includes(field));
-  if (targetedFields.length === 0) {
-    targetedFields = Object.entries(modelChanges)
-      .filter(([, changed]) => changed)
-      .map(([field]) => field);
-  }
-
-  if (targetedFields.length === 0) return null;
-
-  const changedFields = targetedFields.filter((field) => modelChanges[field]);
-
-  if (changedFields.length === 0) return null;
-
-  const parentServices = asArray(updatedModel?.services);
-  const parentLabel = String(updatedModel?.label || '').trim() || 'Clinic series';
-  const rows = [];
-
-  for (const child of asArray(updatedModel?.childSessions)) {
-    if (!child?.date) continue;
-
-    const childHasPairedTime = Boolean(child?.from && child?.until);
-    const resolvedFrom = childHasPairedTime ? child.from : updatedModel?.from;
-    const resolvedUntil = childHasPairedTime ? child.until : updatedModel?.until;
-    const hasTimeOverride = childHasPairedTime
-      && (String(resolvedFrom) !== String(updatedModel?.from || '')
-        || String(resolvedUntil) !== String(updatedModel?.until || ''));
-
-    const hasCapacityOverride = child?.capacity !== undefined
-      && child?.capacity !== null;
-
-    const effectiveServices = child?.services
-      ? applyServiceOperations(parentServices, child.services)
-      : [...parentServices];
-    const hasServicesOverride = asArray(child?.services).length > 0;
-
-    const include = (
-      (changedFields.includes('time') && hasTimeOverride)
-      || (changedFields.includes('capacity') && hasCapacityOverride)
-      || (changedFields.includes('services') && hasServicesOverride)
-    );
-
-    if (!include) continue;
-
-    rows.push({
-      dateISO: child.date,
-      parentLabel,
-      childLabel: child?.label || '',
-      from: resolvedFrom,
-      until: resolvedUntil,
-      capacity: Number(child?.capacity ?? updatedModel?.capacity) || 1,
-      effectiveServiceIds: asArray(effectiveServices)
-    });
-  }
-
-  if (rows.length === 0) return null;
-
-  rows.sort((a, b) => String(a.dateISO).localeCompare(String(b.dateISO)));
-
-  const originalParentServiceIds = sortedStringArray(originalModel?.services);
-  const updatedParentServiceIds = sortedStringArray(updatedModel?.services);
-  const parentServicesAddedIds = updatedParentServiceIds
-    .filter((serviceId) => !originalParentServiceIds.includes(serviceId));
-  const parentServicesRemovedIds = originalParentServiceIds
-    .filter((serviceId) => !updatedParentServiceIds.includes(serviceId));
-
-  return {
-    count: rows.length,
-    hasTimeChange: changedFields.includes('time'),
-    hasCapacityChange: changedFields.includes('capacity'),
-    hasServicesChange: changedFields.includes('services'),
-    parentServicesAddedIds,
-    parentServicesRemovedIds,
-    rows,
-    changedFields
-  };
+  return nextPath;
 }
 
 function calculateAffectedBookings(originalModel, updatedModel, siteBookings) {
@@ -1179,7 +1042,6 @@ function buildSessionHistory(siteRecurringSessions, startDate = null, endDate = 
       from: session.from,
       until: session.until,
       services: session.services || [],
-      childSessions: asArray(session.childSessions || []).slice().sort((a, b) => String(a?.date || '').localeCompare(String(b?.date || ''))),
       capacity: Number(session.capacity) || 0,
       slotLength: Number(session.slotLength) || 0
     });
@@ -1863,41 +1725,6 @@ router.all('/site/:id/clinics/edit/:sessionId/affected-bookings', (req, res) => 
       ...state,
       affectedBookingIds: []
     })
-  });
-});
-
-router.all('/site/:id/clinics/edit/:sessionId/child-clinic-overrides', (req, res) => {
-  const data = req.session.data;
-  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
-  if (!state) {
-    return res.redirect(`/site/${req.site_id}/clinics`);
-  }
-
-  const warning = state.childOverrideWarning;
-  const nextPath = state.postWarningPath
-    || (asArray(state.affectedBookingIds).length > 0
-      ? `${editSummaryPath(req.site_id, req.params.sessionId)}/affected-bookings`
-      : `${editSummaryPath(req.site_id, req.params.sessionId)}/check-answers`);
-
-  if (!warning || !asArray(warning.rows).length) {
-    return res.redirect(nextPath);
-  }
-
-  if (req.method === 'POST') {
-    return res.redirect(nextPath);
-  }
-
-  const step = state.currentEditStep || editStepForField(state.currentEditField, state?.draft?.type === 'Clinic series');
-  const backHref = step
-    ? editStepPath(req.site_id, req.params.sessionId, step)
-    : editSummaryPath(req.site_id, req.params.sessionId);
-
-  return res.render('site/clinics/edit/child-clinic-overrides', {
-    sessionId: req.params.sessionId,
-    backHref,
-    formAction: `${editSummaryPath(req.site_id, req.params.sessionId)}/child-clinic-overrides`,
-    warning: warning,
-    rows: warning.rows
   });
 });
 

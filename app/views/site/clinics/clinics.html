@@ -8,13 +8,23 @@
   {% set serviceTypes = [] %}
 
   {% for service_id in service_ids %}
-    {% set vaccineShortcode = data.services[service_id].cohort.type ~ " " ~ data.services[service_id].vaccine %}
-    {% if vaccineShortcode not in serviceTypes %}
-      {% set serviceTypes = serviceTypes.concat([vaccineShortcode]) %}
+    {% if data.services[service_id] %}
+      {% set vaccineShortcode = data.services[service_id].cohort.type ~ " " ~ data.services[service_id].vaccine %}
+      {% if vaccineShortcode not in serviceTypes %}
+        {% set serviceTypes = serviceTypes.concat([vaccineShortcode]) %}
+      {% endif %}
     {% endif %}
   {% endfor %}
 
-  {{ serviceTypes | join(', ') }}
+  {% if serviceTypes | length > 0 %}
+    <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+      {% for serviceType in serviceTypes %}
+        <li>{{ serviceType }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <span class="nhsuk-u-secondary-text-colour">No services</span>
+  {% endif %}
 {% endmacro %}
 
 {% macro timeLabel(session) %}
@@ -41,11 +51,6 @@
     text: text,
     classes: "nhsuk-tag--" ~ colour
   }) }}
-
-{% endmacro %}
-
-{% macro daysLabel(session) %}
-  {{ (session.days or session.recurrencePattern.byDay or []) | shortWeekdays }}
 {% endmacro %}
 
 {% macro dateLabel(session) %}
@@ -67,117 +72,34 @@
   {% endif %}
 {% endmacro %}
 
-{% macro clinicCard(displaySession, editSessionId) %}
-  {% macro childServiceChanges(childSession) %}
-    {% set operations = childSession.services or [] %}
-    {% if operations | length == 0 %}
-      <span class="nhsuk-u-secondary-text-colour">Change services</span>
-    {% elif operations[0] is string %}
-      <span class="nhsuk-u-secondary-text-colour">Change services</span><br>
-      Services replaced
-    {% else %}
-      {% for operation in operations %}
-        {% set serviceName = data.services[operation.service].name if data.services[operation.service] else operation.service %}
-        <span class="nhsuk-u-secondary-text-colour">Change services</span><br>
-        {% if operation.operation == 'add' %}
-          Added {{ serviceName }}
-        {% elif operation.operation == 'remove' %}
-          Removed {{ serviceName }}
-        {% else %}
-          Service updated: {{ serviceName }}
+{% macro clinicsTable(sessions, includeActions) %}
+  <table class="nhsuk-table-responsive" role="table">
+    <thead class="nhsuk-table__head" role="rowgroup">
+      <tr role="row">
+        <th scope="col" class="nhsuk-table__header" role="columnheader">Type</th>
+        <th scope="col" class="nhsuk-table__header" role="columnheader">Date and time</th>
+        <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
+        {% if includeActions %}
+          <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
         {% endif %}
-        {% if not loop.last %}<br>{% endif %}
+      </tr>
+    </thead>
+    <tbody class="nhsuk-table__body" role="rowgroup">
+      {% for session in sessions %}
+        <tr class="nhsuk-table__row" role="row">
+          <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) }}</td>
+          <td class="nhsuk-table__cell" role="cell">{{ dateLabel(session) }}<br>{{ timeLabel(session) }}</td>
+          <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
+          {% if includeActions %}
+            <td class="nhsuk-table__cell" role="cell">
+              <a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">View and edit</a>
+            </td>
+          {% endif %}
+        </tr>
       {% endfor %}
-    {% endif %}
-  {% endmacro %}
-
-  {% macro childChangesSummary(childSession) %}
-    {% set hasChange = false %}
-    <dl class="app-clinic__changes-definitions">
-      {% if childSession.label %}
-        {% set hasChange = true %}
-        <div class="app-clinic__changes-pair">
-          <dt class="app-clinic__changes-term">Name</dt>
-          <dd class="app-clinic__changes-description">{{ childSession.label }}</dd>
-        </div>
-      {% endif %}
-      {% if childSession.from and childSession.until %}
-        {% set hasChange = true %}
-        <div class="app-clinic__changes-pair">
-          <dt class="app-clinic__changes-term">Time</dt>
-          <dd class="app-clinic__changes-description">{{ childSession.from | nhsTime }} to {{ childSession.until | nhsTime }}</dd>
-        </div>
-      {% endif %}
-      {% if childSession.capacity %}
-        {% set hasChange = true %}
-        <div class="app-clinic__changes-pair">
-          <dt class="app-clinic__changes-term">Capacity</dt>
-          <dd class="app-clinic__changes-description">{{ childSession.capacity }}</dd>
-        </div>
-      {% endif %}
-      {% if childSession.services and (childSession.services | length) > 0 %}
-        {% set hasChange = true %}
-        <div class="app-clinic__changes-pair">
-          <dt class="app-clinic__changes-term">Services</dt>
-          <dd class="app-clinic__changes-description">{{ childServiceChanges(childSession) }}</dd>
-        </div>
-      {% endif %}
-      {% if not hasChange %}
-        <div class="app-clinic__changes-pair">
-          <dt class="app-clinic__changes-term">No changes</dt>
-          <dd class="app-clinic__changes-description">No differences recorded</dd>
-        </div>
-      {% endif %}
-    </dl>
-  {% endmacro %}
-
-  <div class="app-clinc">
-    {% set modelChildSessions = [] %}
-    {% if data.recurring_sessions and data.recurring_sessions[site_id] and data.recurring_sessions[site_id][editSessionId] %}
-      {% set modelChildSessions = data.recurring_sessions[site_id][editSessionId].childSessions or [] %}
-    {% endif %}
-    {% set childSessions = displaySession.childSessions or modelChildSessions or [] %}
-
-    <header class="app-clinic__header">
-      <div class="app-clinic__title">
-        {{ typeLabel(displaySession) }}
-        <h2 class="nhsuk-heading-xs">{{ dateLabel(displaySession) }}, {{ timeLabel(displaySession) }}</h2>
-      </div>
-      <nav class="app-clinic__nav" aria-label="Clinic actions">
-        <ul class="app-clinic__nav-list">
-          <li class="app-clinic__nav-item"><a href="/site/{{ site_id }}/clinics/edit/{{ editSessionId }}">Edit</a></li>
-          <li class="app-clinic__nav-item"><a href="/not-in-this-prototype">Remove</a></li>
-        </ul>
-      </nav>
-    </header>
-    <div class="app-clinic__content">
-      {{ services(displaySession.services) }}
-    </div>
-    {% if childSessions | length > 0 %}
-      <footer class="app-clinic__footer">
-        <table class="nhsuk-table-responsive app-clinic__changes-table" role="table">
-          <thead class="nhsuk-table__head" role="rowgroup">
-            <tr role="row">
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Date</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">What changed</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="nhsuk-table__body" role="rowgroup">
-          {% for childSession in childSessions %}
-            <tr class="nhsuk-table__row" role="row">
-              <td class="nhsuk-table__cell" role="cell">{{ childSession.date | formatDate('d MMM yyyy') }}</td>
-              <td class="nhsuk-table__cell" role="cell">{{ childChangesSummary(childSession) }}</td>
-              <td class="nhsuk-table__cell" role="cell"><a href="/site/{{ site_id }}/clinics/edit/{{ editSessionId }}">Undo changes</a></td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </footer>
-    {% endif %}
-  </div>
+    </tbody>
+  </table>
 {% endmacro %}
-
 
 {% block content %}
   <div class="nhsuk-grid-row">
@@ -210,55 +132,35 @@
 
       <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
 
-      <h2 class="nhsuk-heading-m">Active clinics</h2>
-
       {% set sessionHistory = sessionHistory or [] %}
-
-      {% if sessionHistory | length == 0 %}
-        {{ insetText({
-          text: "No clinics have been created yet."
-        }) }}
-      {% endif %}
-
-      {% if sessionHistory | length > 0 %}
-        {% for session in sessionHistory %}
-          {{ clinicCard(session, session.id) }}
-        {% endfor %}
-      {% endif %}
-
-      <h2 class="nhsuk-heading-m nhsuk-u-margin-top-6">Completed clinics</h2>
-
       {% set pastSessionHistory = pastSessionHistory or [] %}
 
-      {% if pastSessionHistory | length == 0 %}
-        {{ insetText({
-          text: "No completed clinics"
-        }) }}
-      {% endif %}
-
-      {% if pastSessionHistory | length > 0 %}
-        <table class="nhsuk-table-responsive" role="table">
-          <thead class="nhsuk-table__head" role="rowgroup">
-            <tr role="row">
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Name</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Type</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Date</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
-            </tr>
-          </thead>
-          <tbody class="nhsuk-table__body" role="rowgroup">
-            {% for session in pastSessionHistory %}
-              <tr class="nhsuk-table__row" role="row">
-                <td class="nhsuk-table__cell" role="cell">{{ session.label or 'Clinic' }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ dateLabel(session) }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ timeLabel(session) }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% endif %}
-
+      {{ tabs({
+        items: [
+          {
+            label: "Active clinics (" ~ (sessionHistory | length) ~ ")",
+            id: "active-clinics",
+            panel: {
+              html: (
+                insetText({ text: "No clinics have been created yet." })
+                if (sessionHistory | length) == 0
+                else clinicsTable(sessionHistory, true)
+              )
+            }
+          },
+          {
+            label: "Completed clinics (" ~ (pastSessionHistory | length) ~ ")",
+            id: "completed-clinics",
+            panel: {
+              html: (
+                insetText({ text: "No completed clinics" })
+                if (pastSessionHistory | length) == 0
+                else clinicsTable(pastSessionHistory, false)
+              )
+            }
+          }
+        ]
+      }) }}
     </div>
   </div>
 {% endblock %}
