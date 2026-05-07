@@ -823,28 +823,64 @@ function hasEditFieldChanged(original, draft, field) {
   }
 }
 
-function buildChangedRowsForEdit(original, draft, state, siteId, sessionId, data) {
-  const rowsByField = buildSummaryRowMap(draft, siteId, sessionId, data);
+function buildChangedFieldKeysForEdit(original, draft, state) {
   const editableFields = currentEditableFields(state);
   const candidateFields = editableFields.length > 0
     ? editableFields
     : ['date', 'days', 'time', 'capacity', 'duration', 'services', 'closures'];
 
-  const changedRows = candidateFields
-    .filter((field) => rowsByField[field] && hasEditFieldChanged(original, draft, field))
-    .map((field) => rowsByField[field]);
+  const changedFields = candidateFields
+    .filter((field) => hasEditFieldChanged(original, draft, field));
 
-  if (changedRows.length > 0) {
-    return changedRows;
+  if (changedFields.length > 0) {
+    return changedFields;
   }
 
   if (editableFields.length > 0) {
-    return editableFields
-      .filter((field) => rowsByField[field])
-      .map((field) => rowsByField[field]);
+    return editableFields;
   }
 
-  return buildSummaryRowsForEdit(draft, siteId, sessionId, data);
+  return candidateFields;
+}
+
+function childSessionUnaffectedByField(childSession, field) {
+  switch (field) {
+    case 'time':
+      return Boolean(childSession?.from && childSession?.until);
+    case 'capacity':
+      return childSession?.capacity !== undefined && childSession?.capacity !== null;
+    case 'services':
+      return asArray(childSession?.services).length > 0;
+    default:
+      return false;
+  }
+}
+
+function formatShortDate(dateISO) {
+  const dt = DateTime.fromISO(dateISO || '');
+  return dt.isValid ? dt.toFormat('d MMM yyyy') : String(dateISO || '');
+}
+
+function buildUnaffectedChildClinicDates(model, changedFields, siteId) {
+  const childSessions = asArray(model?.childSessions).filter((childSession) => childSession?.date);
+  if (childSessions.length === 0) return [];
+
+  const changed = asArray(changedFields).filter(Boolean);
+  if (changed.length === 0) return [];
+
+  const merged = mergeDailyAvailability({}, String(siteId || ''), { [model.id]: model });
+
+  const unaffectedDates = childSessions
+    .filter((childSession) => changed.every((field) => childSessionUnaffectedByField(childSession, field)))
+    .map((childSession) => childSession.date)
+    .filter((dateISO) => {
+      const sessions = merged?.[dateISO]?.sessions || [];
+      return sessions.some((session) => String(session?.recurringId) === String(model?.id));
+    });
+
+  return Array.from(new Set(unaffectedDates))
+    .sort((a, b) => String(a).localeCompare(String(b)))
+    .map((dateISO) => formatShortDate(dateISO));
 }
 
 function reviewBackPath(siteId, sessionId, state) {
@@ -1727,6 +1763,10 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
 
   if (req.method === 'POST') {
     const updatedModel = draftToModel(state.draft);
+    const changedFields = buildChangedFieldKeysForEdit(state.original, state.draft, state);
+    const unaffectedChildClinics = state.draft.type === 'Clinic series'
+      ? buildUnaffectedChildClinicDates(updatedModel, changedFields, req.site_id)
+      : [];
     persistRecurringSession(data, req.site_id, updatedModel);
 
     const siteBookings = data?.bookings?.[req.site_id] || {};
@@ -1742,7 +1782,8 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
       siteId: req.site_id,
       sessionId: req.params.sessionId,
       isSeries: state.draft.type === 'Clinic series',
-      cancelledBookingsSummary
+      cancelledBookingsSummary,
+      unaffectedChildClinics
     });
 
     applyAffectedBookingAction(siteBookings, state.affectedBookingIds, state.bookingAction);
@@ -1753,7 +1794,20 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
   return res.render('site/clinics/edit/check-answers', {
     sessionId: req.params.sessionId,
     isSeries: state.draft.type === 'Clinic series',
-    rows: buildChangedRowsForEdit(state.original, state.draft, state, req.site_id, req.params.sessionId, data),
+    rowFields: buildChangedFieldKeysForEdit(state.original, state.draft, state),
+    draft: state.draft,
+    previous: {
+      startDate: state.original?.startDate,
+      endDate: state.original?.endDate,
+      days: asArray(state.original?.recurrencePattern?.byDay),
+      from: state.original?.from,
+      until: state.original?.until,
+      capacity: String(Number(state.original?.capacity) || 1),
+      duration: String(Number(state.original?.slotLength) || 10),
+      services: asArray(state.original?.services),
+      closuresCount: asArray(state.original?.closures).length
+    },
+    checkAnswersMode: 'clinic-edit',
     affectedCount: asArray(state.affectedBookingIds).length,
     bookingAction: state.bookingAction,
     backHref: reviewBackPath(req.site_id, req.params.sessionId, state)
@@ -1789,7 +1843,8 @@ router.get('/site/:id/clinics/edit/:sessionId/success', (req, res) => {
 
   return res.render('site/clinics/edit/success', {
     sessionId: req.params.sessionId,
-    cancelSummary
+    cancelSummary,
+    unaffectedChildClinics: matchingSuccessState?.unaffectedChildClinics || []
   });
 });
 

@@ -373,20 +373,16 @@ function hasFieldChanged(state, field) {
   }
 }
 
-function buildChangedRowsForCheckAnswers(state, siteId, itemId, data) {
-  const rowMap = buildSummaryRowMap(state.draft, siteId, itemId, data);
+function buildChangedFieldKeysForCheckAnswers(state) {
   const editableFields = currentEditableFields(state);
-  const rows = editableFields
-    .filter((field) => rowMap[field] && hasFieldChanged(state, field))
-    .map((field) => rowMap[field]);
+  const changedFields = editableFields
+    .filter((field) => hasFieldChanged(state, field));
 
-  if (rows.length > 0) {
-    return rows;
+  if (changedFields.length > 0) {
+    return changedFields;
   }
 
-  return editableFields
-    .filter((field) => rowMap[field])
-    .map((field) => rowMap[field]);
+  return editableFields;
 }
 
 function normalizeIsoMinute(datetimeISO) {
@@ -814,7 +810,16 @@ router.all('/site/:id/change/session/:itemId/check-answers', (req, res) => {
     pageName: 'Check your answers',
     sessionId: req.params.itemId,
     isSeries: false,
-    rows: buildChangedRowsForCheckAnswers(state, req.site_id, req.params.itemId, data),
+    rowFields: buildChangedFieldKeysForCheckAnswers(state),
+    draft: state.draft,
+    previous: {
+      name: state.draft.parentName,
+      from: state.draft.parentFrom,
+      until: state.draft.parentUntil,
+      capacity: String(state.draft.parentCapacity),
+      services: asArray(state.draft.parentServices)
+    },
+    checkAnswersMode: 'session-change',
     affectedCount: asArray(state.affectedBookingIds).length,
     bookingAction: state.bookingAction,
     formAction: `${changeSummaryPath(req.site_id, req.params.itemId)}/check-answers`,

@@ -106,25 +106,10 @@ const clinics = [
         label: 'Adult Flu and Covid clinics (extended)'
       },
       {
-        date: childSessionIn3Days,
+        date: childSessionIn4Days,
         from: '10:00',
         until: '16:30',
         label: 'Adult Flu and Covid clinics (extended)'
-      },
-      {
-        date: childSessionIn4Days,
-        capacity: 3,
-        from: '10:00',
-        until: '16:30',
-        label: 'Adult Flu and Covid clinics (extra vaccinator and change in times)'
-      },
-      {
-        date: childSessionIn5Days,
-        services: [
-          SERVICE_IDS.COVID_ADULT,
-          SERVICE_IDS.RSV_ADULT
-        ],
-        label: 'Adult Flu and Covid clinics (service replace)'
       },
       {
         date: childSessionIn6Days,

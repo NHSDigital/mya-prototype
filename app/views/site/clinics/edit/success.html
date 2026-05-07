@@ -15,24 +15,48 @@
           <p><a href="/not-in-this-prototype">View the list of people who have not been notified</a></p>
         {% endif %}
 
-        <h2 class="nhsuk-heading-m">What would you like to do next?</h2>
+        {% if unaffectedChildClinics and unaffectedChildClinics.length %}
+          {% set unaffectedCount = unaffectedChildClinics.length %}
+          <h2 class="nhsuk-heading-m">{{ unaffectedCount }} {{ 'clinic has' if unaffectedCount == 1 else 'clinics have' }} not been updated</h2>
+          <ul class="nhsuk-list nhsuk-list--bullet">
+            {% for clinicDate in unaffectedChildClinics %}
+              <li>{{ clinicDate }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
 
-        {% for action in cancelSummary.nextActions %}
-          <p class="nhsuk-body"><a href="{{ action.href }}">{{ action.text }}</a></p>
-        {% endfor %}
+        <h2 class="nhsuk-heading-m">What would you like to do next?</h2>
+        <ul class="nhsuk-list nhsuk-list--bullet">
+          {% for action in cancelSummary.nextActions %}
+            <li><a href="{{ action.href }}">{{ action.text }}</a></li>
+          {% endfor %}
+        </ul>
 
       {% else %}
         {{ panel({ titleText: titleText or 'Clinic updated' }) }}
-        {% if primaryHref %}
-        <p class="nhsuk-body"><a href="{{ primaryHref }}">{{ primaryText or 'Continue' }}</a></p>
-        {% elif sessionId %}
-        <p class="nhsuk-body"><a href="/site/{{ site_id }}/clinics/edit/{{ sessionId }}">Make another change</a></p>
+        {% if unaffectedChildClinics and unaffectedChildClinics.length %}
+          {% set unaffectedCount = unaffectedChildClinics.length %}
+          <h2 class="nhsuk-heading-m">{{ unaffectedCount }} {{ 'clinic has' if unaffectedCount == 1 else 'clinics have' }} not been updated</h2>
+          <ul class="nhsuk-list nhsuk-list--bullet">
+            {% for clinicDate in unaffectedChildClinics %}
+              <li>{{ clinicDate }}</li>
+            {% endfor %}
+          </ul>
         {% endif %}
-        {% if secondaryHref %}
-        <p class="nhsuk-body"><a href="{{ secondaryHref }}">{{ secondaryText }}</a></p>
-        {% elif not primaryHref or sessionId %}
-        <p class="nhsuk-body"><a href="/site/{{ site_id }}/clinics">Back to clinics</a></p>
-        {% endif %}
+        <h2 class="nhsuk-heading-m">What would you like to do next?</h2>
+        <ul class="nhsuk-list nhsuk-list--bullet">
+          {% if primaryHref %}
+            <li><a href="{{ primaryHref }}">{{ primaryText or 'Continue' }}</a></li>
+          {% elif sessionId %}
+            <li><a href="/site/{{ site_id }}/clinics/edit/{{ sessionId }}">Make another change</a></li>
+          {% endif %}
+
+          {% if secondaryHref %}
+            <li><a href="{{ secondaryHref }}">{{ secondaryText }}</a></li>
+          {% elif not primaryHref or sessionId %}
+            <li><a href="/site/{{ site_id }}/clinics">Back to clinics</a></li>
+          {% endif %}
+        </ul>
       {% endif %}
     </div>
   </div>
