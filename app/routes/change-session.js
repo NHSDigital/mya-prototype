@@ -107,6 +107,14 @@ function changeStepPath(siteId, itemId, step) {
   return `${changeSummaryPath(siteId, itemId)}/${step}`;
 }
 
+function normalizeBackHref(back) {
+  if (typeof back !== 'string') return null;
+  const value = back.trim();
+  if (!value.startsWith('/')) return null;
+  if (value.startsWith('//')) return null;
+  return value;
+}
+
 function changeFieldToStep(field) {
   switch (field) {
     case 'name':
@@ -365,20 +373,16 @@ function hasFieldChanged(state, field) {
   }
 }
 
-function buildChangedRowsForCheckAnswers(state, siteId, itemId, data) {
-  const rowMap = buildSummaryRowMap(state.draft, siteId, itemId, data);
+function buildChangedFieldKeysForCheckAnswers(state) {
   const editableFields = currentEditableFields(state);
-  const rows = editableFields
-    .filter((field) => rowMap[field] && hasFieldChanged(state, field))
-    .map((field) => rowMap[field]);
+  const changedFields = editableFields
+    .filter((field) => hasFieldChanged(state, field));
 
-  if (rows.length > 0) {
-    return rows;
+  if (changedFields.length > 0) {
+    return changedFields;
   }
 
-  return editableFields
-    .filter((field) => rowMap[field])
-    .map((field) => rowMap[field]);
+  return editableFields;
 }
 
 function normalizeIsoMinute(datetimeISO) {
@@ -549,9 +553,14 @@ function ensureChangeStateForSession(req, res) {
   const data = req.session.data;
   const siteId = req.site_id;
   const itemId = req.params.itemId;
+  const requestedBackHref = normalizeBackHref(req.query?.back);
   const existing = getChangeState(data);
 
   if (existing && existing.siteId === siteId && existing.itemId === itemId) {
+    if (requestedBackHref) {
+      existing.returnTo = requestedBackHref;
+      setChangeState(data, existing);
+    }
     return existing;
   }
 
@@ -570,6 +579,7 @@ function ensureChangeStateForSession(req, res) {
     originalParent: clone(parentModel),
     originalChild: clone(originalChild),
     draft: buildChildDraft(parentModel, target.session, target.date),
+    returnTo: requestedBackHref || null,
     currentEditStep: null,
     bookingAction: null,
     affectedBookingIds: []
@@ -601,7 +611,7 @@ router.get('/site/:id/change/:type/:itemId', (req, res) => {
     draft: state.draft,
     date: state.date,
     displayDate: formatDisplayDate(state.date),
-    weekHref: weekViewHref(req.site_id, state.date)
+    weekHref: state.returnTo || weekViewHref(req.site_id, state.date)
   });
 });
 
@@ -800,7 +810,16 @@ router.all('/site/:id/change/session/:itemId/check-answers', (req, res) => {
     pageName: 'Check your answers',
     sessionId: req.params.itemId,
     isSeries: false,
-    rows: buildChangedRowsForCheckAnswers(state, req.site_id, req.params.itemId, data),
+    rowFields: buildChangedFieldKeysForCheckAnswers(state),
+    draft: state.draft,
+    previous: {
+      name: state.draft.parentName,
+      from: state.draft.parentFrom,
+      until: state.draft.parentUntil,
+      capacity: String(state.draft.parentCapacity),
+      services: asArray(state.draft.parentServices)
+    },
+    checkAnswersMode: 'session-change',
     affectedCount: asArray(state.affectedBookingIds).length,
     bookingAction: state.bookingAction,
     formAction: `${changeSummaryPath(req.site_id, req.params.itemId)}/check-answers`,

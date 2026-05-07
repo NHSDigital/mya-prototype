@@ -1,8 +1,9 @@
 {% extends '../../layouts/layout.html' %}
 {% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
+{% from '../../components/action-control-bar.njk' import appActionControlBar %}
 {% from 'nhsuk/components/card/macro.njk' import card %}
 
-{% set pageName = week[0] | formatDate('d LLLL') ~ ' to ' ~ week[6] | formatDate('d LLLL yyyy') %}
+{% set pageName = weekHeading or (week[0] | formatDate('d LLLL') ~ ' to ' ~ week[6] | formatDate('d LLLL yyyy')) %}
 
 {% block content %}
   <div class="nhsuk-grid-row">
@@ -24,27 +25,24 @@
               href: '/site/' ~ site_id ~ '/availability/month'
             },
             {
-              text: 'Clinics',
-              href: '/site/' ~ site_id ~ '/clinics',
-              primary: true
-            } if features.allAvailability
+              text: 'Clinics list',
+              href: '/site/' ~ site_id ~ '/clinics'
+            }
           ]
         })
       }}
+      <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
+      {{ appActionControlBar({ siteId: site_id }) }}
 
-      {% if features.cancelDateRange %}
-      {% include "../../includes/addCancelButtons.njk" %}
-      {% endif %}
-
-      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      
 
       {{ pagination({
         previous: {
-          labelText: previousWeek.start | formatDate('d') ~ " to " ~ previousWeek.end | formatDate('d LLL'),
+          labelText: previousWeekLabel or (previousWeek.start | formatDate('d') ~ " to " ~ previousWeek.end | formatDate('d LLL')),
           href: "/site/" ~ site_id ~ "/availability/week?date=" ~ previousWeek.start
         },
         next: {
-          labelText: nextWeek.start | formatDate('d') ~ " to " ~ nextWeek.end | formatDate('d LLL'),
+          labelText: nextWeekLabel or (nextWeek.start | formatDate('d') ~ " to " ~ nextWeek.end | formatDate('d LLL')),
           href: "/site/" ~ site_id ~ "/availability/week?date=" ~ nextWeek.start
         }
       }) }}
@@ -62,7 +60,7 @@
               <table class="nhsuk-table">
                 <thead class="nhsuk-table__head">
                   <tr class="nhsuk-table__row">
-                    <th scope="col" class="nhsuk-table__header">Name and time</th>
+                    <th scope="col" class="nhsuk-table__header">Time</th>
                     <th scope="col" class="nhsuk-table__header">Services</th>
                     <th scope="col" class="nhsuk-table__header">Booked</th>
                     <th scope="col" class="nhsuk-table__header">Unbooked</th>
@@ -73,9 +71,6 @@
                   {% for session in day.sessions %}
                   <tr class="nhsuk-table__row">
                     <td class="nhsuk-table__cell">
-                      {% if session.label %}
-                      {{ session.label }}<br>
-                      {% endif %}
                       <strong>{{ session.from | nhsTime }} to {{ session.until | nhsTime }}</strong>
                     </td>
                     <td class="nhsuk-table__cell">
@@ -110,6 +105,10 @@
                   <p class="nhsuk-body-s nhsuk-u-margin-bottom-0"><strong>Unbooked:</strong> {{ day.unbookedAppointments }}</p>
                 </div>
               </div>
+
+              <p class="nhsuk-u-margin-top-4 nhsuk-u-margin-bottom-0">
+                <a href="{{ day.dayViewHref }}">View day</a>
+              </p>
 
             {% else %}
               <p class="nhsuk-body nhsuk-u-margin-bottom-0">No appointments.</p>

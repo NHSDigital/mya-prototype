@@ -1,8 +1,9 @@
 {% extends '../../layouts/layout.html' %}
 {% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
+{% from '../../components/action-control-bar.njk' import appActionControlBar %}
 {% from 'nhsuk/components/card/macro.njk' import card %}
 
-{% set pageName = currentDate | formatDate("LLLL yyyy") %}
+{% set pageName = monthHeading or (currentDate | formatDate("LLLL yyyy")) %}
 
 {% block content %}
   <div class="nhsuk-grid-row">
@@ -24,27 +25,23 @@
               current: true
             },
             {
-              text: 'Clinics',
-              href: '/site/' ~ site_id ~ '/clinics',
-              primary: true
-            } if features.allAvailability
+              text: 'Clinics list',
+              href: '/site/' ~ site_id ~ '/clinics'
+            }
           ]
         })
       }}
 
-      {% if features.cancelDateRange %}
-      {% include "../../includes/addCancelButtons.njk" %}
-      {% endif %}
-
-      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+      <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
+      {{ appActionControlBar({ siteId: site_id }) }}
 
       {{ pagination({
         previous: {
-          labelText: previousMonthDate | formatDate('LLLL yyyy'),
+          labelText: previousMonthLabel or (previousMonthDate | formatDate('LLLL yyyy')),
           href: "/site/" ~ site_id ~ "/availability/month?date=" ~ previousMonthDate
         },
         next: {
-          labelText: nextMonthDate | formatDate('LLLL yyyy'),
+          labelText: nextMonthLabel or (nextMonthDate | formatDate('LLLL yyyy')),
           href: "/site/" ~ site_id ~ "/availability/month?date=" ~ nextMonthDate
         }
       }) }}

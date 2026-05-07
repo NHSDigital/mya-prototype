@@ -54,7 +54,7 @@ const serviceDefinitions = [
   { id: 'RSV:Adult', name: 'RSV Adult', vaccine: vaccineTypes.RSV, group: 'RSV', age: '18+', type: 'Adult' },
   { id: 'RSV_COVID:12-17', name: 'RSV and COVID 12 to 17', vaccine: [vaccineTypes.RSV, vaccineTypes.COVID], group: 'RSV_AND_COVID', age: '12-17', type: 'Child' },
   { id: 'RSV_COVID:18+', name: 'RSV and COVID 18+', vaccine: [vaccineTypes.RSV, vaccineTypes.COVID], group: 'RSV_AND_COVID', age: '18+', type: 'Adult' },
-  { id: 'MENB:16-18', name: 'MenB 17 to 18', vaccine: vaccineTypes.MENB, group: 'MENB', age: '17-18', type: null }
+  { id: 'MENB:16-18', name: 'MenB Young People', vaccine: vaccineTypes.MENB, group: 'MENB', age: '17-18', type: null }
 ];
 
 const SERVICES = Object.fromEntries(
@@ -120,14 +120,9 @@ const base = {
         hideCard: true
       },
       {
-        text: 'View appointments',
-        description: 'View and manage appointments for your site',
+        text: 'Clinics',
+        description: 'View appointments for your site',
         hrefTemplate: '/site/:id/availability/day'
-      },
-      {
-        text: 'Manage clinics',
-        description: 'Create clinics and review recently created clinic series',
-        hrefTemplate: '/site/:id/clinics'
       },
       {
         text: 'Change site details',

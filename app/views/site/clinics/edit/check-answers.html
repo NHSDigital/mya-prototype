@@ -9,11 +9,40 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
+      {% macro servicesSummaryHtml(serviceIds) %}
+        {% set serviceNames = [] %}
+        {% for serviceId in serviceIds or [] %}
+          {% set serviceNames = serviceNames.concat([data.services[serviceId].name if data.services[serviceId] else serviceId]) %}
+        {% endfor %}
+
+        {% if serviceNames | length > 0 %}
+          <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+            {% for serviceName in serviceNames %}
+              <li>{{ serviceName }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          None selected
+        {% endif %}
+      {% endmacro %}
+
+      {% macro servicesText(serviceIds) %}
+        {% set serviceNames = [] %}
+        {% for serviceId in serviceIds or [] %}
+          {% set serviceNames = serviceNames.concat([data.services[serviceId].name if data.services[serviceId] else serviceId]) %}
+        {% endfor %}
+        {{ serviceNames | join(', ') if (serviceNames | length) > 0 else 'None selected' }}
+      {% endmacro %}
+
+      {% macro withPrevious(currentHtml, previousText) %}
+        {{ currentHtml | safe }}<br><span class="nhsuk-u-secondary-text-colour ">Previously, {{ previousText or 'Not set' }}</span>
+      {% endmacro %}
+
       <h1 class="nhsuk-heading-l">{{ pageName or 'Check your answers' }}</h1>
 
       {% set resolvedBookingActionText = 'No booking action selected' %}
       {% if bookingAction == 'cancel' %}
-        {% set resolvedBookingActionText = 'Cancel appointments' %}
+        {% set resolvedBookingActionText = 'Cancel ' ~ affectedCount ~ ' affected appointment' ~ ('s' if affectedCount != 1 else '') %}
       {% elif bookingAction == 'orphan' %}
         {% set resolvedBookingActionText = 'Keep booked appointments' %}
       {% endif %}
@@ -21,11 +50,116 @@
       {% set resolvedButtonText = buttonText or 'Save changes' %}
       {% set resolvedButtonClasses = '' %}
       {% if bookingAction == 'cancel' %}
-        {% set resolvedButtonText = 'Save changes and cancel bookings' %}
+        {% set resolvedButtonText = 'Save changes and cancel appointments' %}
         {% set resolvedButtonClasses = 'nhsuk-button--warning' %}
       {% endif %}
 
-      {% set allRows = rows %}
+      {% set allRows = [] %}
+      {% if rowFields and draft %}
+        {% for field in rowFields %}
+          {% set row = null %}
+
+          {% if checkAnswersMode == 'clinic-edit' %}
+            {% if field == 'date' %}
+              {% set dateText = draft.startDate | formatDate('d MMM yyyy') %}
+              {% if isSeries %}
+                {% set dateText = (draft.startDate | formatDate('d MMM yyyy')) + ' to ' + (draft.endDate | formatDate('d MMM yyyy') ) %}
+              {% endif %}
+              {% set previousDateText = previous.startDate | formatDate('d MMM yyyy') if previous and previous.startDate else 'Not set' %}
+              {% if isSeries and previous and previous.endDate %}
+                {% set previousDateText = (previous.startDate | formatDate('d MMM yyyy')) + ' to ' + (previous.endDate | formatDate('d MMM yyyy')) %}
+              {% endif %}
+              {% set row = {
+                key: { text: 'Dates' if isSeries else 'Date' },
+                value: { html: withPrevious(dateText, previousDateText) },
+                actions: { items: [{ href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/change/date', text: 'Change', visuallyHiddenText: ' dates' }] }
+              } %}
+            {% elif field == 'days' and isSeries %}
+              {% set previousDaysText = (previous.days or []) | join(', ') if previous else 'Not set' %}
+              {% set row = {
+                key: { text: 'Days' },
+                value: { html: withPrevious((draft.days or []) | join(', '), previousDaysText) },
+                actions: { items: [{ href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/change/days', text: 'Change', visuallyHiddenText: ' days' }] }
+              } %}
+            {% elif field == 'time' %}
+              {% set previousTimeText = ((previous.from | nhsTime) + ' to ' + (previous.until | nhsTime)) if previous and previous.from and previous.until else 'Not set' %}
+              {% set row = {
+                key: { text: 'Time' },
+                value: { html: withPrevious((draft.from | nhsTime) + ' to ' + (draft.until | nhsTime), previousTimeText) },
+                actions: { items: [{ href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/change/time', text: 'Change', visuallyHiddenText: ' time' }] }
+              } %}
+            {% elif field == 'capacity' %}
+              {% set row = {
+                key: { text: 'Vaccinators and capacity' },
+                value: { html: withPrevious(draft.capacity, previous.capacity if previous else 'Not set') },
+                actions: { items: [{ href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/change/capacity', text: 'Change', visuallyHiddenText: ' vaccinators and capacity' }] }
+              } %}
+            {% elif field == 'duration' %}
+              {% set previousDurationText = (previous.duration + ' minutes') if previous and previous.duration else 'Not set' %}
+              {% set row = {
+                key: { text: 'Appointment length' },
+                value: { html: withPrevious(draft.duration + ' minutes', previousDurationText) },
+                actions: { items: [{ href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/change/duration', text: 'Change', visuallyHiddenText: ' appointment length' }] }
+              } %}
+            {% elif field == 'services' %}
+              {% set currentServicesHtml = servicesSummaryHtml(draft.services) %}
+              {% set previousServicesText = servicesText(previous.services) if previous else 'Not set' %}
+              {% set row = {
+                key: { text: 'Services' },
+                value: { html: withPrevious(currentServicesHtml, previousServicesText) },
+                actions: { items: [{ href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/change/services', text: 'Change', visuallyHiddenText: ' services' }] }
+              } %}
+            {% elif field == 'closures' and isSeries %}
+              {% set closuresText = 'None added' %}
+              {% if draft.closures and (draft.closures | length) > 0 %}
+                {% set closuresText = (draft.closures | length) + ' added' %}
+              {% endif %}
+              {% set previousClosuresText = (previous.closuresCount + ' added') if previous and previous.closuresCount and previous.closuresCount > 0 else 'None added' %}
+              {% set row = {
+                key: { text: 'Clinic closures' },
+                value: { html: withPrevious(closuresText, previousClosuresText) },
+                actions: { items: [{ href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/change/closures', text: 'Change', visuallyHiddenText: ' clinic closures' }] }
+              } %}
+            {% endif %}
+          {% elif checkAnswersMode == 'session-change' %}
+            {% if field == 'name' %}
+              {% set row = {
+                key: { text: 'Name' },
+                value: { html: withPrevious(draft.name or 'Not provided', previous.name if previous else 'Not set') },
+                actions: { items: [{ href: '/site/' + site_id + '/change/session/' + sessionId + '/change/name', text: 'Change', visuallyHiddenText: ' name' }] }
+              } %}
+            {% elif field == 'time' %}
+              {% set previousTimeText = ((previous.from | nhsTime) + ' to ' + (previous.until | nhsTime)) if previous and previous.from and previous.until else 'Not set' %}
+              {% set row = {
+                key: { text: 'Time' },
+                value: { html: withPrevious((draft.from | nhsTime) + ' to ' + (draft.until | nhsTime), previousTimeText) },
+                actions: { items: [{ href: '/site/' + site_id + '/change/session/' + sessionId + '/change/time', text: 'Change', visuallyHiddenText: ' time' }] }
+              } %}
+            {% elif field == 'capacity' %}
+              {% set row = {
+                key: { text: 'Vaccinators' },
+                value: { html: withPrevious(draft.capacity, previous.capacity if previous else 'Not set') },
+                actions: { items: [{ href: '/site/' + site_id + '/change/session/' + sessionId + '/change/capacity', text: 'Change', visuallyHiddenText: ' vaccinators' }] }
+              } %}
+            {% elif field == 'services' %}
+              {% set currentServicesHtml = servicesSummaryHtml(draft.services) %}
+              {% set previousServicesText = servicesText(previous.services) if previous else 'Not set' %}
+              {% set row = {
+                key: { text: 'Services' },
+                value: { html: withPrevious(currentServicesHtml, previousServicesText) },
+                actions: { items: [{ href: '/site/' + site_id + '/change/session/' + sessionId + '/change/services', text: 'Change', visuallyHiddenText: ' services' }] }
+              } %}
+            {% endif %}
+          {% endif %}
+
+          {% if row %}
+            {% set allRows = allRows.concat([row]) %}
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        {% set allRows = rows or [] %}
+      {% endif %}
+
       {% if affectedCount > 0 %}
         {% set allRows = allRows.concat([{
           key: { text: 'Booked appointments' },
@@ -41,6 +175,7 @@
       {% endif %}
 
       {{ summaryList({ rows: allRows }) }}
+  
 
       <form action="{{ formAction or ('/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId ~ '/check-answers') }}" method="post">
         {{ button({

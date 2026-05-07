@@ -1,18 +1,30 @@
 {% extends '../../layouts/layout.html' %}
+{% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
+{% from '../../components/action-control-bar.njk' import appActionControlBar %}
 
-{% set pageName = "Clinics" %}
+{% set pageName = "Clinics list" %}
 
 {% macro services(service_ids) %}
   {% set serviceTypes = [] %}
 
   {% for service_id in service_ids %}
-    {% set vaccineShortcode = data.services[service_id].cohort.type ~ " " ~ data.services[service_id].vaccine %}
-    {% if vaccineShortcode not in serviceTypes %}
-      {% set serviceTypes = serviceTypes.concat([vaccineShortcode]) %}
+    {% if data.services[service_id] %}
+      {% set vaccineShortcode = data.services[service_id].cohort.type ~ " " ~ data.services[service_id].vaccine %}
+      {% if vaccineShortcode not in serviceTypes %}
+        {% set serviceTypes = serviceTypes.concat([vaccineShortcode]) %}
+      {% endif %}
     {% endif %}
   {% endfor %}
 
-  {{ serviceTypes | join(', ') }}
+  {% if serviceTypes | length > 0 %}
+    <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+      {% for serviceType in serviceTypes %}
+        <li>{{ serviceType }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <span class="nhsuk-u-secondary-text-colour">No services</span>
+  {% endif %}
 {% endmacro %}
 
 {% macro timeLabel(session) %}
@@ -39,11 +51,6 @@
     text: text,
     classes: "nhsuk-tag--" ~ colour
   }) }}
-
-{% endmacro %}
-
-{% macro daysLabel(session) %}
-  {{ (session.days or session.recurrencePattern.byDay or []) | shortWeekdays }}
 {% endmacro %}
 
 {% macro dateLabel(session) %}
@@ -65,86 +72,95 @@
   {% endif %}
 {% endmacro %}
 
+{% macro clinicsTable(sessions, includeActions) %}
+  <table class="nhsuk-table-responsive" role="table">
+    <thead class="nhsuk-table__head" role="rowgroup">
+      <tr role="row">
+        <th scope="col" class="nhsuk-table__header" role="columnheader">Type</th>
+        <th scope="col" class="nhsuk-table__header" role="columnheader">Time and date</th>
+        <th scope="col" class="nhsuk-table__header" role="columnheader">Services</th>
+        {% if includeActions %}
+          <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody class="nhsuk-table__body" role="rowgroup">
+      {% for session in sessions %}
+        <tr class="nhsuk-table__row" role="row">
+          <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) }}</td>
+          <td class="nhsuk-table__cell" role="cell">{{ timeLabel(session) }}<br>{{ dateLabel(session) }}</td>
+          <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
+          {% if includeActions %}
+            <td class="nhsuk-table__cell" role="cell">
+              <a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">View and edit</a>
+            </td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endmacro %}
 
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-full">
+      {{
+        appSecondaryNavigation({
+          items: [
+            {
+              text: 'Day view',
+              href: '/site/' ~ site_id ~ '/availability/day'
+            },
+            {
+              text: 'Week view',
+              href: '/site/' ~ site_id ~ '/availability/week'
+            },
+            {
+              text: 'Month view',
+              href: '/site/' ~ site_id ~ '/availability/month'
+            },
+            {
+              text: 'Clinics list',
+              href: '/site/' ~ site_id ~ '/clinics',
+              current: true
+            }
+          ]
+        })
+      }}
       <h1 class="nhsuk-heading-xl">{{ pageName }}</h1>
+      {{ appActionControlBar({ siteId: site_id }) }}
 
-      {{ button({
-        text: "Create clinic",
-        classes: "nhsuk-button--secondary nhsuk-button--small",
-        href: "/site/" + site_id + "/clinics/type-of-clinc?new=1"
-      }) }}
-
-      <h2 class="nhsuk-heading-m">Active clinics</h2>
+      
 
       {% set sessionHistory = sessionHistory or [] %}
-
-      {% if sessionHistory | length == 0 %}
-        {{ insetText({
-          text: "No clinics have been created yet."
-        }) }}
-      {% endif %}
-
-      {% if sessionHistory | length > 0 %}
-        <table class="nhsuk-table-responsive" role="table">
-          <thead class="nhsuk-table__head" role="rowgroup">
-            <tr role="row">
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Name</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Type</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Date</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="nhsuk-table__body" role="rowgroup">
-            {% for session in sessionHistory %}
-              <tr class="nhsuk-table__row" role="row">
-                <td class="nhsuk-table__cell" role="cell">{{ session.label or 'Clinic' }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) | safe }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ dateLabel(session) }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ timeLabel(session) }}</td>
-                <td class="nhsuk-table__cell" role="cell"><a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">Edit</a><br><a href="/not-in-this-prototype">Remove</a></td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% endif %}
-
-      <h2 class="nhsuk-heading-m nhsuk-u-margin-top-6">Completed clinics</h2>
-
       {% set pastSessionHistory = pastSessionHistory or [] %}
 
-      {% if pastSessionHistory | length == 0 %}
-        {{ insetText({
-          text: "No completed clinics"
-        }) }}
-      {% endif %}
-
-      {% if pastSessionHistory | length > 0 %}
-        <table class="nhsuk-table-responsive" role="table">
-          <thead class="nhsuk-table__head" role="rowgroup">
-            <tr role="row">
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Name</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Type</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Date</th>
-              <th scope="col" class="nhsuk-table__header" role="columnheader">Times</th>
-            </tr>
-          </thead>
-          <tbody class="nhsuk-table__body" role="rowgroup">
-            {% for session in pastSessionHistory %}
-              <tr class="nhsuk-table__row" role="row">
-                <td class="nhsuk-table__cell" role="cell">{{ session.label or 'Clinic' }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ dateLabel(session) }}</td>
-                <td class="nhsuk-table__cell" role="cell">{{ timeLabel(session) }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% endif %}
-
+      {{ tabs({
+        items: [
+          {
+            label: "Active clinics (" ~ (sessionHistory | length) ~ ")",
+            id: "active-clinics",
+            panel: {
+              html: (
+                insetText({ text: "No clinics have been created yet." })
+                if (sessionHistory | length) == 0
+                else clinicsTable(sessionHistory, true)
+              )
+            }
+          },
+          {
+            label: "Completed clinics (" ~ (pastSessionHistory | length) ~ ")",
+            id: "completed-clinics",
+            panel: {
+              html: (
+                insetText({ text: "No completed clinics" })
+                if (pastSessionHistory | length) == 0
+                else clinicsTable(pastSessionHistory, false)
+              )
+            }
+          }
+        ]
+      }) }}
     </div>
   </div>
 {% endblock %}

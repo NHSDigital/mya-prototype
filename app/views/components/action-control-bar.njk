@@ -1,0 +1,29 @@
+{% from 'nhsuk/components/button/macro.njk' import button %}
+
+{% macro appActionControlBar(params) %}
+  {% set siteId = params.siteId %}
+  {% set createClinicHref = params.createClinicHref or ('/site/' ~ siteId ~ '/clinics/type-of-clinc?new=1') %}
+  {% set cancelDateRangeHref = params.cancelDateRangeHref or ('/site/' ~ siteId ~ '/cancel-availability/dates') %}
+
+  <div class="nhsuk-button-group nhsuk-button-group--small">
+    {{ button({
+      text: 'Create clinics',
+      classes: 'nhsuk-button--small',
+      href: createClinicHref
+    }) }}
+
+    {{ button({
+      text: 'Cancel a date range',
+      classes: 'nhsuk-button--secondary nhsuk-button--small',
+      href: cancelDateRangeHref
+    }) }}
+
+    {% if params.print %}
+      {{ button({
+        text: 'Print page',
+        classes: 'nhsuk-button--secondary nhsuk-button--small',
+        href: params.print
+      }) }}
+    {% endif %}
+  </div>
+{% endmacro %}

@@ -15,46 +15,46 @@ function getToday() {
   return override_today || DateTime.now().toFormat('yyyy-MM-dd');
 }
 
+function getRelativeDayLabel(dateISO, todayISO) {
+  const target = DateTime.fromISO(dateISO || '').startOf('day');
+  const today = DateTime.fromISO(todayISO || '').startOf('day');
+  if (!target.isValid || !today.isValid) return null;
+
+  const diffDays = Math.round(target.diff(today, 'days').days);
+  if (diffDays === 0) return 'Today';
+  if (diffDays === -1) return 'Yesterday';
+  if (diffDays === 1) return 'Tomorrow';
+  return null;
+}
+
+function getRelativeWeekLabel(weekStartISO, todayISO) {
+  const targetWeek = DateTime.fromISO(weekStartISO || '').startOf('week');
+  const thisWeek = DateTime.fromISO(todayISO || '').startOf('week');
+  if (!targetWeek.isValid || !thisWeek.isValid) return null;
+
+  const diffWeeks = Math.round(targetWeek.diff(thisWeek, 'weeks').weeks);
+  if (diffWeeks === 0) return 'This week';
+  if (diffWeeks === -1) return 'Last week';
+  if (diffWeeks === 1) return 'Next week';
+  return null;
+}
+
+function getRelativeMonthLabel(monthDateISO, todayISO) {
+  const targetMonth = DateTime.fromISO(monthDateISO || '').startOf('month');
+  const thisMonth = DateTime.fromISO(todayISO || '').startOf('month');
+  if (!targetMonth.isValid || !thisMonth.isValid) return null;
+
+  const diffMonths = Math.round(targetMonth.diff(thisMonth, 'months').months);
+  if (diffMonths === 0) return 'This month';
+  if (diffMonths === -1) return 'Last month';
+  if (diffMonths === 1) return 'Next month';
+  return null;
+}
+
 function asArray(value) {
   if (Array.isArray(value)) return value;
   if (value === undefined || value === null || value === '') return [];
   return [value];
-}
-
-function applyServiceOperations(baseServices = [], operations = []) {
-  let services = [...asArray(baseServices)];
-
-  for (const change of asArray(operations)) {
-    if (!change || typeof change !== 'object') continue;
-
-    if (change.operation === 'replace') {
-      services = asArray(change.values);
-      continue;
-    }
-
-    if (change.operation === 'add' && change.service) {
-      if (!services.includes(change.service)) {
-        services.push(change.service);
-      }
-      continue;
-    }
-
-    if (change.operation === 'remove' && change.service) {
-      services = services.filter((service) => service !== change.service);
-    }
-  }
-
-  return services;
-}
-
-function sortedStringArray(values = []) {
-  return asArray(values)
-    .map((value) => String(value))
-    .sort((a, b) => a.localeCompare(b));
-}
-
-function servicesEqual(left = [], right = []) {
-  return JSON.stringify(sortedStringArray(left)) === JSON.stringify(sortedStringArray(right));
 }
 
 function normalizeSessionType(type) {
@@ -368,7 +368,6 @@ function clone(value) {
 
 function editFieldOptions(isSeries) {
   const options = [
-    { value: 'name', text: 'Name' },
     { value: 'date', text: isSeries ? 'Dates' : 'Date' },
     ...(isSeries ? [{ value: 'days', text: 'Days' }] : []),
     { value: 'time', text: 'Time' },
@@ -408,14 +407,12 @@ function bookingCountText(count) {
 function resetEditOutcome(state) {
   state.bookingAction = null;
   state.affectedBookingIds = [];
-  state.childOverrideWarning = null;
-  state.postWarningPath = null;
 }
 
 function editFieldsForStep(step, isSeries) {
   switch (step) {
     case 'details':
-      return ['name', 'date'];
+      return ['date'];
     case 'days':
       return isSeries ? ['days'] : ['date'];
     case 'clinic-times':
@@ -472,7 +469,6 @@ function editCaptionText(draft) {
 
 function editStepForField(field, isSeries) {
   switch (field) {
-    case 'name':
     case 'date':
       return 'details';
     case 'days':
@@ -501,7 +497,7 @@ function setEditTemplateData(res, data, state) {
 function updateDraftFromDetails(state, newSession = {}) {
   const editableFields = currentEditableFields(state);
 
-  if (editableFields.length === 0 || editableFields.includes('name')) {
+  if ((editableFields.length === 0 || editableFields.includes('name')) && newSession.name !== undefined) {
     state.draft.name = String(newSession.name || '').trim();
   }
 
@@ -731,11 +727,6 @@ function buildSummaryRowMap(draft, siteId, sessionId, data) {
   const closuresText = draft.closures?.length ? `${draft.closures.length} added` : 'None added';
 
   return {
-    name: {
-      key: { text: 'Name' },
-      value: { text: draft.name || 'Not provided' },
-      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/name`, text: 'Change', visuallyHiddenText: ' name' }] }
-    },
     date: {
       key: { text: isSeries ? 'Dates' : 'Date' },
       value: { text: dateText },
@@ -779,7 +770,6 @@ function buildSummaryRowMap(draft, siteId, sessionId, data) {
 function buildSummaryRowsForEdit(draft, siteId, sessionId, data) {
   const rowsByField = buildSummaryRowMap(draft, siteId, sessionId, data);
   const orderedFields = [
-    'name',
     'date',
     'days',
     'time',
@@ -796,8 +786,6 @@ function buildSummaryRowsForEdit(draft, siteId, sessionId, data) {
 
 function hasEditFieldChanged(original, draft, field) {
   switch (field) {
-    case 'name':
-      return String(original?.label || '') !== String(draft?.name || '');
     case 'date':
       if (draft?.type === 'Clinic series') {
         return String(original?.startDate || '') !== String(draft?.startDate || '')
@@ -835,28 +823,64 @@ function hasEditFieldChanged(original, draft, field) {
   }
 }
 
-function buildChangedRowsForEdit(original, draft, state, siteId, sessionId, data) {
-  const rowsByField = buildSummaryRowMap(draft, siteId, sessionId, data);
+function buildChangedFieldKeysForEdit(original, draft, state) {
   const editableFields = currentEditableFields(state);
   const candidateFields = editableFields.length > 0
     ? editableFields
-    : ['name', 'date', 'days', 'time', 'capacity', 'duration', 'services', 'closures'];
+    : ['date', 'days', 'time', 'capacity', 'duration', 'services', 'closures'];
 
-  const changedRows = candidateFields
-    .filter((field) => rowsByField[field] && hasEditFieldChanged(original, draft, field))
-    .map((field) => rowsByField[field]);
+  const changedFields = candidateFields
+    .filter((field) => hasEditFieldChanged(original, draft, field));
 
-  if (changedRows.length > 0) {
-    return changedRows;
+  if (changedFields.length > 0) {
+    return changedFields;
   }
 
   if (editableFields.length > 0) {
-    return editableFields
-      .filter((field) => rowsByField[field])
-      .map((field) => rowsByField[field]);
+    return editableFields;
   }
 
-  return buildSummaryRowsForEdit(draft, siteId, sessionId, data);
+  return candidateFields;
+}
+
+function childSessionUnaffectedByField(childSession, field) {
+  switch (field) {
+    case 'time':
+      return Boolean(childSession?.from && childSession?.until);
+    case 'capacity':
+      return childSession?.capacity !== undefined && childSession?.capacity !== null;
+    case 'services':
+      return asArray(childSession?.services).length > 0;
+    default:
+      return false;
+  }
+}
+
+function formatShortDate(dateISO) {
+  const dt = DateTime.fromISO(dateISO || '');
+  return dt.isValid ? dt.toFormat('d MMM yyyy') : String(dateISO || '');
+}
+
+function buildUnaffectedChildClinicDates(model, changedFields, siteId) {
+  const childSessions = asArray(model?.childSessions).filter((childSession) => childSession?.date);
+  if (childSessions.length === 0) return [];
+
+  const changed = asArray(changedFields).filter(Boolean);
+  if (changed.length === 0) return [];
+
+  const merged = mergeDailyAvailability({}, String(siteId || ''), { [model.id]: model });
+
+  const unaffectedDates = childSessions
+    .filter((childSession) => changed.every((field) => childSessionUnaffectedByField(childSession, field)))
+    .map((childSession) => childSession.date)
+    .filter((dateISO) => {
+      const sessions = merged?.[dateISO]?.sessions || [];
+      return sessions.some((session) => String(session?.recurringId) === String(model?.id));
+    });
+
+  return Array.from(new Set(unaffectedDates))
+    .sort((a, b) => String(a).localeCompare(String(b)))
+    .map((dateISO) => formatShortDate(dateISO));
 }
 
 function reviewBackPath(siteId, sessionId, state) {
@@ -889,107 +913,8 @@ function prepareReviewAfterEdit(data, siteId, state) {
     ? `${editSummaryPath(siteId, state.sessionId)}/affected-bookings`
     : `${editSummaryPath(siteId, state.sessionId)}/check-answers`;
 
-  const warning = buildChildOverrideWarningContext(
-    state,
-    originalModel,
-    updatedModel
-  );
-
-  state.childOverrideWarning = warning;
-  state.postWarningPath = warning ? nextPath : null;
-
   setEditState(data, state);
-  return warning
-    ? `${editSummaryPath(siteId, state.sessionId)}/child-clinic-overrides`
-    : nextPath;
-}
-
-function buildChildOverrideWarningContext(state, originalModel, updatedModel) {
-  if (state?.draft?.type !== 'Clinic series') return null;
-
-  const editableFields = currentEditableFields(state);
-  const modelChanges = {
-    time: String(originalModel?.from || '') !== String(updatedModel?.from || '')
-      || String(originalModel?.until || '') !== String(updatedModel?.until || ''),
-    capacity: (Number(originalModel?.capacity) || 1) !== (Number(updatedModel?.capacity) || 1),
-    services: !servicesEqual(originalModel?.services, updatedModel?.services)
-  };
-
-  let targetedFields = ['time', 'capacity', 'services'].filter((field) => editableFields.includes(field));
-  if (targetedFields.length === 0) {
-    targetedFields = Object.entries(modelChanges)
-      .filter(([, changed]) => changed)
-      .map(([field]) => field);
-  }
-
-  if (targetedFields.length === 0) return null;
-
-  const changedFields = targetedFields.filter((field) => modelChanges[field]);
-
-  if (changedFields.length === 0) return null;
-
-  const parentServices = asArray(updatedModel?.services);
-  const parentLabel = String(updatedModel?.label || '').trim() || 'Clinic series';
-  const rows = [];
-
-  for (const child of asArray(updatedModel?.childSessions)) {
-    if (!child?.date) continue;
-
-    const childHasPairedTime = Boolean(child?.from && child?.until);
-    const resolvedFrom = childHasPairedTime ? child.from : updatedModel?.from;
-    const resolvedUntil = childHasPairedTime ? child.until : updatedModel?.until;
-    const hasTimeOverride = childHasPairedTime
-      && (String(resolvedFrom) !== String(updatedModel?.from || '')
-        || String(resolvedUntil) !== String(updatedModel?.until || ''));
-
-    const hasCapacityOverride = child?.capacity !== undefined
-      && child?.capacity !== null;
-
-    const effectiveServices = child?.services
-      ? applyServiceOperations(parentServices, child.services)
-      : [...parentServices];
-    const hasServicesOverride = asArray(child?.services).length > 0;
-
-    const include = (
-      (changedFields.includes('time') && hasTimeOverride)
-      || (changedFields.includes('capacity') && hasCapacityOverride)
-      || (changedFields.includes('services') && hasServicesOverride)
-    );
-
-    if (!include) continue;
-
-    rows.push({
-      dateISO: child.date,
-      parentLabel,
-      childLabel: child?.label || '',
-      from: resolvedFrom,
-      until: resolvedUntil,
-      capacity: Number(child?.capacity ?? updatedModel?.capacity) || 1,
-      effectiveServiceIds: asArray(effectiveServices)
-    });
-  }
-
-  if (rows.length === 0) return null;
-
-  rows.sort((a, b) => String(a.dateISO).localeCompare(String(b.dateISO)));
-
-  const originalParentServiceIds = sortedStringArray(originalModel?.services);
-  const updatedParentServiceIds = sortedStringArray(updatedModel?.services);
-  const parentServicesAddedIds = updatedParentServiceIds
-    .filter((serviceId) => !originalParentServiceIds.includes(serviceId));
-  const parentServicesRemovedIds = originalParentServiceIds
-    .filter((serviceId) => !updatedParentServiceIds.includes(serviceId));
-
-  return {
-    count: rows.length,
-    hasTimeChange: changedFields.includes('time'),
-    hasCapacityChange: changedFields.includes('capacity'),
-    hasServicesChange: changedFields.includes('services'),
-    parentServicesAddedIds,
-    parentServicesRemovedIds,
-    rows,
-    changedFields
-  };
+  return nextPath;
 }
 
 function calculateAffectedBookings(originalModel, updatedModel, siteBookings) {
@@ -1211,7 +1136,7 @@ function slotMatchesSession(slot, session) {
     && (!slot?.recurringSessionId || !session?.recurringId || String(slot.recurringSessionId) === String(session.recurringId));
 }
 
-function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, servicesById, siteBookings, siteId, today, recurringSessionsById = {}) {
+function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, servicesById, siteBookings, siteId, today, recurringSessionsById = {}, backHref = null) {
   return week.map((day) => {
     const sessions = sortSessionsForAvailability(dailyAvailability?.[day]?.sessions);
     const dateSlots = asArray(slotsByDate?.[day]);
@@ -1221,6 +1146,10 @@ function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, serv
       const bookedTotal = sessionSlots.filter((slot) => slot?.booking_status === 'scheduled').length;
       const totalSlots = sessionSlots.length;
       const resolvedLabel = session.label || recurringSessionsById?.[session?.recurringId]?.label || '';
+
+      const changeHrefBase = day < today || !session?.recurringId
+        ? null
+        : `/site/${siteId}/change/session/${session.id}`;
 
       return {
         id: session.id,
@@ -1238,7 +1167,9 @@ function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, serv
         })),
         bookedTotal,
         unbookedTotal: Math.max(0, totalSlots - bookedTotal),
-        actionHref: day < today || !session?.recurringId ? null : `/site/${siteId}/change/session/${session.id}`
+        actionHref: changeHrefBase
+          ? `${changeHrefBase}${backHref ? `?back=${encodeURIComponent(backHref)}` : ''}`
+          : null
       };
     });
 
@@ -1299,7 +1230,8 @@ function buildMonthAvailabilitySummary(weekRanges, dailyAvailability, slotsByDat
       siteBookings,
       siteId,
       today,
-      recurringSessionsById
+        recurringSessionsById,
+        null
     );
 
     const services = new Map();
@@ -1822,41 +1754,6 @@ router.all('/site/:id/clinics/edit/:sessionId/affected-bookings', (req, res) => 
   });
 });
 
-router.all('/site/:id/clinics/edit/:sessionId/child-clinic-overrides', (req, res) => {
-  const data = req.session.data;
-  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
-  if (!state) {
-    return res.redirect(`/site/${req.site_id}/clinics`);
-  }
-
-  const warning = state.childOverrideWarning;
-  const nextPath = state.postWarningPath
-    || (asArray(state.affectedBookingIds).length > 0
-      ? `${editSummaryPath(req.site_id, req.params.sessionId)}/affected-bookings`
-      : `${editSummaryPath(req.site_id, req.params.sessionId)}/check-answers`);
-
-  if (!warning || !asArray(warning.rows).length) {
-    return res.redirect(nextPath);
-  }
-
-  if (req.method === 'POST') {
-    return res.redirect(nextPath);
-  }
-
-  const step = state.currentEditStep || editStepForField(state.currentEditField, state?.draft?.type === 'Clinic series');
-  const backHref = step
-    ? editStepPath(req.site_id, req.params.sessionId, step)
-    : editSummaryPath(req.site_id, req.params.sessionId);
-
-  return res.render('site/clinics/edit/child-clinic-overrides', {
-    sessionId: req.params.sessionId,
-    backHref,
-    formAction: `${editSummaryPath(req.site_id, req.params.sessionId)}/child-clinic-overrides`,
-    warning: warning,
-    rows: warning.rows
-  });
-});
-
 router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
@@ -1866,6 +1763,10 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
 
   if (req.method === 'POST') {
     const updatedModel = draftToModel(state.draft);
+    const changedFields = buildChangedFieldKeysForEdit(state.original, state.draft, state);
+    const unaffectedChildClinics = state.draft.type === 'Clinic series'
+      ? buildUnaffectedChildClinicDates(updatedModel, changedFields, req.site_id)
+      : [];
     persistRecurringSession(data, req.site_id, updatedModel);
 
     const siteBookings = data?.bookings?.[req.site_id] || {};
@@ -1881,7 +1782,8 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
       siteId: req.site_id,
       sessionId: req.params.sessionId,
       isSeries: state.draft.type === 'Clinic series',
-      cancelledBookingsSummary
+      cancelledBookingsSummary,
+      unaffectedChildClinics
     });
 
     applyAffectedBookingAction(siteBookings, state.affectedBookingIds, state.bookingAction);
@@ -1892,7 +1794,20 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
   return res.render('site/clinics/edit/check-answers', {
     sessionId: req.params.sessionId,
     isSeries: state.draft.type === 'Clinic series',
-    rows: buildChangedRowsForEdit(state.original, state.draft, state, req.site_id, req.params.sessionId, data),
+    rowFields: buildChangedFieldKeysForEdit(state.original, state.draft, state),
+    draft: state.draft,
+    previous: {
+      startDate: state.original?.startDate,
+      endDate: state.original?.endDate,
+      days: asArray(state.original?.recurrencePattern?.byDay),
+      from: state.original?.from,
+      until: state.original?.until,
+      capacity: String(Number(state.original?.capacity) || 1),
+      duration: String(Number(state.original?.slotLength) || 10),
+      services: asArray(state.original?.services),
+      closuresCount: asArray(state.original?.closures).length
+    },
+    checkAnswersMode: 'clinic-edit',
     affectedCount: asArray(state.affectedBookingIds).length,
     bookingAction: state.bookingAction,
     backHref: reviewBackPath(req.site_id, req.params.sessionId, state)
@@ -1928,7 +1843,8 @@ router.get('/site/:id/clinics/edit/:sessionId/success', (req, res) => {
 
   return res.render('site/clinics/edit/success', {
     sessionId: req.params.sessionId,
-    cancelSummary
+    cancelSummary,
+    unaffectedChildClinics: matchingSuccessState?.unaffectedChildClinics || []
   });
 });
 
@@ -2273,13 +2189,91 @@ router.get('/site/:id/debug/recurring-expansion', (req, res) => {
 // VIEW AVAILABILITY
 // -----------------------------------------------------------------------------
 router.get('/site/:id/availability/day', (req, res) => {
+  const data = req.session.data;
+  const site_id = req.site_id;
   const date = req.query.date || getToday();
+  const today = getToday();
+  const tomorrow = DateTime.fromISO(date).plus({ days: 1 }).toISODate();
+  const yesterday = DateTime.fromISO(date).minus({ days: 1 }).toISODate();
+  const daySummary = buildWeekAvailabilitySummary(
+    [date],
+    res.locals.dailyAvailability,
+    res.locals.slots,
+    data.services || {},
+    data?.bookings?.[site_id] || {},
+    site_id,
+    today,
+    data?.recurring_sessions?.[site_id] || {},
+    `/site/${site_id}/availability/day?date=${date}`
+  )[0] || {
+    date,
+    sessions: [],
+    totalAppointments: 0,
+    bookedAppointments: 0,
+    unbookedAppointments: 0,
+    isToday: date === today,
+    isPast: date < today,
+    dayViewHref: `/site/${site_id}/availability/day?date=${date}`
+  };
+
+  if ((daySummary.sessions || []).length === 0 && (res.locals.dailyAvailability?.[date]?.sessions || []).length > 0) {
+    const dateSlots = asArray(res.locals.slots?.[date]);
+    const sessions = sortSessionsForAvailability(res.locals.dailyAvailability?.[date]?.sessions);
+    const siteBookings = data?.bookings?.[site_id] || {};
+    const servicesById = data.services || {};
+
+    const fallbackSessions = sessions.map((session) => {
+      const sessionSlots = dateSlots.filter((slot) => (
+        (slot?.sessionId && session?.id && String(slot.sessionId) === String(session.id))
+        || (
+          !slot?.sessionId
+          && slot?.group?.start === session?.from
+          && slot?.group?.end === session?.until
+          && (!slot?.recurringSessionId || !session?.recurringId || String(slot.recurringSessionId) === String(session.recurringId))
+        )
+      ));
+
+      const bookedTotal = sessionSlots.filter((slot) => slot?.booking_status === 'scheduled').length;
+      const totalSlots = sessionSlots.length;
+      const resolvedLabel = session.label || data?.recurring_sessions?.[site_id]?.[session?.recurringId]?.label || '';
+
+      return {
+        id: session.id,
+        label: resolvedLabel,
+        from: session.from,
+        until: session.until,
+        services: asArray(session.services).map((serviceId) => ({
+          id: serviceId,
+          name: servicesById?.[serviceId]?.name || serviceId,
+          bookedCount: sessionSlots.filter((slot) => (
+            slot?.booking_status === 'scheduled'
+            && slot?.booking_id
+            && siteBookings?.[slot.booking_id]?.service === serviceId
+          )).length
+        })),
+        bookedTotal,
+        unbookedTotal: Math.max(0, totalSlots - bookedTotal),
+        actionHref: date < today || !session?.recurringId
+          ? null
+          : `/site/${site_id}/change/session/${session.id}?back=${encodeURIComponent(`/site/${site_id}/availability/day?date=${date}`)}`
+      };
+    });
+
+    daySummary.sessions = fallbackSessions;
+    daySummary.totalAppointments = fallbackSessions.reduce((sum, session) => sum + session.bookedTotal + session.unbookedTotal, 0);
+    daySummary.bookedAppointments = fallbackSessions.reduce((sum, session) => sum + session.bookedTotal, 0);
+    daySummary.unbookedAppointments = Math.max(0, daySummary.totalAppointments - daySummary.bookedAppointments);
+  }
 
   res.render('site/availability/day', {
     date,
-    today: getToday(),
-    tomorrow: DateTime.fromISO(date).plus({ days: 1 }).toISODate(),
-    yesterday: DateTime.fromISO(date).minus({ days: 1 }).toISODate()
+    today,
+    tomorrow,
+    yesterday,
+    daySummary,
+    dayHeading: getRelativeDayLabel(date, today),
+    previousDayLabel: getRelativeDayLabel(yesterday, today),
+    nextDayLabel: getRelativeDayLabel(tomorrow, today)
   });
 });
 
@@ -2315,7 +2309,8 @@ router.get('/site/:id/availability/week', (req, res) => {
     data?.bookings?.[site_id] || {},
     site_id,
     today,
-    data?.recurring_sessions?.[site_id] || {}
+    data?.recurring_sessions?.[site_id] || {},
+    `/site/${site_id}/availability/week?date=${startFromDate}`
   );
 
   res.render('site/availability/week', {
@@ -2324,7 +2319,10 @@ router.get('/site/:id/availability/week', (req, res) => {
     week,
     weekDays,
     previousWeek,
-    nextWeek
+    nextWeek,
+    weekHeading: getRelativeWeekLabel(week[0], today),
+    previousWeekLabel: getRelativeWeekLabel(previousWeek.start, today),
+    nextWeekLabel: getRelativeWeekLabel(nextWeek.start, today)
   });
 });
 
@@ -2349,7 +2347,10 @@ router.get('/site/:id/availability/month', (req, res) => {
     currentDate: monthData.currentDate,
     previousMonthDate: monthData.previousMonthDate,
     nextMonthDate: monthData.nextMonthDate,
-    monthWeeks
+    monthWeeks,
+    monthHeading: getRelativeMonthLabel(monthData.currentDate, today),
+    previousMonthLabel: getRelativeMonthLabel(monthData.previousMonthDate, today),
+    nextMonthLabel: getRelativeMonthLabel(monthData.nextMonthDate, today)
   });
 });
 
