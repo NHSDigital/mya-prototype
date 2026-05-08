@@ -146,11 +146,6 @@
             value: closure.startDate | nhsDateRange(closure.endDate)
           }]) %}
         {% endfor %}
-      {% else %}
-        {% set closuresItems = [{
-          keyHtml: '<span class="nhsuk-hint nhsuk-u-margin-bottom-0">No closures</span>',
-          value: 'None added'
-        }] %}
       {% endif %}
 
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
@@ -251,6 +246,7 @@
       }) }}
 
       {% if isSeries %}
+        {% if closuresItems | length > 0 %}
         {{ appCard({
           title: 'Closures',
           action: {
@@ -260,6 +256,17 @@
           },
           items: closuresItems
         }) }}
+        {% else %}
+        {{ appCard({
+          title: 'Closures',
+          action: {
+            href: editBasePath ~ '/clinic-closures',
+            text: 'Change',
+            visuallyHiddenText: ' closures'
+          },
+          html: '<p class="nhsuk-body-s nhsuk-u-margin-bottom-0">No closures added</p>'
+         }) }}
+         {% endif %}
 
         {% set oneOffChangesItems = [] %}
         {% if draft.childSessions and draft.childSessions.length %}
@@ -317,7 +324,7 @@
         {% else %}
           {{ appCard({
             title: 'Clinics with changes',
-            html: '<p class="nhsuk-body nhsuk-u-margin-bottom-0">No clinics with one-off changes.</p>'
+            html: '<p class="nhsuk-body-s nhsuk-u-margin-bottom-0">No clinics with changes.</p>'
           }) }}
         {% endif %}
       {% endif %}
