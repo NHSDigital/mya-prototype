@@ -117,16 +117,6 @@ function ensureCreateSession(data) {
   return session;
 }
 
-function toDateObject(dateInput) {
-  const fallback = DateTime.now();
-
-  return {
-    day: String(dateInput?.day || fallback.day),
-    month: String(dateInput?.month || fallback.month),
-    year: String(dateInput?.year || fallback.year)
-  };
-}
-
 function toTimeString(timeInput) {
   const hour = String(timeInput?.hour || '00').padStart(2, '0');
   const minute = String(timeInput?.minute || '00').padStart(2, '0');
@@ -162,68 +152,6 @@ function inferClinicTypeFromModel(model = {}) {
   }
 
   return 'Clinic series';
-}
-
-function populateEditSession(data, model) {
-  const clinicType = inferClinicTypeFromModel(model);
-  const startDateParts = toDateParts(model.startDate);
-  const endDateParts = toDateParts(model.endDate || model.startDate);
-
-  data.newSession = {
-    name: model.label || '',
-    type: clinicType,
-    startDate: startDateParts,
-    endDate: endDateParts,
-    singleDate: clinicType === 'Single clinic' ? startDateParts : { day: '', month: '', year: '' },
-    days: asArray(model.recurrencePattern?.byDay),
-    startTime: toTimeParts(model.from),
-    endTime: toTimeParts(model.until),
-    capacity: String(Number(model.capacity) || ''),
-    duration: String(Number(model.slotLength) || ''),
-    services: asArray(model.services),
-    closures: asArray(model.closures)
-      .filter((closure) => closure?.startDate && closure?.endDate)
-      .map((closure) => ({
-        startDate: closure.startDate,
-        endDate: closure.endDate,
-        label: closure.label || ''
-      }))
-  };
-
-  data.editingSessionId = model.id;
-}
-
-function buildPersistableSession(newSession) {
-  const mode = normalizeSessionType(newSession.type) || 'Clinic series';
-  const isSingleDate = mode === 'Single clinic';
-  const startDate = isSingleDate ? toDateObject(newSession.singleDate) : toDateObject(newSession.startDate);
-  const endDate = isSingleDate ? toDateObject(newSession.singleDate) : toDateObject(newSession.endDate);
-  const startTime = toTimeString(newSession.startTime);
-  const endTime = toTimeString(newSession.endTime);
-
-  let days = asArray(newSession.days);
-  if (isSingleDate) {
-    const iso = `${startDate.year}-${String(startDate.month).padStart(2, '0')}-${String(startDate.day).padStart(2, '0')}`;
-    const dt = DateTime.fromISO(iso);
-    days = dt.isValid ? [dt.toFormat('cccc')] : [];
-  }
-
-  return {
-    startDate,
-    endDate,
-    days,
-    startTime: {
-      hour: startTime.split(':')[0],
-      minute: startTime.split(':')[1]
-    },
-    endTime: {
-      hour: endTime.split(':')[0],
-      minute: endTime.split(':')[1]
-    },
-    services: asArray(newSession.services),
-    capacity: Number(newSession.capacity) || 1,
-    duration: Number(newSession.duration) || 10
-  };
 }
 
 function toIsoDate(dateParts) {
@@ -366,20 +294,6 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function editFieldOptions(isSeries) {
-  const options = [
-    { value: 'date', text: isSeries ? 'Dates' : 'Date' },
-    ...(isSeries ? [{ value: 'days', text: 'Days' }] : []),
-    { value: 'time', text: 'Time' },
-    { value: 'capacity', text: 'Vaccinators and capacity' },
-    { value: 'duration', text: 'Appointment length' },
-    { value: 'services', text: 'Services' },
-    ...(isSeries ? [{ value: 'closures', text: 'Clinic closures' }] : [])
-  ];
-
-  return options;
-}
-
 function getEditState(data) {
   return data.editClinic || null;
 }
@@ -417,7 +331,7 @@ function editFieldsForStep(step, isSeries) {
       return isSeries ? ['days'] : ['date'];
     case 'clinic-times':
       return ['time'];
-  return initializeEditStateForSession(data, siteId, sessionId);
+    case 'appointments-calculator':
       return ['capacity', 'duration'];
     case 'services':
       return ['services'];
@@ -703,85 +617,6 @@ function parseDateInputToISO(input = {}) {
 
   const dt = DateTime.fromObject({ day: +day, month: +month, year: +year });
   return dt.isValid ? dt.toISODate() : null;
-}
-
-function servicesSummaryListHtml(serviceIds = [], servicesById = {}) {
-  const names = asArray(serviceIds)
-    .map((id) => servicesById?.[id]?.name || id)
-    .filter(Boolean);
-
-  if (names.length === 0) {
-    return 'None selected';
-  }
-
-  const items = names.map((name) => `<li>${name}</li>`).join('');
-  return `<ul class="nhsuk-list nhsuk-u-margin-bottom-0">${items}</ul>`;
-}
-
-function buildSummaryRowMap(draft, siteId, sessionId, data) {
-  const isSeries = draft.type === 'Clinic series';
-  const startDateText = DateTime.fromISO(draft.startDate).toFormat('d MMM yyyy');
-  const endDateText = DateTime.fromISO(draft.endDate).toFormat('d MMM yyyy');
-  const dateText = isSeries ? `${startDateText} to ${endDateText}` : startDateText;
-  const servicesHtml = servicesSummaryListHtml(draft.services, data.services);
-  const closuresText = draft.closures?.length ? `${draft.closures.length} added` : 'None added';
-
-  return {
-    date: {
-      key: { text: isSeries ? 'Dates' : 'Date' },
-      value: { text: dateText },
-      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/date`, text: 'Change', visuallyHiddenText: ' dates' }] }
-    },
-    ...(isSeries ? {
-      days: {
-        key: { text: 'Days' },
-        value: { text: asArray(draft.days).join(', ') },
-        actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/days`, text: 'Change', visuallyHiddenText: ' days' }] }
-      },
-      closures: {
-        key: { text: 'Clinic closures' },
-        value: { text: closuresText },
-        actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/closures`, text: 'Change', visuallyHiddenText: ' clinic closures' }] }
-      }
-    } : {}),
-    time: {
-      key: { text: 'Time' },
-      value: { text: `${draft.from} to ${draft.until}` },
-      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/time`, text: 'Change', visuallyHiddenText: ' time' }] }
-    },
-    capacity: {
-      key: { text: 'Vaccinators and capacity' },
-      value: { text: String(draft.capacity) },
-      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/capacity`, text: 'Change', visuallyHiddenText: ' vaccinators and capacity' }] }
-    },
-    duration: {
-      key: { text: 'Appointment length' },
-      value: { text: `${draft.duration} minutes` },
-      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/duration`, text: 'Change', visuallyHiddenText: ' appointment length' }] }
-    },
-    services: {
-      key: { text: 'Services' },
-      value: { html: servicesHtml },
-      actions: { items: [{ href: `/site/${siteId}/clinics/edit/${sessionId}/change/services`, text: 'Change', visuallyHiddenText: ' services' }] }
-    }
-  };
-}
-
-function buildSummaryRowsForEdit(draft, siteId, sessionId, data) {
-  const rowsByField = buildSummaryRowMap(draft, siteId, sessionId, data);
-  const orderedFields = [
-    'date',
-    'days',
-    'time',
-    'capacity',
-    'duration',
-    'services',
-    'closures'
-  ];
-
-  return orderedFields
-    .map((field) => rowsByField[field])
-    .filter(Boolean);
 }
 
 function hasEditFieldChanged(original, draft, field) {
@@ -2145,18 +1980,6 @@ router.get('/site/:id/clinics/success', (req, res) => {
   res.render(`site/clinics/${flowType}/success`);
 });
 
-// Legacy create-availability URLs
-router.get('/site/:id/create-availability', (req, res) => res.redirect(`/site/${req.site_id}/clinics`));
-router.all('/site/:id/create-availability/type-of-session', (req, res) => res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`));
-router.all('/site/:id/create-availability/dates', (req, res) => res.redirect(`/site/${req.site_id}/clinics/details`));
-router.all('/site/:id/create-availability/days', (req, res) => res.redirect(`/site/${req.site_id}/clinics/days`));
-router.all('/site/:id/create-availability/time-and-capacity', (req, res) => res.redirect(`/site/${req.site_id}/clinics/clinic-times`));
-router.all('/site/:id/create-availability/services', (req, res) => res.redirect(`/site/${req.site_id}/clinics/services`));
-router.all('/site/:id/create-availability/clinic-closures', (req, res) => res.redirect(`/site/${req.site_id}/clinics/clinic-closures`));
-router.all('/site/:id/create-availability/check-answers', (req, res) => res.redirect(`/site/${req.site_id}/clinics/check-answers`));
-router.all('/site/:id/create-availability/process-new-session', (req, res) => res.redirect(`/site/${req.site_id}/clinics/process-new-session`));
-router.get('/site/:id/create-availability/success', (req, res) => res.redirect(`/site/${req.site_id}/clinics/success`));
-
 // -----------------------------------------------------------------------------
 // VIEW AVAILABILITY
 // -----------------------------------------------------------------------------
@@ -2326,51 +2149,17 @@ router.get('/site/:id/availability/month', (req, res) => {
   });
 });
 
-router.get('/site/:id/availability/all', (req, res) => { 
-  res.redirect(`/site/${req.site_id}/create-availability`);
-});
+function redirectLegacyToClinics(req, res) {
+  return res.redirect(`/site/${req.site_id}/clinics`);
+}
 
-router.get('/site/:id/availability/all/:groupId', (req, res) => {
-  res.redirect(`/site/${req.site_id}/create-availability`);
-});
-
-// -----------------------------------------------------------------------------
-// REMOVE GROUP or SESSION
-// -----------------------------------------------------------------------------
-router.all('/site/:id/remove/:itemId', (req, res) => {
-  res.redirect(`/site/${req.site_id}/create-availability`);
-});
-
-router.all('/site/:id/remove/:itemId/do-you-want-to-cancel-bookings', (req, res) => {
-  res.redirect(`/site/${req.site_id}/create-availability`);
-});
-
-router.all('/site/:id/remove/:itemId/check-answers', (req, res) => {
-  res.redirect(`/site/${req.site_id}/create-availability`);
-});
-
-router.all('/site/:id/remove/:itemId/success', (req, res) => {
-  res.redirect(`/site/${req.site_id}/create-availability`);
-});
-
-// -----------------------------------------------------------------------------
-// CONFIRM REMOVE
-// -----------------------------------------------------------------------------
-router.get('/site/:id/remove/:itemId/confirm-remove', (req, res) => {
-  res.redirect(`/site/${req.site_id}/create-availability`);
-});
-
-// -----------------------------------------------------------------------------
-// CHANGE GROUP
-// -----------------------------------------------------------------------------
-
-router.all('/site/:id/change/group/:itemId', (req, res) => {
-  res.redirect(`/site/${req.site_id}/create-availability`);
-});
-
-router.all('/site/:id/change/group/:itemId/:step', (req, res) => {
-  res.redirect(`/site/${req.site_id}/create-availability`);
-});
+// Legacy fallback routes retained for backwards compatibility.
+router.get('/site/:id/availability/all', redirectLegacyToClinics);
+router.get('/site/:id/availability/all/:groupId', redirectLegacyToClinics);
+router.all('/site/:id/remove/:itemId', redirectLegacyToClinics);
+router.all('/site/:id/remove/:itemId/:step', redirectLegacyToClinics);
+router.all('/site/:id/change/group/:itemId', redirectLegacyToClinics);
+router.all('/site/:id/change/group/:itemId/:step', redirectLegacyToClinics);
 
 // -----------------------------------------------------------------------------
 // EXPORT ROUTER
