@@ -1412,7 +1412,7 @@ router.get('/site/:id/clinics/edit/:sessionId', (req, res) => {
   }
 
   const heading = state.draft.type === 'Clinic series' ? 'Edit clinic series' : 'Edit single clinic';
-  return res.render('site/clinics/edit/summary', {
+  return res.render('site/clinics/edit/summary-parent', {
     pageName: heading,
     draft: state.draft,
     sessionId: req.params.sessionId
@@ -2157,34 +2157,6 @@ router.all('/site/:id/create-availability/check-answers', (req, res) => res.redi
 router.all('/site/:id/create-availability/process-new-session', (req, res) => res.redirect(`/site/${req.site_id}/clinics/process-new-session`));
 router.get('/site/:id/create-availability/success', (req, res) => res.redirect(`/site/${req.site_id}/clinics/success`));
 
-router.get('/site/:id/debug/recurring-expansion', (req, res) => {
-  const data = req.session.data;
-  const site_id = req.site_id;
-  const recurringSessions = data?.recurring_sessions?.[site_id] || {};
-  const records = Object.values(recurringSessions);
-
-  const requestedId = req.query.id;
-  const selected = records.find((session) => session.id === requestedId) || records[0] || null;
-  const expandedDates = [];
-
-  if (selected) {
-    for (const [date, day] of Object.entries(res.locals.dailyAvailability || {})) {
-      const hasMatch = (day.sessions || []).some((session) => session.recurringId === selected.id);
-      if (hasMatch) expandedDates.push(date);
-    }
-  }
-
-  expandedDates.sort();
-
-  res.render('site/debug/recurring-expansion', {
-    sessionCount: records.length,
-    selected,
-    expandedDates,
-    selectedJson: selected ? JSON.stringify(selected, null, 2) : ''
-  });
-});
-
-
 // -----------------------------------------------------------------------------
 // VIEW AVAILABILITY
 // -----------------------------------------------------------------------------
@@ -2265,7 +2237,7 @@ router.get('/site/:id/availability/day', (req, res) => {
     daySummary.unbookedAppointments = Math.max(0, daySummary.totalAppointments - daySummary.bookedAppointments);
   }
 
-  res.render('site/availability/day', {
+  res.render('site/clinics/availability/day', {
     date,
     today,
     tomorrow,
@@ -2313,7 +2285,7 @@ router.get('/site/:id/availability/week', (req, res) => {
     `/site/${site_id}/availability/week?date=${startFromDate}`
   );
 
-  res.render('site/availability/week', {
+  res.render('site/clinics/availability/week', {
     date: startFromDate,
     today,
     week,
@@ -2343,7 +2315,7 @@ router.get('/site/:id/availability/month', (req, res) => {
     recurringSessions
   );
 
-  res.render('site/availability/month', {
+  res.render('site/clinics/availability/month', {
     currentDate: monthData.currentDate,
     previousMonthDate: monthData.previousMonthDate,
     nextMonthDate: monthData.nextMonthDate,

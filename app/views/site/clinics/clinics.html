@@ -9,10 +9,12 @@
 
   {% for service_id in service_ids %}
     {% if data.services[service_id] %}
-      {% set vaccineShortcode = data.services[service_id].cohort.type ~ " " ~ data.services[service_id].vaccine %}
-      {% if vaccineShortcode not in serviceTypes %}
-        {% set serviceTypes = serviceTypes.concat([vaccineShortcode]) %}
+      {% set serviceName = data.services[service_id].name %}
+      {% if serviceName not in serviceTypes %}
+        {% set serviceTypes = serviceTypes.concat([serviceName]) %}
       {% endif %}
+    {% elif service_id and service_id not in serviceTypes %}
+      {% set serviceTypes = serviceTypes.concat([service_id]) %}
     {% endif %}
   {% endfor %}
 

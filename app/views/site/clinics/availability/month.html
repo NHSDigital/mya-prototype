@@ -1,6 +1,6 @@
-{% extends '../../layouts/layout.html' %}
-{% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
-{% from '../../components/action-control-bar.njk' import appActionControlBar %}
+{% extends '../../../layouts/layout.html' %}
+{% from '../../../components/secondary-navigation.njk' import appSecondaryNavigation %}
+{% from '../../../components/action-control-bar.njk' import appActionControlBar %}
 {% from 'nhsuk/components/card/macro.njk' import card %}
 
 {% set pageName = monthHeading or (currentDate | formatDate("LLLL yyyy")) %}

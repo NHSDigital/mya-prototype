@@ -605,7 +605,7 @@ router.get('/site/:id/change/:type/:itemId', (req, res) => {
     return res.redirect(`/site/${req.site_id}/availability/week`);
   }
 
-  return res.render('site/change-session/summary', {
+  return res.render('site/clinics/edit/summary-child', {
     pageName: 'Change clinic',
     itemId: req.params.itemId,
     draft: state.draft,
@@ -865,22 +865,5 @@ router.get('/site/:id/change/session/:itemId/success', (req, res) => {
     cancelSummary
   });
 });
-
-router.get('/site/:id/change/:type/:itemId/is-this-part-of-a-group', (req, res) =>
-  res.redirect(changeSummaryPath(req.site_id, req.params.itemId)));
-router.get('/site/:id/change/:type/:itemId/matching-availability', (req, res) =>
-  res.redirect(changeSummaryPath(req.site_id, req.params.itemId)));
-router.post('/site/:id/change/:type/:itemId/select-type-of-change', (req, res) =>
-  res.redirect(changeSummaryPath(req.site_id, req.params.itemId)));
-router.post('/site/:id/change/:type/:itemId/change-matching-availability', (req, res) =>
-  res.redirect(changeSummaryPath(req.site_id, req.params.itemId)));
-router.get('/site/:id/change/:type/:itemId/select-matching-availability', (req, res) =>
-  res.redirect(changeSummaryPath(req.site_id, req.params.itemId)));
-router.get('/site/:id/change/:type/:itemId/do-you-want-to-cancel-bookings-single', (req, res) =>
-  res.redirect(changeSummaryPath(req.site_id, req.params.itemId)));
-router.get('/site/:id/change/:type/:itemId/check-answers-single', (req, res) =>
-  res.redirect(`${changeSummaryPath(req.site_id, req.params.itemId)}/check-answers`));
-router.get('/site/:id/change/:type/:itemId/success-single', (req, res) =>
-  res.redirect(`${changeSummaryPath(req.site_id, req.params.itemId)}/success`));
 
 module.exports = router;

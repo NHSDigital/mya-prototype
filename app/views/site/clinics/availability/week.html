@@ -1,6 +1,6 @@
-{% extends '../../layouts/layout.html' %}
-{% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
-{% from '../../components/action-control-bar.njk' import appActionControlBar %}
+{% extends '../../../layouts/layout.html' %}
+{% from '../../../components/secondary-navigation.njk' import appSecondaryNavigation %}
+{% from '../../../components/action-control-bar.njk' import appActionControlBar %}
 {% from 'nhsuk/components/card/macro.njk' import card %}
 
 {% set pageName = weekHeading or (week[0] | formatDate('d LLLL') ~ ' to ' ~ week[6] | formatDate('d LLLL yyyy')) %}
@@ -105,12 +105,16 @@
                 </div>
               </div>
 
-              <p class="nhsuk-u-margin-top-4 nhsuk-u-margin-bottom-0">
+              <div class="nhsuk-button-group nhsuk-button-group--small nhsuk-u-padding-top-3">
                 <a href="{{ day.dayViewHref }}">View day</a>
-              </p>
+                <a href="/not-in-this-prototype">Add clinic</a>
+              </div>
 
             {% else %}
               <p class="nhsuk-body nhsuk-u-margin-bottom-0">No appointments.</p>
+              <div class="nhsuk-button-group nhsuk-button-group--small nhsuk-u-padding-top-3">
+                <a href="/not-in-this-prototype">Add clinic</a>
+              </div>
             {% endif %}
           {% endcall %}
         </li>
