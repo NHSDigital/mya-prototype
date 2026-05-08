@@ -6,6 +6,7 @@
   {% set cancelDateRangeHref = params.cancelDateRangeHref or ('/site/' ~ siteId ~ '/cancel-availability/dates') %}
 
   <div class="nhsuk-button-group nhsuk-button-group--small">
+    {% if params.create %}
     {{ button({
       text: 'Create clinics',
       classes: 'nhsuk-button--small',
@@ -17,6 +18,7 @@
       classes: 'nhsuk-button--secondary nhsuk-button--small',
       href: cancelDateRangeHref
     }) }}
+    {% endif %}
 
     {% if params.print %}
       {{ button({
@@ -25,5 +27,7 @@
         href: params.print
       }) }}
     {% endif %}
+    
+    
   </div>
 {% endmacro %}

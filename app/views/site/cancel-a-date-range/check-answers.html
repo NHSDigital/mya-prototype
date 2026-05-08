@@ -72,11 +72,12 @@
         {% endif %}
 
 
-        {{ button({
-          text: buttonText,
-          classes: "nhsuk-button--warning",
-          href: "/site/" + site_id + "/cancel-availability/success"
-        }) }}
+        <form method="post" action="/site/{{ site_id }}/cancel-availability/check-answers">
+          {{ button({
+            text: buttonText,
+            classes: "nhsuk-button--warning"
+          }) }}
+        </form>
 
     </div>
   </div>

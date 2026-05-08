@@ -1,54 +1,5 @@
 {% extends '../../layouts/layout.html' %}
 
-{# Get affected sessions #}
-{% set affectedSessions = [] %}
-{% for siteId, day in data.daily_availability %}
-    {% if siteId == site_id %}    
-      {% for date, dayData in day %}
-        {% if date | isDateBetween(startDate, endDate)  %}
-          {% for session in dayData.sessions %}
-            {% set affectedSessions = affectedSessions.concat({
-              date: date,
-              from: session.from,
-              until: session.until,
-              services: session.services,
-              slotLength: session.slotLength
-            }) %}
-          {% endfor %}
-        {% endif %}
-      {% endfor %}
-    {% endif %}
-{% endfor %}
-
-
-{# Get affected bookings #}
-{% set affectedBookings = [] %}
-{% for siteId, bookings in data.bookings %}
-    {% if siteId == site_id %}    
-      {% for bookingId, booking in bookings %}
-        {% if booking.datetime | isDateBetween(startDate, endDate)  %}
-          {% set affectedBookings = affectedBookings.concat(booking) %}
-        {% endif %}
-      {% endfor %}
-    {% endif %}
-{% endfor %}
-
-{% macro totalSlots(from, until, slotLength) %}
-  {# 1. Split the strings into [Hours, Minutes] #}
-  {% set startParts = from.split(':') %}
-  {% set endParts = until.split(':') %}
-
-  {# 2. Convert times to absolute minutes from midnight #}
-  {#    (Hours * 60) + Minutes #}
-  {% set startTotalMins = (startParts[0] | int * 60) + (startParts[1] | int) %}
-  {% set endTotalMins = (endParts[0] | int * 60) + (endParts[1] | int) %}
-
-  {# 3. Calculate duration and divide by slot length #}
-  {% set duration = endTotalMins - startTotalMins %}
-  {% set numberOfSlots = (duration / slotLength) | round(0, "floor") %}
-  {{ numberOfSlots }}
-{% endmacro %}
-
 {% macro sessionsAndBookings(sessions, bookings) %}
 <table class="nhsuk-table-responsive" role="table">
   <caption class="nhsuk-table__caption">
@@ -57,8 +8,7 @@
   <thead class="nhsuk-table__head" role="rowgroup">
     <tr class="nhsuk-table__row" role="row">
       <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Date and time</th>
-      <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Services</th>
-      <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Bookings</th>
+      <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Bookings per service</th>
       <th scope="col" class="nhsuk-table__header nhsuk-u-width-one-quarter" role="columnheader">Unbooked</th>
     </tr>
   </thead>
@@ -68,33 +18,19 @@
       <td class="nhsuk-table__cell" role="cell">
         <span class="nhsuk-table-responsive__heading" aria-hidden="true">Date time </span>{{ session.date | nhsDate }}<br>{{ session.from | nhsTime }} to {{ session.until | nhsTime }}
       </td>
-      <td class="nhsuk-table__cell" role="cell" colspan="2">
-        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Services and bookings </span>
-        {% set bookingCount = 0 %}
-        {% for booking in bookings %}
-          {% if booking.datetime | formatDate('yyyy-MM-dd') == session.date and booking.status == "scheduled" and booking.datetime | isTimeBetween(session.from, session.until) %}
-          {% set bookingCount = bookingCount + 1 %}
-          {% endif %}
-        {% endfor %}
-        {% set displayBookings = 1 %}
+      <td class="nhsuk-table__cell" role="cell">
+        <span class="nhsuk-table-responsive__heading" aria-hidden="true">Bookings </span>
         <ul class="nhsuk-list">
         {% for serviceId in session.services %}
-          <li>
-            {{ data.services[serviceId].name }}
-            {{ displayBookings }}
-          </li>
+          {% set serviceName = data.services[serviceId].name if data.services[serviceId] else serviceId %}
+          {% set bookingCount = session.serviceBookingCounts[serviceId] if session.serviceBookingCounts else 0 %}
+          <li>{{ serviceName }} ({{ bookingCount }} {{ 'booking' | plural(bookingCount) }})</li>
         {% endfor %}
-        {% if bookingCount > displayBookings %}{{ displayBookings - 1 }}{% endif %}
         </ul>
       </td>
       <td class="nhsuk-table__cell" role="cell">
         <span class="nhsuk-table-responsive__heading" aria-hidden="true">Unbooked </span>
-        {% set unbookedCount = totalSlots(session.from, session.until, session.slotLength) - bookingCount %}
-        {# bit of a hack, as these numbers are unreliable #}
-        {% if unbookedCount < 0 %}
-          {% set unbookedCount = 0 %}
-        {% endif %}
-        {{ unbookedCount }}
+        {{ session.unbookedCount or 0 }}
       </td>
     </tr>
     {% endfor %}

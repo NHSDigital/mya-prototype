@@ -10,7 +10,7 @@ router.use(siteLevelMiddleware());
 // base router AFTER
 router.use('/', require('./routes/base'));
 router.use('/', require('./routes/change-session'));
-router.use('/', require('./routes/cancel-availability'));
+router.use('/', require('./routes/cancel-a-date-range'));
 
 
 
