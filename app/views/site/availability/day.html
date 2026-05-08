@@ -78,7 +78,7 @@
             {% if slot.booking_status == opts.status or slot.booking_status in opts.status %}
             {% set booking = data.bookings[site_id][slot.booking_id] %}
             <tr class="nhsuk-table__row" role="row">
-              <td class="nhsuk-table__cell">{{ booking.datetime | formatDate('h:mm a') | lower  }}</td>
+              <td class="nhsuk-table__cell">{{ booking.datetime | nhsTime  }}</td>
               <td class="nhsuk-table__cell">
                 {{ booking.name }}<br>
                 {{ booking.nhsNumber | nhsNumber | safe }}
