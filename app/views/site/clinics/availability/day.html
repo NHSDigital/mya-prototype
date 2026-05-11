@@ -112,6 +112,8 @@
       {% macro clinicsRunningToday() %}
         {% set sessions = daySummary.sessions or [] %}
 
+        <h2 class="nhsuk-heading-m">Clinics running today</h2>
+
         {% if sessions | length %}
           <table class="nhsuk-table">
             <thead class="nhsuk-table__head">
