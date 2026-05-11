@@ -1,6 +1,15 @@
 {% extends '../../../layouts/layout.html' %}
 {% from '../../../components/app-card.njk' import appCard %}
 
+{% set editBasePath = '/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId %}
+{% set isSeries = draft.type == 'Clinic series' %}
+{% set pageName = 'Change clinic series' if isSeries else 'Change single clinic' %}
+{% set detailsTitle = 'Series details' if isSeries else 'Clinic details' %}
+{% set vaccinatorText = draft.capacity ~ ' vaccinator' %}
+{% if draft.capacity != 1 %}
+  {% set vaccinatorText = vaccinatorText ~ 's' %}
+{% endif %}
+
 {% block beforeContent %}
 {{ backLink({
   href: '/site/' + site_id + '/clinics'
@@ -99,14 +108,6 @@
         </dl>
       {% endmacro %}
 
-      {% set editBasePath = '/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId %}
-      {% set isSeries = draft.type == 'Clinic series' %}
-      {% set pageName = 'Change clinic series' if isSeries else 'Change single clinic' %}
-      {% set detailsTitle = 'Series details' if isSeries else 'Clinic details' %}
-      {% set vaccinatorText = draft.capacity ~ ' vaccinator' %}
-      {% if draft.capacity != 1 %}
-        {% set vaccinatorText = vaccinatorText ~ 's' %}
-      {% endif %}
 
       {# slots calculation #}
       {% set fromParts = draft.from.split(':') %}
@@ -149,6 +150,8 @@
       {% endif %}
 
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      
 
       {{ appCard({
         title: detailsTitle,
