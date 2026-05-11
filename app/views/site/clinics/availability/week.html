@@ -85,7 +85,7 @@
                     <td class="nhsuk-table__cell">{{ session.unbookedTotal }} free</td>
                     <td class="nhsuk-table__cell">
                       {% if session.actionHref %}
-                      <a href="{{ session.actionHref }}">Change</a>
+                      <a href="{{ session.actionHref }}">View and change</a>
                       {% endif %}
                     </td>
                   </tr>
@@ -105,14 +105,14 @@
                 </div>
               </div>
 
-              <div class="nhsuk-button-group nhsuk-button-group--small nhsuk-u-padding-top-3">
+              <div class="nhsuk-button-group nhsuk-u-padding-top-3">
                 <a href="{{ day.dayViewHref }}">View day</a>
                 <a href="/not-in-this-prototype">Add clinic</a>
               </div>
 
             {% else %}
               <p class="nhsuk-body nhsuk-u-margin-bottom-0">No clinics running.</p>
-              <div class="nhsuk-button-group nhsuk-button-group--small nhsuk-u-padding-top-3">
+              <div class="nhsuk-button-group nhsuk-u-padding-top-3">
                 <a href="/not-in-this-prototype">Add clinic</a>
               </div>
             {% endif %}

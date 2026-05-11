@@ -101,7 +101,7 @@
 
       {% set editBasePath = '/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId %}
       {% set isSeries = draft.type == 'Clinic series' %}
-      {% set pageName = 'Edit clinic series' if isSeries else 'Edit single clinic' %}
+      {% set pageName = 'Change clinic series' if isSeries else 'Change single clinic' %}
       {% set detailsTitle = 'Series details' if isSeries else 'Clinic details' %}
       {% set vaccinatorText = draft.capacity ~ ' vaccinator' %}
       {% if draft.capacity != 1 %}

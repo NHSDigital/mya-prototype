@@ -19,7 +19,7 @@
         {% if unaffectedChildClinics and unaffectedChildClinics.length %}
           {% set unaffectedCount = unaffectedChildClinics.length %}
           <h2 class="nhsuk-heading-m">{{ unaffectedCount }} {{ 'clinic has' if unaffectedCount == 1 else 'clinics have' }} not been updated</h2>
-          <p>These clinics were not changed because you have already edited their {{ unaffectedReason }}.</p>
+          <p>These clinics were not changed because you have already changed their {{ unaffectedReason }}.</p>
           <ul class="nhsuk-list nhsuk-list--bullet">
             {% for clinicDate in unaffectedChildClinics %}
               <li>{{ clinicDate }}</li>
@@ -39,7 +39,7 @@
         {% if unaffectedChildClinics and unaffectedChildClinics.length %}
           {% set unaffectedCount = unaffectedChildClinics.length %}
           <h2 class="nhsuk-heading-m">{{ unaffectedCount }} {{ 'clinic has' if unaffectedCount == 1 else 'clinics have' }} not been updated</h2>
-          <p>These clinics were not changed because you have already edited their {{ unaffectedReason }}.</p>
+          <p>These clinics were not changed because you have already changed their {{ unaffectedReason }}.</p>
           <ul class="nhsuk-list nhsuk-list--bullet">
             {% for clinicDate in unaffectedChildClinics %}
               <li>{{ clinicDate }}</li>
