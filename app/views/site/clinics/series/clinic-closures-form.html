@@ -32,14 +32,14 @@
         <input type="hidden" name="newSession[type]" value="Clinic series">
         {{ input({
           label: {
-            text: "Closure label",
+            text: "Name of closure (optional)",
             classes: "nhsuk-label--m"
           },
           id: "closure-name",
           name: "closure[name]",
           classes: "nhsuk-input--width-20",
           hint: {
-            text: "A short name for these dates. For example, Christmas closure"
+            text: "Add a short name for these dates. For example, Christmas closure"
           },
           value: closure.name
         }) }}
@@ -49,7 +49,7 @@
           namePrefix: "closure[startDate]",
           fieldset: {
             legend: {
-              text: "Closure start date",
+              text: "Start date",
               classes: "nhsuk-label--m"
             }
           },
@@ -80,7 +80,7 @@
           namePrefix: "closure[endDate]",
           fieldset: {
             legend: {
-              text: "Closure end date",
+              text: "End date",
               classes: "nhsuk-label--m"
             }
           },

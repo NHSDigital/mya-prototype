@@ -121,7 +121,7 @@ const base = {
       },
       {
         text: 'Clinics',
-        description: 'View appointments for your site',
+        description: 'View appointments and manage clinics for your site',
         hrefTemplate: '/site/:id/availability/day'
       },
       {

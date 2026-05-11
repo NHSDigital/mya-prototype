@@ -62,7 +62,7 @@
                     <th scope="col" class="nhsuk-table__header">Time</th>
                     <th scope="col" class="nhsuk-table__header">Services</th>
                     <th scope="col" class="nhsuk-table__header">Booked</th>
-                    <th scope="col" class="nhsuk-table__header">Unbooked</th>
+                    <th scope="col" class="nhsuk-table__header">Free</th>
                     <th scope="col" class="nhsuk-table__header">Action</th>
                   </tr>
                 </thead>
@@ -82,7 +82,7 @@
                         {{ service.bookedCount }} booked{% if not loop.last %}<br>{% endif %}
                       {% endfor %}
                     </td>
-                    <td class="nhsuk-table__cell">{{ session.unbookedTotal }} unbooked</td>
+                    <td class="nhsuk-table__cell">{{ session.unbookedTotal }} free</td>
                     <td class="nhsuk-table__cell">
                       {% if session.actionHref %}
                       <a href="{{ session.actionHref }}">Change</a>
@@ -101,7 +101,7 @@
                   <p class="nhsuk-body-s nhsuk-u-margin-bottom-0"><strong>Booked:</strong> {{ day.bookedAppointments }}</p>
                 </div>
                 <div class="nhsuk-grid-column-one-third">
-                  <p class="nhsuk-body-s nhsuk-u-margin-bottom-0"><strong>Unbooked:</strong> {{ day.unbookedAppointments }}</p>
+                  <p class="nhsuk-body-s nhsuk-u-margin-bottom-0"><strong>Free:</strong> {{ day.unbookedAppointments }}</p>
                 </div>
               </div>
 
@@ -111,7 +111,7 @@
               </div>
 
             {% else %}
-              <p class="nhsuk-body nhsuk-u-margin-bottom-0">No appointments.</p>
+              <p class="nhsuk-body nhsuk-u-margin-bottom-0">No clinics running.</p>
               <div class="nhsuk-button-group nhsuk-button-group--small nhsuk-u-padding-top-3">
                 <a href="/not-in-this-prototype">Add clinic</a>
               </div>

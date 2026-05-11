@@ -1,7 +1,7 @@
 {% extends '../../../layouts/layout.html' %}
 {% from '../../../components/appointments-summary.njk' import appointmentsSummary %}
 
-{% if not pageName %}{% set pageName = "Appointments calculator" %}{% endif %}
+{% if not pageName %}{% set pageName = "Capacity calculator" %}{% endif %}
 {% if not backUrl %}{% set backUrl = '/site/' + site_id + '/clinics/clinic-times' %}{% endif %}
 {% if not formAction %}{% set formAction = '/site/' + site_id + '/clinics/services' %}{% endif %}
 {% if not captionText %}{% set captionText = 'Create a single clinic' %}{% endif %}

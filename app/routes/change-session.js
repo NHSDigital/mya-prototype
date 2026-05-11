@@ -862,7 +862,9 @@ router.get('/site/:id/change/session/:itemId/success', (req, res) => {
     primaryText: 'Back to week view',
     secondaryHref: dayViewHref(req.site_id, date),
     secondaryText: 'View this day',
-    cancelSummary
+    cancelSummary,
+    unaffectedChildClinics: [],
+    unaffectedChildReasonText: 'details'
   });
 });
 

@@ -45,11 +45,21 @@
           {{ startDate | formatDate }} to {{ endDate | formatDate }}
         {%- endset %}
 
-        {% set displayDays = data.newSession.days or [] | join(", ") %}
+        {% set displayDays = (data.newSession.days or []) | join(", ") %}
 
         {% set startTime = (data.newSession.startTime.hour) + ':' + (data.newSession.startTime.minute | default('00')) %}
         {% set endTime = (data.newSession.endTime.hour) + ':' + (data.newSession.endTime.minute | default('00')) %}
         {% set displayTime = (startTime | nhsTime) + " to " + (endTime | nhsTime) %}
+
+        {% set startParts = startTime.split(':') %}
+        {% set endParts = endTime.split(':') %}
+        {% set startMinutes = (startParts[0] | int * 60) + (startParts[1] | int) %}
+        {% set endMinutes = (endParts[0] | int * 60) + (endParts[1] | int) %}
+        {% set sessionMinutes = endMinutes - startMinutes %}
+        {% set totalAppointmentsPerClinic = 0 %}
+        {% if sessionMinutes > 0 and (data.newSession.duration | int) > 0 and (data.newSession.capacity | int) > 0 %}
+          {% set totalAppointmentsPerClinic = (sessionMinutes // (data.newSession.duration | int)) * (data.newSession.capacity | int) %}
+        {% endif %}
 
         {% set servicesAvailable = [] %}
         {% set selectedServices = data.newSession.services or [] %}
@@ -146,7 +156,7 @@
               }
             }, {
               key: {
-                text: "Vaccinators or vaccination spaces available"
+                text: "Vaccinators available"
               },
               value: {
                 text: data.newSession.capacity
@@ -156,16 +166,23 @@
                   {
                     href: "/site/" + site_id + "/clinics/appointments-calculator",
                     text: "Change",
-                    visuallyHiddenText: " vaccinators or vaccination spaces available"
+                    visuallyHiddenText: " vaccinators available"
                   }
                 ]
+              }
+            }, {
+              key: {
+                text: "Total appointments per clinic"
+              },
+              value: {
+                text: totalAppointmentsPerClinic
               }
             }, {
               key: {
                 text: "Appointment length"
               },
               value: {
-                text: data.newSession.duration
+                text: data.newSession.duration ~ " minutes"
               },
               actions: {
                 items: [

@@ -718,6 +718,29 @@ function buildUnaffectedChildClinicDates(model, changedFields, siteId) {
     .map((dateISO) => formatShortDate(dateISO));
 }
 
+function buildUnaffectedChildReasonText(changedFields = []) {
+  const changed = new Set(asArray(changedFields));
+  const labels = [];
+
+  if (changed.has('time')) labels.push('start and end times');
+  if (changed.has('capacity')) labels.push('vaccinators');
+  if (changed.has('services')) labels.push('services');
+
+  if (labels.length === 0) {
+    return 'details';
+  }
+
+  if (labels.length === 1) {
+    return labels[0];
+  }
+
+  if (labels.length === 2) {
+    return `${labels[0]} or ${labels[1]}`;
+  }
+
+  return `${labels.slice(0, -1).join(', ')}, or ${labels[labels.length - 1]}`;
+}
+
 function reviewBackPath(siteId, sessionId, state) {
   if (asArray(state?.affectedBookingIds).length > 0) {
     return `${editSummaryPath(siteId, sessionId)}/affected-bookings`;
@@ -1602,6 +1625,7 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
     const unaffectedChildClinics = state.draft.type === 'Clinic series'
       ? buildUnaffectedChildClinicDates(updatedModel, changedFields, req.site_id)
       : [];
+    const unaffectedChildReasonText = buildUnaffectedChildReasonText(changedFields);
     persistRecurringSession(data, req.site_id, updatedModel);
 
     const siteBookings = data?.bookings?.[req.site_id] || {};
@@ -1618,7 +1642,8 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
       sessionId: req.params.sessionId,
       isSeries: state.draft.type === 'Clinic series',
       cancelledBookingsSummary,
-      unaffectedChildClinics
+      unaffectedChildClinics,
+      unaffectedChildReasonText
     });
 
     applyAffectedBookingAction(siteBookings, state.affectedBookingIds, state.bookingAction);
@@ -1679,7 +1704,8 @@ router.get('/site/:id/clinics/edit/:sessionId/success', (req, res) => {
   return res.render('site/clinics/edit/success', {
     sessionId: req.params.sessionId,
     cancelSummary,
-    unaffectedChildClinics: matchingSuccessState?.unaffectedChildClinics || []
+    unaffectedChildClinics: matchingSuccessState?.unaffectedChildClinics || [],
+    unaffectedChildReasonText: matchingSuccessState?.unaffectedChildReasonText || 'details'
   });
 });
 

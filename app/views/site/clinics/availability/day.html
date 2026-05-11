@@ -119,7 +119,7 @@
                 <th scope="col" class="nhsuk-table__header">Time</th>
                 <th scope="col" class="nhsuk-table__header">Services</th>
                 <th scope="col" class="nhsuk-table__header">Booked</th>
-                <th scope="col" class="nhsuk-table__header">Unbooked</th>
+                <th scope="col" class="nhsuk-table__header">Free</th>
                 <th scope="col" class="nhsuk-table__header">Action</th>
               </tr>
             </thead>
@@ -139,7 +139,7 @@
                       {{ service.bookedCount }} booked{% if not loop.last %}<br>{% endif %}
                     {% endfor %}
                   </td>
-                  <td class="nhsuk-table__cell">{{ session.unbookedTotal }} unbooked</td>
+                  <td class="nhsuk-table__cell">{{ session.unbookedTotal }} free</td>
                   <td class="nhsuk-table__cell">
                     {% if session.actionHref %}
                       <a href="{{ session.actionHref }}">Change</a>

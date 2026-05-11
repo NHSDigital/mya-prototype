@@ -3,6 +3,7 @@
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
+      {% set unaffectedReason = unaffectedChildReasonText or 'details' %}
       {% if cancelSummary %}
         {{ panel({ titleText: cancelSummary.titleText }) }}
 
@@ -18,6 +19,7 @@
         {% if unaffectedChildClinics and unaffectedChildClinics.length %}
           {% set unaffectedCount = unaffectedChildClinics.length %}
           <h2 class="nhsuk-heading-m">{{ unaffectedCount }} {{ 'clinic has' if unaffectedCount == 1 else 'clinics have' }} not been updated</h2>
+          <p>These clinics were not changed because you have already edited their {{ unaffectedReason }}.</p>
           <ul class="nhsuk-list nhsuk-list--bullet">
             {% for clinicDate in unaffectedChildClinics %}
               <li>{{ clinicDate }}</li>
@@ -37,6 +39,7 @@
         {% if unaffectedChildClinics and unaffectedChildClinics.length %}
           {% set unaffectedCount = unaffectedChildClinics.length %}
           <h2 class="nhsuk-heading-m">{{ unaffectedCount }} {{ 'clinic has' if unaffectedCount == 1 else 'clinics have' }} not been updated</h2>
+          <p>These clinics were not changed because you have already edited their {{ unaffectedReason }}.</p>
           <ul class="nhsuk-list nhsuk-list--bullet">
             {% for clinicDate in unaffectedChildClinics %}
               <li>{{ clinicDate }}</li>
@@ -54,7 +57,7 @@
           {% if secondaryHref %}
             <li><a href="{{ secondaryHref }}">{{ secondaryText }}</a></li>
           {% elif not primaryHref or sessionId %}
-            <li><a href="/site/{{ site_id }}/clinics">Back to clinics</a></li>
+            <li><a href="/site/{{ site_id }}/clinics">Back to clinics list</a></li>
           {% endif %}
         </ul>
       {% endif %}
