@@ -151,7 +151,13 @@
 
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
-      
+      <div class="nhsuk-button-group nhsuk-button-group--small">
+        {{ button({
+            text: 'Remove clinic series',
+          classes: 'nhsuk-button--small nhsuk-button--warning',
+            href: '/not-in-this-prototype'
+        }) }}
+      </div>
 
       {{ appCard({
         title: detailsTitle,
