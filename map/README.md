@@ -249,5 +249,5 @@ If you want local `/map` to behave like a remote server, remove that line or set
 ## Notes
 
 - `map/dist` is generated output and can be ignored in git.
-- The generated pages assume the host prototype already serves the standard NHS frontend CSS at `/css/main.css`.
+- The generated pages assume the host prototype already serves the standard NHS frontend CSS at `/main.css`.
 - If you want to prebuild the map during startup in a specific prototype, you can still add your own `prestart` script there, but the folder does not depend on it.
