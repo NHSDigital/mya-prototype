@@ -1,0 +1,18 @@
+title: Reports
+versions:
+  v1:
+    summary: Reports reached directly from the top navigation.
+    nav_path:
+      - Reports
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/reports-v1.svg
+  v2:
+    summary: Reports after the Clinics area was consolidated in the top navigation.
+    nav_path:
+      - Reports
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/reports-v2.svg

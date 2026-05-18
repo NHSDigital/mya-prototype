@@ -4,6 +4,7 @@
 /dist
 /tmp
 /public
+/map/dist
 
 # Runtime data
 pids

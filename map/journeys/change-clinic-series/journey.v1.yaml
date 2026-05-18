@@ -1,0 +1,79 @@
+id: v1
+tag: Latest
+title: Change clinic series
+
+step_order:
+  - clinic-overview-page
+  - change-properties
+  - affected-clinics
+  - affected-booking
+  - check-answers
+  - success
+
+findings:
+  - scope: step
+    step: clinic-overview-page
+    insights:
+      - People found it easy to identify the clinic series they wanted to change.
+
+  - scope: variant
+    step: change-properties
+    variant: start-and-end-times
+    insights:
+      - Users are sometimes confused between the 12 and 24 hour time formats.
+      - Some participants question whether the change will apply on every day in the series.
+      - Participants tried to understand the time fields before noticing the explanatory copy beneath them.
+    next_steps:
+      - Make the scope of the change easier to scan without relying on helper text alone.
+      - Test a clearer field grouping for time changes.
+
+  - scope: variant
+    step: change-properties
+    variant: clinic-capacity
+    insights:
+      - Capacity is easier to understand when the surrounding labels describe the operational impact.
+    next_steps:
+      - Keep related numeric fields visually grouped together.
+
+  - scope: step
+    step: affected-clinics
+    insights:
+      - People often skipped this page unless the heading immediately signalled risk or change.
+      - Users rarely read the full body copy when the main action sat below the fold.
+    next_steps:
+      - Tighten the copy so the page explains the consequence faster.
+      - Reduce the amount of explanatory content and surface the decision sooner.
+
+  - scope: step
+    step: affected-booking
+    insights:
+      - Users want to know how many bookings are affected before they commit to the change.
+      - People expected a stronger signal when bookings would be cancelled automatically.
+    next_steps:
+      - Pull the booking impact summary closer to the main call to action.
+      - Test stronger severity styling when appointments are lost.
+
+  - scope: variant
+    step: check-answers
+    variant: start-and-end-times
+    insights:
+      - Users look for the changed values before they read the supporting labels.
+    next_steps:
+      - Increase emphasis on the before and after values.
+
+  - scope: cross-step
+    steps:
+      - affected-clinics
+      - affected-booking
+      - check-answers
+    insights:
+      - Once the journey started talking about risk or cancellations, participants became more cautious throughout the rest of the flow.
+    next_steps:
+      - Make the consequence trail more consistent across the later steps.
+
+  - scope: step
+    step: success
+    insights:
+      - Users appreciated knowing whether the change had already been applied to future clinics.
+    next_steps:
+      - Add a short recap of what the confirmation means for the next appointment cycle.

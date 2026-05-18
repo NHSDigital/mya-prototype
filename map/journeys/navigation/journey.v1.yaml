@@ -1,0 +1,18 @@
+id: v1
+title: Navigation
+
+step_order:
+  - home
+  - view-appointments
+  - manage-clinics
+  - change-site-details
+  - manage-users
+  - reports
+
+findings:
+  - scope: step
+    step: manage-clinics
+    insights:
+      - People treated Manage clinics as a separate top-level area when it sat beside View appointments in the main navigation.
+    next_steps:
+      - Test whether grouping clinic tasks under a shared parent reduces the choice burden.

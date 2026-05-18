@@ -1,0 +1,18 @@
+title: Change site details
+versions:
+  v1:
+    summary: Site details reached directly from the top navigation.
+    nav_path:
+      - Change site details
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/change-site-details-v1.svg
+  v2:
+    summary: Site details after the Clinics area was consolidated in the top navigation.
+    nav_path:
+      - Change site details
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/change-site-details-v2.svg

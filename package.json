@@ -4,6 +4,8 @@
   "description": "Rapidly create HTML prototypes of NHS websites and services.",
   "main": "app.js",
   "scripts": {
+    "map:build": "node map/build.js",
+    "map:watch": "node --watch-preserve-output --watch-path=map/journeys --watch-path=map/templates --watch-path=map/assets --watch-path=map/build.js --watch-path=map/router.js map/build.js",
     "start": "node app.js",
     "watch": "node --watch app.js"
   },
@@ -11,9 +13,11 @@
   "license": "MIT",
   "dependencies": {
     "dotenv": "^17.2.2",
+    "js-yaml": "^4.1.0",
     "luxon": "^3.7.2",
     "nhsuk-frontend": "^10.2.2",
-    "nhsuk-prototype-kit": "8.0.0-beta.7"
+    "nhsuk-prototype-kit": "8.0.0-beta.7",
+    "nunjucks": "^3.2.4"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.42.0",

@@ -1,0 +1,9 @@
+title: Affected booking
+versions:
+  v1:
+    summary: A booking impact step that helps users understand what happens to existing appointments before they continue.
+    prototype_path: /site/clinics/edit/affected-bookings
+    variants:
+      - id: default
+        label: Default warning
+        screenshot: screenshots/affected-bookings.png

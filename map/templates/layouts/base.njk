@@ -1,0 +1,25 @@
+{% from "nhsuk/components/breadcrumb/macro.njk" import breadcrumb %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ pageTitle }} | Journey map prototype</title>
+    <meta name="description" content="{{ description }}">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/map/assets/map.css">
+    <script src="/map/assets/map.js" defer></script>
+  </head>
+  <body class="map-site {{ bodyClass }}">
+    <div class="map-shell">
+      {% block chrome %}
+        {% if breadcrumbParams %}
+          {{ breadcrumb(breadcrumbParams) }}
+        {% endif %}
+      {% endblock %}
+      <main class="map-main" id="maincontent">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </body>
+</html>

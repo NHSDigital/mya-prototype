@@ -1,0 +1,30 @@
+id: v2
+tag: Latest
+title: Navigation
+
+step_order:
+  - home
+  - view-appointments
+  - manage-clinics
+  - change-site-details
+  - manage-users
+  - reports
+
+findings:
+  - scope: cross-step
+    steps:
+      - view-appointments
+      - manage-clinics
+    insights:
+      - Combining View appointments and Manage clinics under Clinics made the navigation model feel more coherent.
+    next_steps:
+      - Keep the sub-navigation labels tightly aligned with the tasks users expect to complete.
+
+  - scope: dependency
+    step: manage-clinics
+    related_steps:
+      - view-appointments
+    insights:
+      - People understood Manage clinics more quickly once they had already entered the Clinics area.
+    next_steps:
+      - Make the Clinics landing route obvious from pages outside the clinic management area.

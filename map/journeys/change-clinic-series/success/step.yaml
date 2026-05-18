@@ -1,0 +1,8 @@
+title: Success
+versions:
+  v1:
+    summary: The confirmation step after the change is complete, used to confirm outcomes and direct people to their next task.
+    variants:
+      - id: default
+        label: Default confirmation
+        screenshot: screenshots/success.png

@@ -1,0 +1,53 @@
+{% macro breadcrumbs(items=[]) %}
+  {% if items and items.length %}
+    <nav class="nhsuk-breadcrumb" aria-label="Breadcrumb">
+      <ol class="nhsuk-breadcrumb__list">
+        {% for item in items %}
+          {% if item.href %}
+            <li class="nhsuk-breadcrumb__item">
+              <a class="nhsuk-breadcrumb__link" href="{{ item.href }}">{{ item.label }}</a>
+            </li>
+          {% else %}
+            <li class="nhsuk-breadcrumb__item" aria-current="page">
+              {{ item.label }}
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ol>
+    </nav>
+  {% endif %}
+{% endmacro %}
+
+{% macro textList(items=[], emptyMessage='') %}
+  {% if items and items.length %}
+    <ul class="map-text-list">
+      {% for item in items %}
+        <li>
+          <p>{{ item.text }}</p>
+          {% if item.source %}
+            <small>{{ item.source }}</small>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif emptyMessage %}
+    <p class="map-empty-state">{{ emptyMessage }}</p>
+  {% endif %}
+{% endmacro %}
+
+{% macro boardNotes(items=[], emptyMessage='') %}
+  {% if items and items.length %}
+    <ul class="map-board-notes">
+      {% for item in items %}
+        <li>
+          <p>{{ item.text }}</p>
+          {% if item.source %}
+            <small>{{ item.source }}</small>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif emptyMessage %}
+    <p class="map-empty-state">{{ emptyMessage }}</p>
+  {% endif %}
+{% endmacro %}

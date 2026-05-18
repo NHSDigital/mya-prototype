@@ -1,0 +1,8 @@
+title: Clinic overview page
+versions:
+  v1:
+    summary: The starting point for the edit flow, where people confirm they are about to update the correct clinic series.
+    variants:
+      - id: default
+        label: Default view
+        screenshot: screenshots/clinics-overview-v1.png

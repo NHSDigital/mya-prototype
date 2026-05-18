@@ -1,0 +1,113 @@
+{% extends "layouts/base.njk" %}
+{% from "components/macros.njk" import textList %}
+
+{% block content %}
+  <section class="map-page-head map-page-head--simple">
+    <div>
+      <span class="map-detail-eyebrow">Step {{ step.position }} of {{ journey.steps.length }}</span>
+      <h1 class="map-page-title">{{ step.title }}</h1>
+      <p class="map-page-summary">{{ step.summary }}</p>
+    </div>
+  </section>
+
+  <section class="map-detail-panels nhsuk-u-margin-bottom-5">
+    <div class="map-panel">
+      <h2>Step metadata</h2>
+      <dl class="map-meta-list">
+        <div>
+          <dt>Journey</dt>
+          <dd><a href="{{ journey.path }}">{{ journey.title }}</a></dd>
+        </div>
+        <div>
+          <dt>Variants</dt>
+          <dd>{{ step.variants.length }}</dd>
+        </div>
+        <div>
+          <dt>Version</dt>
+          <dd>{{ journey.version.label if journey.version else 'Unversioned' }}</dd>
+        </div>
+        <div>
+          <dt>Screen version</dt>
+          <dd>
+            {{ step.screenVersionId }}
+            {% if step.isReusedFromEarlierVersion %}
+              reused in {{ journey.version.id }}
+            {% endif %}
+          </dd>
+        </div>
+        {% if step.navPathLabel %}
+          <div>
+            <dt>Navigation path</dt>
+            <dd>{{ step.navPathLabel }}</dd>
+          </div>
+        {% endif %}
+        {% if step.prototypePath %}
+          <div>
+            <dt>Prototype page</dt>
+            <dd><a href="{{ step.prototypePath }}">{{ step.prototypePath }}</a></dd>
+          </div>
+        {% endif %}
+      </dl>
+    </div>
+
+    {% if step.focusQuestions.length %}
+      <div class="map-panel">
+        <h2>Research focus</h2>
+        <ul class="map-bullet-list">
+          {% for question in step.focusQuestions %}
+            <li>{{ question }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if step.linkedInsights.length or step.linkedNextSteps.length %}
+      <div class="map-panel">
+        <h2>Connected findings</h2>
+        {% if step.linkedInsights.length %}
+          <h3>User insights</h3>
+          {{ textList(step.linkedInsights) }}
+        {% endif %}
+        {% if step.linkedNextSteps.length %}
+          <h3>What to try next</h3>
+          {{ textList(step.linkedNextSteps) }}
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="map-variant-grid">
+    {% for variant in step.variants %}
+      <article class="map-variant-card" id="variant-{{ variant.id }}">
+        <header class="map-variant-card__header">
+          <div>
+            <span class="map-detail-eyebrow">Variant</span>
+            <h2>{{ variant.label }}</h2>
+          </div>
+          {% if variant.isDefaultVariant %}
+            <span class="map-tag map-tag--soft">Default</span>
+          {% endif %}
+        </header>
+
+        <figure class="map-detail-screen">
+          <img src="{{ variant.screenshotPath }}" alt="{{ variant.alt }}" loading="lazy">
+          {% if variant.caption %}
+            <figcaption>{{ variant.caption }}</figcaption>
+          {% endif %}
+        </figure>
+
+        <div class="map-detail-grid">
+          <section class="map-panel">
+            <h3>User insights</h3>
+            {{ textList(variant.insights, 'No user insights yet.') }}
+          </section>
+
+          <section class="map-panel">
+            <h3>What to try next</h3>
+            {{ textList(variant.nextSteps, 'No follow-up ideas yet.') }}
+          </section>
+        </div>
+      </article>
+    {% endfor %}
+  </section>
+{% endblock %}

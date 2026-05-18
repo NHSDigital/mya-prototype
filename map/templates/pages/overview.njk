@@ -1,0 +1,46 @@
+{% extends "layouts/base.njk" %}
+{% from "components/macros.njk" import textList %}
+
+{% block content %}
+  <section class="map-page-head map-page-head--simple">
+    <div>
+      <span class="map-detail-eyebrow">Prototype map</span>
+      <h1 class="map-page-title">User journeys overview</h1>
+      <p class="map-page-summary">
+        This area is generated from versioned journey YAML in <code>/map/journeys</code>.
+      </p>
+    </div>
+  </section>
+
+  <section class="map-overview-grid">
+    {% for journey in journeys %}
+      <article class="map-overview-card">
+        <span class="map-card-eyebrow">Journey map</span>
+        <h2><a href="{{ journey.path }}">{{ journey.title }}</a></h2>
+        {% if journey.summary %}
+          <p>{{ journey.summary }}</p>
+        {% endif %}
+        <dl class="map-meta-list">
+          <div>
+            <dt>Steps</dt>
+            <dd>{{ journey.steps.length }}</dd>
+          </div>
+          <div>
+            <dt>Versions</dt>
+            <dd>{{ journey.versionCount }}</dd>
+          </div>
+          <div>
+            <dt>Latest version</dt>
+            <dd>{{ journey.latestVersionLabel }}</dd>
+          </div>
+        </dl>
+        {% if journey.researchSummaryPreview.length %}
+          <div class="nhsuk-u-margin-top-4">
+            <span class="map-card-eyebrow">Research summary</span>
+            {{ textList(journey.researchSummaryPreview) }}
+          </div>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </section>
+{% endblock %}
