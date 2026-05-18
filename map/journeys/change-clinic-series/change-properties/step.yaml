@@ -17,3 +17,5 @@ versions:
       - id: day-pattern
         label: Day pattern
         screenshot: screenshots/day-pattern.png
+  v2:
+    use: v1

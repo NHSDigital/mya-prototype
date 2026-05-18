@@ -12,35 +12,50 @@
     </div>
   </section>
 
-  <section class="map-overview-grid">
-    {% for journey in journeys %}
-      <article class="map-overview-card">
-        <span class="map-card-eyebrow">Journey map</span>
-        <h2><a href="{{ journey.path }}">{{ journey.title }}</a></h2>
-        {% if journey.summary %}
-          <p>{{ journey.summary }}</p>
-        {% endif %}
-        <dl class="map-meta-list">
-          <div>
-            <dt>Steps</dt>
-            <dd>{{ journey.steps.length }}</dd>
-          </div>
-          <div>
-            <dt>Versions</dt>
-            <dd>{{ journey.versionCount }}</dd>
-          </div>
-          <div>
-            <dt>Latest version</dt>
-            <dd>{{ journey.latestVersionLabel }}</dd>
-          </div>
-        </dl>
-        {% if journey.researchSummaryPreview.length %}
-          <div class="nhsuk-u-margin-top-4">
-            <span class="map-card-eyebrow">Research summary</span>
-            {{ textList(journey.researchSummaryPreview) }}
-          </div>
-        {% endif %}
-      </article>
-    {% endfor %}
-  </section>
+  {% for section in sections %}
+    <section class="map-overview-section" aria-labelledby="section-{{ section.id }}">
+      <div class="map-overview-section__head">
+        <span class="map-card-eyebrow">Section</span>
+        <h2 id="section-{{ section.id }}" class="map-overview-section__title">{{ section.title }}</h2>
+      </div>
+
+      {% if section.journeys.length %}
+        <div class="map-overview-grid">
+          {% for journey in section.journeys %}
+            <article class="map-overview-card">
+              <span class="map-card-eyebrow">Journey map</span>
+              <h3><a href="{{ journey.path }}">{{ journey.title }}</a></h3>
+              {% if journey.summary %}
+                <p>{{ journey.summary }}</p>
+              {% endif %}
+              <dl class="map-meta-list">
+                <div>
+                  <dt>Steps</dt>
+                  <dd>{{ journey.latestStepCount }}</dd>
+                </div>
+                <div>
+                  <dt>Versions</dt>
+                  <dd>{{ journey.versionCount }}</dd>
+                </div>
+                <div>
+                  <dt>Latest version</dt>
+                  <dd>{{ journey.latestVersionLabel }}</dd>
+                </div>
+              </dl>
+              {% if journey.researchSummaryPreview.length %}
+                <div class="nhsuk-u-margin-top-4">
+                  <span class="map-card-eyebrow">Research summary</span>
+                  {{ textList(journey.researchSummaryPreview) }}
+                </div>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="map-panel map-overview-empty">
+          <p class="map-empty-state">No journeys in this section yet.</p>
+        </div>
+      {% endif %}
+    </section>
+  {% endfor %}
 {% endblock %}

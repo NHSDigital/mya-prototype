@@ -25,6 +25,7 @@ const JOURNEYS_DIR = path.join(MAP_DIR, 'journeys');
 const ASSETS_DIR = path.join(MAP_DIR, 'assets');
 const TEMPLATES_DIR = path.join(MAP_DIR, 'templates');
 const VERSIONS_META_PATH = path.join(MAP_DIR, 'versions.yaml');
+const SECTIONS_META_PATH = path.join(MAP_DIR, 'sections.yaml');
 const NHSUK_NUNJUCKS_DIR = path.join(
   MAP_DIR,
   '..',
@@ -38,17 +39,18 @@ const JOURNEY_VERSION_FILE_PATTERN = /^journey\.(.+)\.ya?ml$/i;
 function buildMapSite() {
   const versionsMeta = loadVersionsMeta();
   const journeys = loadJourneys(versionsMeta);
+  const sections = loadSectionsMeta(journeys);
 
   emptyDir(DIST_DIR);
 
   copyDirectory(ASSETS_DIR, path.join(DIST_DIR, 'assets'));
   copyJourneyScreenshots(journeys);
   prepareJourneysForRender(journeys);
-  renderSite(journeys);
+  renderSite(journeys, sections);
 
   writeFile(
     path.join(DIST_DIR, 'site-data.json'),
-    `${JSON.stringify({ generatedAt: new Date().toISOString(), journeys }, null, 2)}\n`
+    `${JSON.stringify({ generatedAt: new Date().toISOString(), journeys, sections }, null, 2)}\n`
   );
 
   writeFile(
@@ -139,6 +141,7 @@ function loadJourney(journeySlug, versionsMeta) {
     owner: latestVersion.owner,
     service: latestVersion.service,
     path: latestAliasPath,
+    latestStepCount: latestVersion.steps.length,
     versionCount: versions.length,
     latestVersionId: latestVersion.version.id,
     latestVersionLabel: latestVersion.version.label,
@@ -244,6 +247,87 @@ function loadVersionsMeta() {
   return versions;
 }
 
+function loadSectionsMeta(journeys) {
+  if (!fs.existsSync(SECTIONS_META_PATH)) {
+    throw new Error(
+      `The /map folder now requires a top-level sections metadata file at ${SECTIONS_META_PATH}`
+    );
+  }
+
+  const data = readYaml(SECTIONS_META_PATH);
+  const sectionEntries = data.sections;
+
+  if (!Array.isArray(sectionEntries) || !sectionEntries.length) {
+    throw new Error(`Missing required sections list in ${SECTIONS_META_PATH}`);
+  }
+
+  const journeysBySlug = new Map(journeys.map((journey) => [journey.slug, journey]));
+  const assignedJourneys = new Set();
+  const sectionIds = new Set();
+
+  const sections = sectionEntries.map((entry, index) => {
+    if (!isPlainObject(entry)) {
+      throw new Error(`${SECTIONS_META_PATH} -> sections[${index}] must be an object`);
+    }
+
+    const id = requiredString(
+      entry.id || slugify(entry.title),
+      `${SECTIONS_META_PATH} -> sections[${index}].id`
+    );
+    const title = requiredString(
+      entry.title,
+      `${SECTIONS_META_PATH} -> sections[${index}].title`
+    );
+    const journeySlugs = normalizeStringArray(
+      entry.journeys || [],
+      `${SECTIONS_META_PATH} -> sections[${index}].journeys`
+    );
+
+    if (sectionIds.has(id)) {
+      throw new Error(`Section id "${id}" is used more than once in ${SECTIONS_META_PATH}`);
+    }
+
+    sectionIds.add(id);
+
+    const sectionJourneys = journeySlugs.map((journeySlug) => {
+      const journey = journeysBySlug.get(journeySlug);
+
+      if (!journey) {
+        throw new Error(
+          `Section "${title}" in ${SECTIONS_META_PATH} references unknown journey "${journeySlug}"`
+        );
+      }
+
+      if (assignedJourneys.has(journeySlug)) {
+        throw new Error(
+          `Journey "${journeySlug}" is assigned to more than one section in ${SECTIONS_META_PATH}`
+        );
+      }
+
+      assignedJourneys.add(journeySlug);
+      return journey;
+    });
+
+    return {
+      id,
+      title,
+      journeys: sectionJourneys
+    };
+  });
+
+  const unassignedJourneys = journeys
+    .map((journey) => journey.slug)
+    .filter((journeySlug) => !assignedJourneys.has(journeySlug));
+
+  if (unassignedJourneys.length) {
+    throw new Error(
+      `Every journey must be assigned to a section in ${SECTIONS_META_PATH}. Missing: ${unassignedJourneys.join(', ')}`
+    );
+  }
+
+  return sections;
+}
+
 function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
   const stepDir = path.join(journeyDir, stepSlug);
   const stepPath = path.join(stepDir, 'step.yaml');
@@ -296,13 +380,11 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
       `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}.summary`
     ),
     prototypePath: optionalString(versionConfig.prototype_path),
+    notes: optionalString(versionConfig.notes),
+    notesHtml: renderBasicMarkdown(optionalString(versionConfig.notes)),
     focusQuestions: normalizeStringArray(
       versionConfig.focus_questions,
       `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}.focus_questions`
-    ),
-    navPath: normalizeStringArray(
-      versionConfig.nav_path,
-      `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}.nav_path`
     ),
     variants,
     defaultVariantId,
@@ -672,8 +754,6 @@ function prepareJourneysForRender(journeys) {
         for (const variant of step.variants) {
           variant.isDefaultVariant = variant.id === step.defaultVariantId;
         }
-
-        step.navPathLabel = step.navPath.join(' > ');
       }
     }
   }
@@ -690,7 +770,7 @@ function createTemplateEnvironment() {
   return env;
 }
 
-function renderSite(journeys) {
+function renderSite(journeys, sections) {
   const env = createTemplateEnvironment();
 
   writeFile(
@@ -702,7 +782,8 @@ function renderSite(journeys) {
       bodyClass: 'map-site--overview',
       breadcrumbs: [],
       breadcrumbParams: null,
-      journeys
+      journeys,
+      sections
     })
   );
 
@@ -874,6 +955,14 @@ function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+function slugify(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function normalizeStringArray(value, fieldName) {
   return ensureArray(value)
     .map((item) => requiredString(item, fieldName))
@@ -895,6 +984,67 @@ function optionalString(value) {
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
+}
+
+function renderBasicMarkdown(markdown) {
+  const source = optionalString(markdown).replace(/\r\n/g, '\n');
+
+  if (!source) {
+    return '';
+  }
+
+  const blocks = [];
+  const paragraphLines = [];
+  const listItems = [];
+
+  function flushParagraph() {
+    if (!paragraphLines.length) return;
+    blocks.push(`<p>${escapeHtml(paragraphLines.join(' '))}</p>`);
+    paragraphLines.length = 0;
+  }
+
+  function flushList() {
+    if (!listItems.length) return;
+    blocks.push(
+      `<ul class="map-bullet-list">${listItems
+        .map((item) => `<li>${escapeHtml(item)}</li>`)
+        .join('')}</ul>`
+    );
+    listItems.length = 0;
+  }
+
+  for (const rawLine of source.split('\n')) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    if (line.startsWith('- ')) {
+      flushParagraph();
+      listItems.push(line.slice(2).trim());
+      continue;
+    }
+
+    flushList();
+    paragraphLines.push(line);
+  }
+
+  flushParagraph();
+  flushList();
+
+  return blocks.join('\n');
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function emptyDir(dirPath) {

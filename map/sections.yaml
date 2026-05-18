@@ -1,0 +1,18 @@
+sections:
+  - id: global
+    title: Global
+    journeys:
+      - navigation
+
+  - id: manage-clinics
+    title: Manage Clinics
+    journeys:
+      - change-clinic-series
+
+  - id: create-clinics
+    title: Create Clinics
+    journeys: []
+
+  - id: manage-site-and-users
+    title: Manage site and users
+    journeys: []

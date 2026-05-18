@@ -1,0 +1,8 @@
+title: Month view
+versions:
+  v2:
+    summary: The month view reached from Clinics.
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/month-view-v2.png

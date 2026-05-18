@@ -2,16 +2,12 @@ title: Home
 versions:
   v1:
     summary: The home page with the original top navigation.
-    nav_path:
-      - Home
     variants:
       - id: default
         label: Default
-        screenshot: screenshots/home-v1.svg
+        screenshot: screenshots/home-v1.png
   v2:
     summary: The home page after the top navigation was consolidated.
-    nav_path:
-      - Home
     variants:
       - id: default
         label: Default

@@ -6,3 +6,5 @@ versions:
       - id: default
         label: Default view
         screenshot: screenshots/clinics-overview-v1.png
+  v2:
+    use: v1

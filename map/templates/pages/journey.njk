@@ -41,9 +41,6 @@
                 <div>
                   <span class="map-step-number">Step {{ step.position }}</span>
                   <span class="map-step-title">{{ step.title }}</span>
-                  {% if step.navPathLabel %}
-                    <span class="map-step-nav-path">{{ step.navPathLabel }}</span>
-                  {% endif %}
                   <span class="map-step-version-note">
                     Screen {{ step.screenVersionId }}{% if step.isReusedFromEarlierVersion %} reused in {{ journey.version.id }}{% endif %}
                   </span>

@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
-  <rect width="800" height="450" fill="#f0f4f5"/>
-  <rect x="40" y="34" width="720" height="52" rx="8" fill="#005eb8"/>
-  <text x="68" y="67" fill="#ffffff" font-family="Arial, sans-serif" font-size="20">Home</text>
-  <text x="180" y="67" fill="#ffffff" font-family="Arial, sans-serif" font-size="20">Clinics</text>
-  <text x="310" y="67" fill="#ffffff" font-family="Arial, sans-serif" font-size="20">Change site details</text>
-  <text x="56" y="128" fill="#212b32" font-family="Arial, sans-serif" font-size="34" font-weight="700">Change site details v2</text>
-  <text x="56" y="176" fill="#4c6272" font-family="Arial, sans-serif" font-size="22">Top-level item after Clinics replaced the two separate clinic links.</text>
-</svg>

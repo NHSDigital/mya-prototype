@@ -6,6 +6,7 @@
   "scripts": {
     "map:build": "node map/build.js",
     "map:watch": "node --watch-preserve-output --watch-path=map/journeys --watch-path=map/templates --watch-path=map/assets --watch-path=map/build.js --watch-path=map/router.js map/build.js",
+    "prestart": "npm run map:build",
     "start": "node app.js",
     "watch": "node --watch app.js"
   },

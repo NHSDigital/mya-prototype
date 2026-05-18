@@ -3,11 +3,9 @@ title: Navigation
 
 step_order:
   - home
-  - view-appointments
+  - day-view
+  - week-view
   - manage-clinics
-  - change-site-details
-  - manage-users
-  - reports
 
 findings:
   - scope: step

@@ -7,3 +7,20 @@ versions:
       - id: start-and-end-times
         label: Start and end times
         screenshot: screenshots/time.png
+  v2:
+    summary: The review step where people confirm the final set of changes before saving them.
+    default_variant: keep-bookings
+    notes: |
+      The screenshots show the 2 meaningful outcome states for booked appointments:
+
+      - keep booked appointments
+      - cancel affected appointments
+
+      The rest of the content can still vary depending on what changed in the series.
+    variants:
+      - id: keep-bookings
+        label: Keep booked appointments
+        screenshot: screenshots/check-answers-v2-keep.png
+      - id: cancel-bookings
+        label: Cancel affected appointments
+        screenshot: screenshots/check-answers-v2-cancel.png

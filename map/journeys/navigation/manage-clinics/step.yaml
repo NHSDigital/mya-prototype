@@ -2,18 +2,7 @@ title: Manage clinics
 versions:
   v1:
     summary: The clinic management area reached directly from the top navigation.
-    nav_path:
-      - Manage clinics
     variants:
       - id: default
         label: Default
-        screenshot: screenshots/manage-clinics-v1.svg
-  v2:
-    summary: The clinic management area reached from the Clinics sub-navigation.
-    nav_path:
-      - Clinics
-      - Manage clinics
-    variants:
-      - id: default
-        label: Default
-        screenshot: screenshots/manage-clinics-v2.svg
+        screenshot: screenshots/manage-clinics-v1.png

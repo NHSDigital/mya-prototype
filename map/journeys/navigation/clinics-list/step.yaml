@@ -1,0 +1,12 @@
+title: Clinics list
+versions:
+  v2:
+    summary: The clinics list reached from Clinics.
+    default_variant: active
+    variants:
+      - id: active
+        label: Active clinics
+        screenshot: screenshots/clinics-list-v2-active.png
+      - id: completed
+        label: Completed clinics
+        screenshot: screenshots/clinics-list-v2-completed.png

@@ -35,12 +35,6 @@
             {% endif %}
           </dd>
         </div>
-        {% if step.navPathLabel %}
-          <div>
-            <dt>Navigation path</dt>
-            <dd>{{ step.navPathLabel }}</dd>
-          </div>
-        {% endif %}
         {% if step.prototypePath %}
           <div>
             <dt>Prototype page</dt>
@@ -58,6 +52,13 @@
             <li>{{ question }}</li>
           {% endfor %}
         </ul>
+      </div>
+    {% endif %}
+
+    {% if step.notesHtml %}
+      <div class="map-panel">
+        <h2>Notes</h2>
+        <div class="map-rich-text">{{ step.notesHtml | safe }}</div>
       </div>
     {% endif %}
 

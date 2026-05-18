@@ -6,3 +6,5 @@ versions:
       - id: default
         label: Default warning
         screenshot: screenshots/affected-clinics.png
+  v2:
+    use: v1

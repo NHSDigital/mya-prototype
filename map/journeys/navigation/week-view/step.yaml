@@ -1,0 +1,14 @@
+title: Week view
+versions:
+  v1:
+    summary: The week view reached directly from View appointments in the top navigation.
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/week-view-v1.png
+  v2:
+    summary: The week view reached from Clinics.
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/week-view-v2.png

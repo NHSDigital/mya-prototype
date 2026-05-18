@@ -1,0 +1,11 @@
+id: v2
+tag: Latest
+title: Change clinic series
+
+step_order:
+  - clinic-overview-page
+  - change-properties
+  - affected-clinics
+  - affected-booking
+  - check-answers
+  - success

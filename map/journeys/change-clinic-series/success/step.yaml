@@ -6,3 +6,26 @@ versions:
       - id: default
         label: Default confirmation
         screenshot: screenshots/success.png
+  v2:
+    summary: The confirmation step after the change is complete, used to confirm outcomes and direct people to their next task.
+    default_variant: keep-bookings
+    notes: |
+      The screenshots show the 2 main outcome states:
+
+      - keep bookings
+      - cancel bookings
+
+      The cancellation path can still vary based on what changed in the series, for example:
+
+      - times
+      - services added or removed
+      - vaccinators
+
+      Those content differences are treated as notes rather than separate screenshot variants unless the layout changes materially.
+    variants:
+      - id: keep-bookings
+        label: Keep bookings
+        screenshot: screenshots/success-v2-keep.png
+      - id: cancel-bookings
+        label: Cancel bookings
+        screenshot: screenshots/success-v2-cancel.png

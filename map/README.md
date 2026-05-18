@@ -20,6 +20,7 @@ Journey data lives under:
 ```text
 map/
   versions.yaml
+  sections.yaml
   journeys/
     [journey-slug]/
       journey.v1.yaml
@@ -36,12 +37,15 @@ There is no separate `user-insights` data source anymore. Each `journey.vX.yaml`
 
 Shared metadata for each version lives in `map/versions.yaml`.
 
+Homepage section metadata and journey ordering live in `map/sections.yaml`.
+
 ## What lives in this folder
 
 - `build.js`: builds the static `/map/dist` site from YAML
 - `router.js`: Express router that serves `/map` and rebuilds automatically if the source files change
 - `journeys/`: versioned journey YAML plus step YAML and screenshots
 - `versions.yaml`: shared metadata for version ids such as labels and tags
+- `sections.yaml`: homepage sections and curated journey ordering
 - `assets/`: CSS and JavaScript for the generated pages
 
 ## Minimal integration in a prototype
@@ -91,6 +95,25 @@ versions:
   v2:
     label: Round 2 testing
     tag: Latest
+```
+
+`sections.yaml`
+
+```yaml
+sections:
+  - id: global
+    title: Global
+    journeys:
+      - navigation
+
+  - id: manage-clinics
+    title: Manage Clinics
+    journeys:
+      - change-clinic-series
+
+  - id: create-clinics
+    title: Create Clinics
+    journeys: []
 ```
 
 `journey.v1.yaml`
@@ -152,9 +175,11 @@ versions:
   v1:
     summary: Short summary for this version of the step
     prototype_path: /optional/prototype/path
-    nav_path:
-      - Top-level item
-      - Optional sub-navigation item
+    notes: |
+      Optional free-form notes for the step version.
+
+      - Useful for caveats
+      - Or content combinations that are not separate screenshots
     focus_questions:
       - Optional research question
     default_variant: default
@@ -185,11 +210,14 @@ If `caption` is omitted, no caption is shown.
 
 - Each journey must define at least one `journey.vX.yaml`.
 - `versions.yaml` must define metadata for every version id used by any `journey.vX.yaml`.
+- `sections.yaml` must define the homepage sections in display order.
+- Every journey must be assigned to exactly one section in `sections.yaml`.
 - Each `journey.vX.yaml` must list its `step_order`.
 - `tag` is optional on `journey.vX.yaml` and can be used to mark the latest version for that specific journey.
 - Every step listed in that `step_order` must either have a matching `versions.vX` block in its `step.yaml`, or an earlier `versions.vY` block that can be reused automatically.
 - If there is no exact `versions.vX`, the builder falls back to the nearest earlier step version.
 - A `versions.vX` block can still be a pure alias like `use: v1` when you want to make the reuse explicit.
+- `notes` is optional on a step version and supports simple markdown paragraphs and `-` bullet lists on the step detail page.
 - Alias blocks are strict: if you use `use`, it must be the only field in that version block.
 - The latest journey page at `/map/journeys/<journey>/` is resolved from the version tagged `Latest`, or the highest `vX` if no tag is present.
 - Cross-step and dependency findings are shown on step detail pages as connected findings.
@@ -207,6 +235,8 @@ For remote environments, the recommended setup is:
 
 1. Run `npm run map:build` during deploy or startup.
 2. Serve the prebuilt output with `MAP_BUILD_MODE=static`.
+
+In this repo, `npm start` now runs `npm run map:build` first via the `prestart` script, so platforms that use the standard npm start flow will generate `map/dist` before the app boots.
 
 For local development in this repo, `.env` currently sets:
 
