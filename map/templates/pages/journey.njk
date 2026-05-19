@@ -89,21 +89,34 @@
 
         <tr class="map-journey-table__row">
           {% for step in journey.steps %}
-            <td class="map-journey-table__cell" data-map-insights="{{ step.slug }}">
+            <td class="map-journey-table__cell">
               <h3 class="map-board-label">User insights</h3>
-              {{ boardNotes(step.defaultVariant.insights, 'None for this version') }}
+              <div data-map-insights="{{ step.slug }}" data-empty-message="None for this version">
+                {{ boardNotes(step.defaultVariant.insights, 'None for this version') }}
+              </div>
             </td>
           {% endfor %}
         </tr>
 
         <tr class="map-journey-table__row">
           {% for step in journey.steps %}
-            <td class="map-journey-table__cell" data-map-next="{{ step.slug }}">
+            <td class="map-journey-table__cell">
               <h3 class="map-board-label">What to try next</h3>
-              {{ boardNotes(step.defaultVariant.nextSteps, 'None for this version') }}
+              <div data-map-next="{{ step.slug }}" data-empty-message="None for this version">
+                {{ boardNotes(step.defaultVariant.nextSteps, 'None for this version') }}
+              </div>
             </td>
           {% endfor %}
         </tr>
+
+        {% if journey.journeyFindings.nextSteps.length %}
+          <tr class="map-journey-table__row map-journey-table__row--journey-next">
+            <td class="map-journey-table__cell map-journey-table__cell--journey-next" colspan="{{ journey.steps.length }}">
+              <h3 class="map-board-label">Journey-wide what to try next</h3>
+              {{ boardNotes(journey.journeyFindings.nextSteps) }}
+            </td>
+          </tr>
+        {% endif %}
       </tbody>
     </table>
   </section>

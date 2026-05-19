@@ -7,8 +7,4 @@ versions:
         label: Default
         screenshot: screenshots/home-v1.png
   v2:
-    summary: The home page after the top navigation was consolidated.
-    variants:
-      - id: default
-        label: Default
-        screenshot: screenshots/home-v2.svg
+    use: v1

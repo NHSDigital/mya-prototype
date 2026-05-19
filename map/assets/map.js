@@ -1,20 +1,6 @@
-function renderResearchList(items, emptyMessage) {
-  if (!Array.isArray(items) || !items.length) {
-    return `<p class="map-empty-state">${emptyMessage}</p>`;
-  }
-
-  const content = items
-    .map(
-      (item) => `
-        <li>
-          <p>${escapeHtml(item.text)}</p>
-          <small>${escapeHtml(item.source)}</small>
-        </li>
-      `
-    )
-    .join('');
-
-  return `<ul class="map-board-notes">${content}</ul>`;
+function renderHtml(target, html) {
+  if (!target) return;
+  target.innerHTML = html || '';
 }
 
 function updateVariant(stepSlug, variantData) {
@@ -28,27 +14,12 @@ function updateVariant(stepSlug, variantData) {
   }
 
   if (insights) {
-    insights.innerHTML = `
-      <h3 class="map-board-label">User insights</h3>
-      ${renderResearchList(variantData.insights, 'No user insights yet.')}
-    `;
+    renderHtml(insights, variantData.insightsHtml);
   }
 
   if (nextSteps) {
-    nextSteps.innerHTML = `
-      <h3 class="map-board-label">What to try next</h3>
-      ${renderResearchList(variantData.nextSteps, 'No follow-up ideas yet.')}
-    `;
+    renderHtml(nextSteps, variantData.nextStepsHtml);
   }
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 document.querySelectorAll('.js-map-variant-select').forEach((selectElement) => {

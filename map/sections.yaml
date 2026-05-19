@@ -8,6 +8,7 @@ sections:
     title: Manage Clinics
     journeys:
       - change-clinic-series
+      - change-single-clinic
 
   - id: create-clinics
     title: Create Clinics

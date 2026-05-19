@@ -1,0 +1,8 @@
+title: Clinic times
+versions:
+  v1:
+    summary: The step where a user changes the start and end time for the single clinic.
+    variants:
+      - id: default
+        label: Default view
+        screenshot: screenshots/clinic-times-v1.png

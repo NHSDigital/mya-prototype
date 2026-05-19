@@ -7,4 +7,8 @@ versions:
         label: Default view
         screenshot: screenshots/clinics-overview-v1.png
   v2:
-    use: v1
+    summary: Updated to replace "clinic series" with "repeating clinics"
+    variants:
+      - id: default
+        label: Default view
+        screenshot: screenshots/clinics-overview-v2.png

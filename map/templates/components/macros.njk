@@ -41,9 +41,6 @@
       {% for item in items %}
         <li>
           <p>{{ item.text }}</p>
-          {% if item.source %}
-            <small>{{ item.source }}</small>
-          {% endif %}
         </li>
       {% endfor %}
     </ul>

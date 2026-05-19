@@ -1,0 +1,27 @@
+id: v1
+tag: Latest
+title: Change single clinic
+
+step_order:
+  - change-clinic
+  - clinic-times
+  - affected-bookings
+  - check-answers
+  - success
+
+journey_findings:
+  insights:
+    - Once participants found the correct clinic entry point from the week view, they were able to complete the single-clinic edit flow.
+
+findings:
+  - scope: step
+    step: change-clinic
+    next_steps:
+      - Show clinic closures on the week and day views.
+      - Add a "remove clinic" flow.
+
+  - scope: step
+    step: check-answers
+    next_steps:
+      - Add text on the Check your answers page to show the previous value.
+      - Include information about the number of bookings that will be cancelled, similar to the cancel a date range design.

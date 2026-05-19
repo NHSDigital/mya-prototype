@@ -37,6 +37,7 @@ const BUILD_STAMP_PATH = path.join(DIST_DIR, '.build-stamp.json');
 const JOURNEY_VERSION_FILE_PATTERN = /^journey\.(.+)\.ya?ml$/i;
 
 function buildMapSite() {
+  const env = createTemplateEnvironment();
   const versionsMeta = loadVersionsMeta();
   const journeys = loadJourneys(versionsMeta);
   const sections = loadSectionsMeta(journeys);
@@ -45,8 +46,8 @@ function buildMapSite() {
 
   copyDirectory(ASSETS_DIR, path.join(DIST_DIR, 'assets'));
   copyJourneyScreenshots(journeys);
-  prepareJourneysForRender(journeys);
-  renderSite(journeys, sections);
+  prepareJourneysForRender(journeys, env);
+  renderSite(journeys, sections, env);
 
   writeFile(
     path.join(DIST_DIR, 'site-data.json'),
@@ -738,7 +739,7 @@ function copyJourneyScreenshots(journeys) {
   }
 }
 
-function prepareJourneysForRender(journeys) {
+function prepareJourneysForRender(journeys, env) {
   for (const journey of journeys) {
     journey.latestVersion = journey.versions.find(
       (version) => version.version.id === journey.latestVersionId
@@ -749,7 +750,7 @@ function prepareJourneysForRender(journeys) {
 
       for (const step of version.steps) {
         step.defaultVariant = step.variants.find((variant) => variant.id === step.defaultVariantId);
-        step.variantIndexJson = serializeForScript(indexVariants(step.variants));
+        step.variantIndexJson = serializeForScript(indexVariants(step.variants, env));
 
         for (const variant of step.variants) {
           variant.isDefaultVariant = variant.id === step.defaultVariantId;
@@ -770,9 +771,7 @@ function createTemplateEnvironment() {
   return env;
 }
 
-function renderSite(journeys, sections) {
-  const env = createTemplateEnvironment();
-
+function renderSite(journeys, sections, env) {
   writeFile(
     path.join(DIST_DIR, 'index.html'),
     env.render('pages/overview.njk', {
@@ -881,18 +880,27 @@ function createJourneyRenderModel({ journey, version, journeyPath, stepPathBase 
   };
 }
 
-function indexVariants(variants) {
+function indexVariants(variants, env) {
   return variants.reduce((result, variant) => {
     result[variant.id] = {
       label: variant.label,
       caption: variant.caption,
       alt: variant.alt,
       screenshotPath: variant.screenshotPath,
-      insights: variant.insights,
-      nextSteps: variant.nextSteps
+      insightsHtml: renderBoardNotesHtml(env, variant.insights, 'None for this version'),
+      nextStepsHtml: renderBoardNotesHtml(env, variant.nextSteps, 'None for this version')
     };
     return result;
   }, {});
+}
+
+function renderBoardNotesHtml(env, items, emptyMessage) {
+  return env
+    .renderString(
+      '{% from "components/macros.njk" import boardNotes %}{{ boardNotes(items, emptyMessage) }}',
+      { items, emptyMessage }
+    )
+    .trim();
 }
 
 function pickLatestVersion(versions) {

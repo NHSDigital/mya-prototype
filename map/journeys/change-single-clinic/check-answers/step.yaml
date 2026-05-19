@@ -1,0 +1,8 @@
+title: Check answers
+versions:
+  v1:
+    summary: The review step where the updated clinic details are checked before saving.
+    variants:
+      - id: default
+        label: Keep bookings
+        screenshot: screenshots/check-answers-v1.png

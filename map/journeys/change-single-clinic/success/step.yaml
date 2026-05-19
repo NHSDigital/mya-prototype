@@ -1,0 +1,8 @@
+title: Success
+versions:
+  v1:
+    summary: The confirmation step after the single clinic has been updated.
+    variants:
+      - id: default
+        label: Default confirmation
+        screenshot: screenshots/success-v1.png

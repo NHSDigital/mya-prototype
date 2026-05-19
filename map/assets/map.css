@@ -276,6 +276,11 @@
   font-weight: 400;
 }
 
+.map-journey-table__cell--journey-next {
+  min-width: auto;
+  width: auto;
+}
+
 .map-journey-table__cell--empty {
   padding-bottom: 0;
 }

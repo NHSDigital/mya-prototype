@@ -1,0 +1,8 @@
+title: Affected bookings
+versions:
+  v1:
+    summary: The decision step that explains what happens to bookings affected by the clinic change.
+    variants:
+      - id: default
+        label: Keep bookings
+        screenshot: screenshots/affected-bookings-v1.png

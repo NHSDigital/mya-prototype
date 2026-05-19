@@ -11,6 +11,24 @@ step_order:
 
 journey_findings:
   insights:
-    - Combining View appointments and Manage clinics into a single Clinics area made the top navigation feel simpler.
-  next_steps:
-    - Check whether people can still find specific clinic tasks quickly once they enter Clinics.
+    - Combining View appointments and Manage clinics into a single Clinics area made the top navigation feel simpler
+
+
+findings:
+  - scope: step
+    step: clinics-list
+    insights:
+      - Participants tended to look in the month view when trying to edit clinics in bulk, rather than the Clinics list.
+      - Some then discovered Clinic list, but others required prompting to open it and said they hadn't noticed it
+      - 2 of 3 participants seemed to notice the cancel date range feature but then didn't use it to complete the task of removing multiple days
+      - Although participants understood the concept of "clinic series" it wasn't the natural language they'd use to describe this concept
+    next_steps:
+      - Rename Clinics list to Manage clinics
+      - Introduce navigation to "Edit this clinic series" in the week view, month view, and day view > Clinics running today
+      - Make the 'Clinic list' more visually distinct (eg right align or change styling)
+      - Try relabeling "series" "repeating" throughout
+
+  - scope: step
+    step: week-view
+    insights:
+      - One participant mentioned that more natural language for the "view day" link would be "view appointments"

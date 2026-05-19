@@ -8,3 +8,18 @@ step_order:
   - affected-booking
   - check-answers
   - success
+
+findings:
+  - scope: step
+    step: clinic-overview-page
+    insights:
+      - Users didn't notice the "remove clinic series" button
+      - When trying to set days the clinics wouldn't run, participants went to the "series details" and didn't notice the "clinic closures" section
+    next_steps:
+      - Move the link to the clinics list page (see navigation journey)
+      - Move the "clinic closures" card under the "series details" card
+      - Rename "series details" to "Start and end dates"
+  - scope: step
+    step: affected-booking
+    insights:
+      - one participant mentioned they they would not cancel from here, as they would want to send a personal message alongside the cancellation. They also wanted to see the content of the automated cancellation message.
