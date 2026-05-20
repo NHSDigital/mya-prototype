@@ -15,5 +15,4 @@ findings:
     insights:
       - Participants didn't notice the "Close this clinic" link. One person mentioned they were looking for "cancel".
     next_steps:
-      - Move the "Close this clinic" link to the `day > clinics running on this day` and week views
-      - Rename "Close this clinic" to "Cancel"
+      - Add a "Cancel" action link on the week view and remove "close session" CTA from single clinic overview screen

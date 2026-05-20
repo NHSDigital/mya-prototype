@@ -36,6 +36,13 @@ const NHSUK_NUNJUCKS_DIR = path.join(
 const BUILD_STAMP_PATH = path.join(DIST_DIR, '.build-stamp.json');
 const JOURNEY_VERSION_FILE_PATTERN = /^journey\.(.+)\.ya?ml$/i;
 
+class MapValidationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'MapValidationError';
+  }
+}
+
 function buildMapSite() {
   const env = createTemplateEnvironment();
   const versionsMeta = loadVersionsMeta();
@@ -233,8 +240,14 @@ function loadJourneyVersion({ journeyDir, journeySlug, entry, versionsMeta }) {
 
 function loadVersionsMeta() {
   if (!fs.existsSync(VERSIONS_META_PATH)) {
-    throw new Error(
-      `The /map folder now requires a top-level versions metadata file at ${VERSIONS_META_PATH}`
+    throw new MapValidationError(
+      [
+        `Missing required file: ${VERSIONS_META_PATH}`,
+        'Expected a top-level versions metadata file like:',
+        'versions:',
+        '  v1:',
+        '    label: Round 1 testing'
+      ].join('\n')
     );
   }
 
@@ -242,7 +255,7 @@ function loadVersionsMeta() {
   const versions = data.versions || {};
 
   if (!isPlainObject(versions) || !Object.keys(versions).length) {
-    throw new Error(`Missing required versions map in ${VERSIONS_META_PATH}`);
+    throw validationError(`${VERSIONS_META_PATH} -> versions`, 'Expected a non-empty object map of version ids.');
   }
 
   return versions;
@@ -250,8 +263,15 @@ function loadVersionsMeta() {
 
 function loadSectionsMeta(journeys) {
   if (!fs.existsSync(SECTIONS_META_PATH)) {
-    throw new Error(
-      `The /map folder now requires a top-level sections metadata file at ${SECTIONS_META_PATH}`
+    throw new MapValidationError(
+      [
+        `Missing required file: ${SECTIONS_META_PATH}`,
+        'Expected a top-level sections file like:',
+        'sections:',
+        '  - title: Global',
+        '    journeys:',
+        '      - navigation'
+      ].join('\n')
     );
   }
 
@@ -259,7 +279,7 @@ function loadSectionsMeta(journeys) {
   const sectionEntries = data.sections;
 
   if (!Array.isArray(sectionEntries) || !sectionEntries.length) {
-    throw new Error(`Missing required sections list in ${SECTIONS_META_PATH}`);
+    throw validationError(`${SECTIONS_META_PATH} -> sections`, 'Expected a non-empty list of sections.');
   }
 
   const journeysBySlug = new Map(journeys.map((journey) => [journey.slug, journey]));
@@ -268,7 +288,11 @@ function loadSectionsMeta(journeys) {
 
   const sections = sectionEntries.map((entry, index) => {
     if (!isPlainObject(entry)) {
-      throw new Error(`${SECTIONS_META_PATH} -> sections[${index}] must be an object`);
+      throw validationError(
+        `${SECTIONS_META_PATH} -> sections[${index}]`,
+        'Expected each section entry to be an object.',
+        { actual: entry }
+      );
     }
 
     const id = requiredString(
@@ -285,7 +309,11 @@ function loadSectionsMeta(journeys) {
     );
 
     if (sectionIds.has(id)) {
-      throw new Error(`Section id "${id}" is used more than once in ${SECTIONS_META_PATH}`);
+      throw validationError(
+        `${SECTIONS_META_PATH} -> sections[${index}].id`,
+        `Section id "${id}" is used more than once.`,
+        { actual: id }
+      );
     }
 
     sectionIds.add(id);
@@ -294,14 +322,21 @@ function loadSectionsMeta(journeys) {
       const journey = journeysBySlug.get(journeySlug);
 
       if (!journey) {
-        throw new Error(
-          `Section "${title}" in ${SECTIONS_META_PATH} references unknown journey "${journeySlug}"`
+        throw validationError(
+          `${SECTIONS_META_PATH} -> sections[${index}].journeys`,
+          `Unknown journey slug "${journeySlug}".`,
+          {
+            actual: journeySlug,
+            expected: formatList(journeys.map((entry) => entry.slug))
+          }
         );
       }
 
       if (assignedJourneys.has(journeySlug)) {
-        throw new Error(
-          `Journey "${journeySlug}" is assigned to more than one section in ${SECTIONS_META_PATH}`
+        throw validationError(
+          `${SECTIONS_META_PATH} -> sections[${index}].journeys`,
+          `Journey "${journeySlug}" is assigned to more than one section.`,
+          { actual: journeySlug }
         );
       }
 
@@ -321,8 +356,11 @@ function loadSectionsMeta(journeys) {
     .filter((journeySlug) => !assignedJourneys.has(journeySlug));
 
   if (unassignedJourneys.length) {
-    throw new Error(
-      `Every journey must be assigned to a section in ${SECTIONS_META_PATH}. Missing: ${unassignedJourneys.join(', ')}`
+    throw new MapValidationError(
+      [
+        `Every journey must be assigned to a section in ${SECTIONS_META_PATH}.`,
+        `Missing journey slugs: ${formatList(unassignedJourneys)}`
+      ].join('\n')
     );
   }
 
@@ -334,8 +372,12 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
   const stepPath = path.join(stepDir, 'step.yaml');
 
   if (!fs.existsSync(stepPath)) {
-    throw new Error(
-      `Journey "${journeySlug}" references missing step "${stepSlug}" at ${stepPath}`
+    throw new MapValidationError(
+      [
+        `Journey "${journeySlug}" references a missing step "${stepSlug}".`,
+        `Expected step file: ${stepPath}`,
+        `Available step folders: ${formatList(listDirectories(journeyDir).filter((entry) => entry !== 'screenshots'))}`
+      ].join('\n')
     );
   }
 
@@ -348,9 +390,10 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
   });
   const versionConfig = resolvedVersion.config;
 
-  const variants = ensureArray(versionConfig.variants).map((variant) =>
+  const variants = ensureArray(versionConfig.variants).map((variant, variantIndex) =>
     normalizeVariant({
       variant,
+      variantIndex,
       stepDir,
       stepPath,
       versionId: resolvedVersion.resolvedVersionId,
@@ -359,8 +402,9 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
   );
 
   if (!variants.length) {
-    throw new Error(
-      `Step "${stepSlug}" must declare at least one variant in ${stepPath} -> versions.${versionId}.variants`
+    throw validationError(
+      `${stepPath} -> versions.${versionId}.variants`,
+      `Step "${stepSlug}" must declare at least one variant.`
     );
   }
 
@@ -368,8 +412,13 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
   const defaultVariant = variants.find((variant) => variant.id === defaultVariantId);
 
   if (!defaultVariant) {
-    throw new Error(
-      `Step "${stepSlug}" sets default_variant "${defaultVariantId}" but no matching variant exists in ${stepPath} -> versions.${versionId}`
+    throw validationError(
+      `${stepPath} -> versions.${versionId}.default_variant`,
+      `No matching variant exists for default_variant "${defaultVariantId}".`,
+      {
+        actual: defaultVariantId,
+        expected: formatList(variants.map((variant) => variant.id))
+      }
     );
   }
 
@@ -407,14 +456,21 @@ function resolveStepVersionConfig({ stepConfig, stepPath, stepSlug, versionId, s
   const versionConfig = availableVersionId ? versions[availableVersionId] : null;
 
   if (!versionConfig) {
-    throw new Error(
-      `Step "${stepSlug}" must define versions.${requestedVersionId} in ${stepPath}, or provide an earlier version to fall back to`
+    throw new MapValidationError(
+      [
+        `Step "${stepSlug}" does not define a usable version for "${requestedVersionId}".`,
+        `Checked file: ${stepPath}`,
+        `Available versions: ${formatList(Object.keys(versions))}`,
+        'Add versions.<id> for this step, or define an earlier version that can be reused.'
+      ].join('\n')
     );
   }
 
   if (!isPlainObject(versionConfig)) {
-    throw new Error(
-      `Step "${stepSlug}" versions.${availableVersionId} in ${stepPath} must be an object`
+    throw validationError(
+      `${stepPath} -> versions.${availableVersionId}`,
+      'Expected a version block object.',
+      { actual: versionConfig }
     );
   }
 
@@ -428,14 +484,20 @@ function resolveStepVersionConfig({ stepConfig, stepPath, stepSlug, versionId, s
 
   const keys = Object.keys(versionConfig);
   if (keys.length !== 1 || keys[0] !== 'use') {
-    throw new Error(
-      `Step "${stepSlug}" versions.${availableVersionId} in ${stepPath} must either define the version directly or contain only "use: <version-id>"`
+    throw validationError(
+      `${stepPath} -> versions.${availableVersionId}`,
+      'A version alias must contain only "use: <version-id>", with no other fields.',
+      { actual: versionConfig }
     );
   }
 
   if (stack.includes(availableVersionId) || stack.includes(aliasTarget)) {
-    throw new Error(
-      `Step "${stepSlug}" has a circular version alias in ${stepPath}: ${[...stack, availableVersionId, aliasTarget].join(' -> ')}`
+    throw new MapValidationError(
+      `Step "${stepSlug}" has a circular version alias in ${stepPath}: ${[
+        ...stack,
+        availableVersionId,
+        aliasTarget
+      ].join(' -> ')}`
     );
   }
 
@@ -456,21 +518,34 @@ function findClosestStepVersionId(versionIds, requestedVersionId) {
   return candidates.at(-1) || '';
 }
 
-function normalizeVariant({ variant, stepDir, stepPath, versionId, stepTitle }) {
-  const id = requiredString(variant.id, `${stepPath} -> versions.${versionId}.variants[].id`);
+function normalizeVariant({ variant, stepDir, stepPath, versionId, stepTitle, variantIndex }) {
+  const variantField = `${stepPath} -> versions.${versionId}.variants[${variantIndex}]`;
+  if (!isPlainObject(variant)) {
+    throw validationError(variantField, 'Expected each variant entry to be an object.', {
+      actual: variant
+    });
+  }
+  const id = requiredString(variant.id, `${variantField}.id`);
   const screenshotSource = requiredString(
     variant.screenshot,
-    `${stepPath} -> versions.${versionId}.variants[].screenshot`
+    `${variantField}.screenshot`
   );
   const screenshotAbsolutePath = path.join(stepDir, screenshotSource);
 
   if (!fs.existsSync(screenshotAbsolutePath)) {
-    throw new Error(`Screenshot "${screenshotSource}" does not exist for ${stepPath}`);
+    throw new MapValidationError(
+      [
+        `Referenced screenshot does not exist.`,
+        `Field: ${variantField}.screenshot`,
+        `Value: ${formatValue(screenshotSource)}`,
+        `Expected file: ${screenshotAbsolutePath}`
+      ].join('\n')
+    );
   }
 
   return {
     id,
-    label: requiredString(variant.label, `${stepPath} -> versions.${versionId}.variants[].label`),
+    label: requiredString(variant.label, `${variantField}.label`),
     caption: optionalString(variant.caption),
     alt: optionalString(variant.alt) || defaultVariantAlt(stepTitle, variant.label),
     screenshotSource,
@@ -588,8 +663,13 @@ function applyFindingsToSteps({ steps, findings, journeyPath }) {
       const variantStore = step._variantFindings[finding.variant];
 
       if (!variantStore) {
-        throw new Error(
-          `${journeyPath} -> findings references missing variant "${finding.variant}" on step "${finding.step}"`
+        throw validationError(
+          `${journeyPath} -> findings`,
+          `Missing variant "${finding.variant}" on step "${finding.step}".`,
+          {
+            actual: finding.variant,
+            expected: formatList(step.variants.map((variant) => variant.id))
+          }
         );
       }
 
@@ -608,7 +688,10 @@ function applyFindingsToSteps({ steps, findings, journeyPath }) {
 
     if (finding.scope === 'cross-step') {
       if (!finding.steps.length) {
-        throw new Error(`${journeyPath} -> findings cross-step entry must list steps`);
+        throw validationError(
+          `${journeyPath} -> findings cross-step`,
+          'A cross-step finding must list one or more step slugs in "steps".'
+        );
       }
 
       for (const stepSlug of finding.steps) {
@@ -630,7 +713,10 @@ function applyFindingsToSteps({ steps, findings, journeyPath }) {
     if (finding.scope === 'dependency') {
       const step = getRequiredStep(stepsBySlug, finding.step, journeyPath, finding.scope);
       if (!finding.relatedSteps.length) {
-        throw new Error(`${journeyPath} -> findings dependency entry must list related_steps`);
+        throw validationError(
+          `${journeyPath} -> findings dependency`,
+          'A dependency finding must list one or more step slugs in "related_steps".'
+        );
       }
 
       for (const relatedStepSlug of finding.relatedSteps) {
@@ -674,13 +760,21 @@ function applyFindingsToSteps({ steps, findings, journeyPath }) {
 
 function getRequiredStep(stepsBySlug, stepSlug, journeyPath, scope) {
   if (!stepSlug) {
-    throw new Error(`${journeyPath} -> findings ${scope} entry must declare a step`);
+    throw validationError(
+      `${journeyPath} -> findings ${scope}`,
+      'This finding must declare a step slug in "step".'
+    );
   }
 
   const step = stepsBySlug.get(stepSlug);
   if (!step) {
-    throw new Error(
-      `${journeyPath} -> findings ${scope} entry references missing step "${stepSlug}"`
+    throw validationError(
+      `${journeyPath} -> findings ${scope}.step`,
+      `Unknown step slug "${stepSlug}".`,
+      {
+        actual: stepSlug,
+        expected: formatList([...stepsBySlug.keys()])
+      }
     );
   }
   return step;
@@ -943,7 +1037,21 @@ function copyDirectory(sourceDir, targetDir) {
 }
 
 function readYaml(filePath) {
-  return yaml.load(fs.readFileSync(filePath, 'utf8')) || {};
+  try {
+    return yaml.load(fs.readFileSync(filePath, 'utf8')) || {};
+  } catch (error) {
+    const line = error.mark ? error.mark.line + 1 : null;
+    const column = error.mark ? error.mark.column + 1 : null;
+    throw new MapValidationError(
+      [
+        `Invalid YAML in ${filePath}`,
+        line && column ? `Location: line ${line}, column ${column}` : '',
+        error.reason ? `Problem: ${error.reason}` : error.message
+      ]
+        .filter(Boolean)
+        .join('\n')
+    );
+  }
 }
 
 function listDirectories(dirPath) {
@@ -973,14 +1081,14 @@ function slugify(value) {
 
 function normalizeStringArray(value, fieldName) {
   return ensureArray(value)
-    .map((item) => requiredString(item, fieldName))
+    .map((item, index) => requiredString(item, `${fieldName}[${index}]`))
     .filter(Boolean);
 }
 
 function requiredString(value, fieldName) {
   const normalized = optionalString(value);
   if (!normalized) {
-    throw new Error(`Missing required value for ${fieldName}`);
+    throw validationError(fieldName, 'Expected a non-empty string.', { actual: value });
   }
   return normalized;
 }
@@ -1104,9 +1212,52 @@ function toBreadcrumbParams(items) {
   };
 }
 
+function validationError(fieldName, message, details = {}) {
+  const lines = [`Invalid map data at ${fieldName}`, message];
+
+  if ('actual' in details) {
+    lines.push(`Received: ${formatValue(details.actual)}`);
+  }
+
+  if (details.expected) {
+    lines.push(`Expected: ${details.expected}`);
+  }
+
+  if (details.hint) {
+    lines.push(`Hint: ${details.hint}`);
+  }
+
+  return new MapValidationError(lines.join('\n'));
+}
+
+function formatValue(value) {
+  if (value === undefined) return 'undefined';
+  if (value === null) return 'null';
+  if (typeof value === 'string') return JSON.stringify(value);
+
+  try {
+    return JSON.stringify(value);
+  } catch (error) {
+    return String(value);
+  }
+}
+
+function formatList(values) {
+  return values && values.length ? values.join(', ') : '(none)';
+}
+
 if (require.main === module) {
-  const result = buildMapSite();
-  console.log(`Built map site with ${result.journeysCount} journey(s) into ${result.distDir}`);
+  try {
+    const result = buildMapSite();
+    console.log(`Built map site with ${result.journeysCount} journey(s) into ${result.distDir}`);
+  } catch (error) {
+    if (error instanceof MapValidationError) {
+      console.error(error.message);
+      process.exit(1);
+    }
+
+    throw error;
+  }
 }
 
 module.exports = {

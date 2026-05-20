@@ -12,6 +12,8 @@ step_order:
 journey_findings:
   insights:
     - Combining View appointments and Manage clinics into a single Clinics area made the top navigation feel simpler
+  next_steps:
+    - Test out replacing "clinic series" with "repeating clinics" or similar throughout journey
 
 
 findings:
@@ -23,12 +25,16 @@ findings:
       - 2 of 3 participants seemed to notice the cancel date range feature but then didn't use it to complete the task of removing multiple days
       - Although participants understood the concept of "clinic series" it wasn't the natural language they'd use to describe this concept
     next_steps:
-      - Rename Clinics list to Manage clinics
-      - Introduce navigation to "Edit this clinic series" in the week view, month view, and day view > Clinics running today
-      - Make the 'Clinic list' more visually distinct (eg right align or change styling)
-      - Try relabeling "series" "repeating" throughout
+      - Rename "Clinic list" to "Manage clinics"
+      - Display count of clinics or day pattern for clinic series shown on the "Manage clinics" tab
+      - Rename "Cancel a date range" to "Cancel all clinics"
+      - Add a "Cancel" action link in "Manage clinics" and remove "close session" CTA from clinic series overview screen
+      - Move completed clinics into a details component and remove the tabs view
 
   - scope: step
     step: week-view
     insights:
       - One participant mentioned that more natural language for the "view day" link would be "view appointments"
+    next_steps:
+      - In the week view rename "View day" to "View appointments"
+      - Add a "Cancel" action link on the week view and remove "close session" CTA from single clinic overview screen

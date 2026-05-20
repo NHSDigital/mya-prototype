@@ -17,5 +17,11 @@ versions:
       - id: day-pattern
         label: Day pattern
         screenshot: screenshots/day-pattern.png
+      - id: closures
+        label: Closures
+        screenshot: screenshots/closures.png
+      - id: closures-remove
+        label: Remove Closure
+        screenshot: screenshots/closures-remove.png
   v2:
     use: v1
