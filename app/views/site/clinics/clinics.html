@@ -2,7 +2,7 @@
 {% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
 {% from '../../components/action-control-bar.njk' import appActionControlBar %}
 
-{% set pageName = "Clinics list" %}
+{% set pageName = "Manage clinics" %}
 
 {% macro services(service_ids) %}
   {% set serviceTypes = [] %}
@@ -122,7 +122,7 @@
               href: '/site/' ~ site_id ~ '/availability/month'
             },
             {
-              text: 'Clinics list',
+              text: 'Manage clinics',
               href: '/site/' ~ site_id ~ '/clinics',
               current: true
             }
