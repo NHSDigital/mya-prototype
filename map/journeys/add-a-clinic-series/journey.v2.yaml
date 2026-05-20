@@ -1,0 +1,22 @@
+id: v2
+tag: Latest
+title: Add a clinic series
+summary: End-to-end flow for creating a new clinic series.
+
+step_order:
+  - type-of-clinc
+  - details
+  - days
+  - clinic-times
+  - appointments-calculator
+  - services
+  - clinic-closures
+  - clinic-closures-add
+  - check-answers
+  - success
+
+journey_findings:
+  insights: []
+  next_steps: []
+
+findings: []

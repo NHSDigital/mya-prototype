@@ -1,0 +1,9 @@
+title: Dates
+versions:
+  v2:
+    summary: Set the start and end dates for the clinic series.
+    prototype_path: /site/1/clinics/details
+    variants:
+      - id: default
+        label: Submitted state
+        screenshot: screenshots/default.png

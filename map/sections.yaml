@@ -12,7 +12,8 @@ sections:
 
   - id: create-clinics
     title: Create Clinics
-    journeys: []
+    journeys:
+      - add-a-clinic-series
 
   - id: manage-site-and-users
     title: Manage site and users

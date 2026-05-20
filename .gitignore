@@ -69,3 +69,6 @@ coverage
 
 # ESlint cache
 .cache
+
+# Prototype map
+/map/tmp-inbox

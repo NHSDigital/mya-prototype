@@ -1,0 +1,9 @@
+title: Type of clinic
+versions:
+  v2:
+    summary: Select the type of clinic to create.
+    prototype_path: /site/1/clinics/type-of-clinc
+    variants:
+      - id: default
+        label: Submitted state
+        screenshot: screenshots/default.png

@@ -1,0 +1,9 @@
+title: Services
+versions:
+  v2:
+    summary: Choose services offered in the clinic series.
+    prototype_path: /site/1/clinics/services
+    variants:
+      - id: default
+        label: Submitted state
+        screenshot: screenshots/default.png

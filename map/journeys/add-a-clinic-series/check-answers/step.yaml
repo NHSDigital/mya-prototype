@@ -1,0 +1,9 @@
+title: Check answers
+versions:
+  v2:
+    summary: Review all clinic series details before publishing.
+    prototype_path: /site/1/clinics/check-answers
+    variants:
+      - id: default
+        label: Submitted state
+        screenshot: screenshots/default.png

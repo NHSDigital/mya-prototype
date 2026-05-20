@@ -1,0 +1,9 @@
+title: Days
+versions:
+  v2:
+    summary: Choose which days the clinic series runs on.
+    prototype_path: /site/1/clinics/days
+    variants:
+      - id: default
+        label: Submitted state
+        screenshot: screenshots/default.png

@@ -1,0 +1,9 @@
+title: Capacity calculator
+versions:
+  v2:
+    summary: Set booking length and vaccinator capacity.
+    prototype_path: /site/1/clinics/appointments-calculator
+    variants:
+      - id: default
+        label: Submitted state
+        screenshot: screenshots/default.png
