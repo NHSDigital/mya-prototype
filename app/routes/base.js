@@ -1984,6 +1984,7 @@ router.all('/site/:id/clinics/process-new-session', (req, res) => {
     return res.redirect(`/site/${site_id}/clinics?new-session=false`);
   }
 
+  const createdFlowType = clinicFlowType(data);
   const recurringSession = buildRecurringSessionModel(newSession);
   if (data.editingSessionId) {
     recurringSession.id = data.editingSessionId;
@@ -1991,12 +1992,13 @@ router.all('/site/:id/clinics/process-new-session', (req, res) => {
   persistRecurringSession(data, site_id, recurringSession);
   delete data.newSession;
   delete data.editingSessionId;
+  data.lastCreatedClinicFlowType = createdFlowType;
 
   res.redirect(`/site/${site_id}/clinics/success`);
 });
 
 router.get('/site/:id/clinics/success', (req, res) => {
-  const flowType = clinicFlowType(req.session.data);
+  const flowType = clinicFlowType(req.session.data) || req.session.data.lastCreatedClinicFlowType;
 
   if (!flowType) {
     return res.render('site/clinics/series/success');

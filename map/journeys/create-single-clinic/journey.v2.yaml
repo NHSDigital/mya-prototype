@@ -1,0 +1,19 @@
+id: v2
+tag: Latest
+title: Create single clinic
+summary: End-to-end flow for creating a single clinic.
+
+step_order:
+  - type-of-clinc
+  - details
+  - clinic-times
+  - appointments-calculator
+  - services
+  - check-answers
+  - success
+
+journey_findings:
+  insights: []
+  next_steps: []
+
+findings: []

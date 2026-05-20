@@ -14,6 +14,7 @@ sections:
     title: Create Clinics
     journeys:
       - add-a-clinic-series
+      - create-single-clinic
 
   - id: manage-site-and-users
     title: Manage site and users

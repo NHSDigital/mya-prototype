@@ -1,0 +1,9 @@
+title: Success
+versions:
+  v2:
+    summary: Confirmation that the clinic was created.
+    prototype_path: /site/1/clinics/success
+    variants:
+      - id: default
+        label: default
+        screenshot: screenshots/default.png

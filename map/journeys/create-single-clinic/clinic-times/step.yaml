@@ -1,0 +1,9 @@
+title: Clinic times
+versions:
+  v2:
+    summary: Define start and end time for the clinic.
+    prototype_path: /site/1/clinics/clinic-times
+    variants:
+      - id: default
+        label: default
+        screenshot: screenshots/default.png
