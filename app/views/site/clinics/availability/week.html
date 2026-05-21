@@ -63,7 +63,7 @@
                     <th scope="col" class="nhsuk-table__header">Services</th>
                     <th scope="col" class="nhsuk-table__header">Booked</th>
                     <th scope="col" class="nhsuk-table__header">Free</th>
-                    <th scope="col" class="nhsuk-table__header">Action</th>
+                    <th scope="col" class="nhsuk-table__header">Actions</th>
                   </tr>
                 </thead>
                 <tbody class="nhsuk-table__body">
@@ -85,8 +85,20 @@
                     <td class="nhsuk-table__cell">{{ session.unbookedTotal }} free</td>
                     <td class="nhsuk-table__cell">
                       {% if session.actionHref %}
-                      <a href="{{ session.actionHref }}">View and change</a><br>
-                      <a href="/not-in-this-prototype">Cancel</a>
+                      <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+                        <li>
+                          <a href="{{ session.actionHref }}">
+                            View and change
+                            <span class="nhsuk-u-visually-hidden"> clinic on {{ day.date | formatDate('EEEE d LLLL yyyy') }} at {{ session.from | nhsTime }} to {{ session.until | nhsTime }}</span>
+                          </a>
+                        </li>
+                        <li>
+                          <a href="/not-in-this-prototype">
+                            Cancel
+                            <span class="nhsuk-u-visually-hidden"> clinic on {{ day.date | formatDate('EEEE d LLLL yyyy') }} at {{ session.from | nhsTime }} to {{ session.until | nhsTime }}</span>
+                          </a>
+                        </li>
+                      </ul>
                       {% endif %}
                     </td>
                   </tr>

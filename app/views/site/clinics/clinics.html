@@ -128,8 +128,20 @@
           <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
           {% if includeActions %}
             <td class="nhsuk-table__cell" role="cell">
-              <a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">View and change</a><br>
-              <a href="/not-in-this-prototype">Cancel</a>
+              <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+                <li>
+                  <a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">
+                    View and change
+                    <span class="nhsuk-u-visually-hidden"> clinic on {{ dateLabel(session) }} at {{ timeLabel(session) }}</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="/not-in-this-prototype">
+                    Cancel
+                    <span class="nhsuk-u-visually-hidden"> clinic on {{ dateLabel(session) }} at {{ timeLabel(session) }}</span>
+                  </a>
+                </li>
+              </ul>
             </td>
           {% endif %}
         </tr>

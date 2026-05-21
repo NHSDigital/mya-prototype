@@ -66,7 +66,7 @@
               <th scope="col" class="nhsuk-table__header">Contact details</th>
               <th scope="col" class="nhsuk-table__header">Service</th>
               {% if opts.canCancel %}
-              <th scope="col" class="nhsuk-table__header">Action</th>
+              <th scope="col" class="nhsuk-table__header">Actions</th>
               {% endif %}
             </tr>
           </thead>
@@ -95,7 +95,16 @@
               </td>
               <td class="nhsuk-table__cell">{{ data.services[booking.service].name }}</td>
               {% if opts.canCancel %}
-              <td class="nhsuk-table__cell"><a href="/not-in-this-prototype">Cancel</a></td>
+              <td class="nhsuk-table__cell">
+                <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+                  <li>
+                    <a href="/not-in-this-prototype">
+                      Cancel
+                      <span class="nhsuk-u-visually-hidden"> appointment for {{ booking.name }} at {{ booking.datetime | nhsTime }}</span>
+                    </a>
+                  </li>
+                </ul>
+              </td>
               {% endif %}
             </tr>
             {% endif %}
@@ -122,7 +131,7 @@
                 <th scope="col" class="nhsuk-table__header">Services</th>
                 <th scope="col" class="nhsuk-table__header">Booked</th>
                 <th scope="col" class="nhsuk-table__header">Free</th>
-                <th scope="col" class="nhsuk-table__header">Action</th>
+                <th scope="col" class="nhsuk-table__header">Actions</th>
               </tr>
             </thead>
             <tbody class="nhsuk-table__body">
@@ -144,8 +153,20 @@
                   <td class="nhsuk-table__cell">{{ session.unbookedTotal }} free</td>
                   <td class="nhsuk-table__cell">
                     {% if session.actionHref %}
-                      <a href="{{ session.actionHref }}">View and change</a><br>
-                      <a href="/not-in-this-prototype">Cancel</a>
+                      <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+                        <li>
+                          <a href="{{ session.actionHref }}">
+                            View and change
+                            <span class="nhsuk-u-visually-hidden"> clinic on {{ date | formatDate('EEEE d LLLL yyyy') }} at {{ session.from | nhsTime }} to {{ session.until | nhsTime }}</span>
+                          </a>
+                        </li>
+                        <li>
+                          <a href="/not-in-this-prototype">
+                            Cancel
+                            <span class="nhsuk-u-visually-hidden"> clinic on {{ date | formatDate('EEEE d LLLL yyyy') }} at {{ session.from | nhsTime }} to {{ session.until | nhsTime }}</span>
+                          </a>
+                        </li>
+                      </ul>
                     {% endif %}
                   </td>
                 </tr>
