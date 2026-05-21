@@ -373,6 +373,10 @@ function editSummaryPath(siteId, sessionId) {
   return `/site/${siteId}/clinics/edit/${sessionId}`;
 }
 
+function cancelSummaryPath(siteId, sessionId) {
+  return `/site/${siteId}/clinics/cancel/${sessionId}`;
+}
+
 function editStepPath(siteId, sessionId, step) {
   return `${editSummaryPath(siteId, sessionId)}/${step}`;
 }
@@ -601,9 +605,80 @@ function initializeEditStateForSession(data, siteId, sessionId) {
     sessionId,
     original: clone(model),
     draft,
+    cancelMode: false,
     bookingAction: null,
     affectedBookingIds: []
   };
+
+  setEditState(data, state);
+  return state;
+}
+
+function calculateCancellationAffectedBookings(model, siteId, siteBookings = {}) {
+  const affectedIds = new Set();
+  const merged = mergeDailyAvailability({}, String(siteId || ''), { [model.id]: model });
+  const sessionIds = new Set();
+  const slotsByMinute = new Map();
+
+  for (const [date, day] of Object.entries(merged || {})) {
+    for (const session of (day.sessions || [])) {
+      if (session?.id) {
+        sessionIds.add(String(session.id));
+      }
+
+      const start = DateTime.fromISO(`${date}T${session.from}`, { zone: 'Europe/London' });
+      const end = DateTime.fromISO(`${date}T${session.until}`, { zone: 'Europe/London' });
+      const slotLength = Number(session.slotLength) || 10;
+      const services = new Set(asArray(session.services));
+
+      for (let dt = start; dt < end; dt = dt.plus({ minutes: slotLength })) {
+        const key = dt.toFormat("yyyy-MM-dd'T'HH:mm");
+        const existing = slotsByMinute.get(key) || new Set();
+        for (const serviceId of services) {
+          existing.add(serviceId);
+        }
+        slotsByMinute.set(key, existing);
+      }
+    }
+  }
+
+  for (const booking of Object.values(siteBookings || {})) {
+    if (booking?.status !== 'scheduled') continue;
+
+    if (String(booking?.recurringSessionId || '') === String(model.id)) {
+      affectedIds.add(String(booking.id));
+      continue;
+    }
+
+    if (booking?.sessionId && sessionIds.has(String(booking.sessionId))) {
+      affectedIds.add(String(booking.id));
+      continue;
+    }
+
+    const minute = booking?.slotKey || normalizeIsoMinute(booking?.datetime);
+    if (!minute) continue;
+
+    const services = slotsByMinute.get(minute);
+    if (services && services.has(booking.service)) {
+      affectedIds.add(String(booking.id));
+    }
+  }
+
+  return Array.from(affectedIds);
+}
+
+function initializeCancelStateForSession(data, siteId, sessionId) {
+  const state = initializeEditStateForSession(data, siteId, sessionId);
+  if (!state) return null;
+
+  const siteBookings = data?.bookings?.[siteId] || {};
+  const affectedBookingIds = calculateCancellationAffectedBookings(state.original, siteId, siteBookings);
+
+  state.cancelMode = true;
+  state.currentEditField = null;
+  state.currentEditStep = null;
+  state.affectedBookingIds = affectedBookingIds;
+  state.bookingAction = null;
 
   setEditState(data, state);
   return state;
@@ -742,6 +817,10 @@ function buildUnaffectedChildReasonText(changedFields = []) {
 }
 
 function reviewBackPath(siteId, sessionId, state) {
+  if (state?.cancelMode) {
+    return cancelSummaryPath(siteId, sessionId);
+  }
+
   if (asArray(state?.affectedBookingIds).length > 0) {
     return `${editSummaryPath(siteId, sessionId)}/affected-bookings`;
   }
@@ -1008,6 +1087,9 @@ function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, serv
       const changeHrefBase = day < today || !session?.recurringId
         ? null
         : `/site/${siteId}/change/session/${session.id}`;
+      const cancelHref = day < today || !session?.recurringId
+        ? null
+        : `/site/${siteId}/clinics/cancel/${session.recurringId}`;
 
       return {
         id: session.id,
@@ -1027,7 +1109,8 @@ function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, serv
         unbookedTotal: Math.max(0, totalSlots - bookedTotal),
         actionHref: changeHrefBase
           ? `${changeHrefBase}${backHref ? `?back=${encodeURIComponent(backHref)}` : ''}`
-          : null
+          : null,
+        cancelHref
       };
     });
 
@@ -1274,6 +1357,125 @@ router.get('/site/:id/clinics/edit/:sessionId', (req, res) => {
     draft: state.draft,
     sessionId: req.params.sessionId
   });
+});
+
+router.get('/site/:id/clinics/cancel/:sessionId', (req, res) => {
+  const state = initializeCancelStateForSession(req.session.data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  if (state.affectedBookingIds.length > 0) {
+    return res.redirect(`${cancelSummaryPath(req.site_id, req.params.sessionId)}/affected-bookings`);
+  }
+
+  return res.redirect(`${cancelSummaryPath(req.site_id, req.params.sessionId)}/check-answers`);
+});
+
+router.all('/site/:id/clinics/cancel/:sessionId/affected-bookings', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  if (!state.cancelMode) {
+    return res.redirect(cancelSummaryPath(req.site_id, req.params.sessionId));
+  }
+
+  const affectedCount = asArray(state.affectedBookingIds).length;
+  if (affectedCount === 0) {
+    return res.redirect(`${cancelSummaryPath(req.site_id, req.params.sessionId)}/check-answers`);
+  }
+
+  if (req.method === 'POST') {
+    const action = req.body?.bookingAction;
+    if (action === 'orphan' || action === 'cancel') {
+      state.bookingAction = action;
+      setEditState(data, state);
+      return res.redirect(`${cancelSummaryPath(req.site_id, req.params.sessionId)}/check-answers`);
+    }
+  }
+
+  return res.render('site/clinics/edit/affected-bookings', {
+    sessionId: req.params.sessionId,
+    isSeries: state.draft.type === 'Clinic series',
+    affectedCount,
+    selectedBookingAction: state.bookingAction || null,
+    headingText: `${affectedCount} bookings are affected by cancelling this ${state.draft.type === 'Clinic series' ? 'clinic series' : 'clinic'}`,
+    introText: 'What do you want to do with the booked appointments when you cancel this clinic?',
+    formAction: `${cancelSummaryPath(req.site_id, req.params.sessionId)}/affected-bookings`,
+    backHref: `/site/${req.site_id}/clinics`
+  });
+});
+
+router.all('/site/:id/clinics/cancel/:sessionId/check-answers', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId);
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  if (!state.cancelMode) {
+    return res.redirect(cancelSummaryPath(req.site_id, req.params.sessionId));
+  }
+
+  const affectedCount = asArray(state.affectedBookingIds).length;
+  if (affectedCount > 0 && !state.bookingAction) {
+    return res.redirect(`${cancelSummaryPath(req.site_id, req.params.sessionId)}/affected-bookings`);
+  }
+
+  if (req.method === 'POST') {
+    const siteBookings = data?.bookings?.[req.site_id] || {};
+    const bookingAction = state.bookingAction;
+    const cancelledBookingsSummary = bookingAction === 'cancel'
+      ? buildCancelledBookingsSummary({
+        siteBookings,
+        affectedBookingIds: state.affectedBookingIds,
+        servicesById: data.services
+      })
+      : null;
+
+    data.recurring_sessions = data.recurring_sessions || {};
+    data.recurring_sessions[req.site_id] = data.recurring_sessions[req.site_id] || {};
+    delete data.recurring_sessions[req.site_id][req.params.sessionId];
+
+    setEditSuccessState(data, {
+      siteId: req.site_id,
+      sessionId: req.params.sessionId,
+      isSeries: state.draft.type === 'Clinic series',
+      cancelMode: true,
+      cancelledBookingsSummary,
+      unaffectedChildClinics: [],
+      unaffectedChildReasonText: 'details'
+    });
+
+    applyAffectedBookingAction(siteBookings, state.affectedBookingIds, bookingAction);
+    clearEditState(data);
+    return res.redirect(`${cancelSummaryPath(req.site_id, req.params.sessionId)}/success`);
+  }
+
+  const clinicTypeText = state.draft.type === 'Clinic series' ? 'clinic series' : 'clinic';
+  return res.render('site/clinics/edit/check-answers', {
+    sessionId: req.params.sessionId,
+    isSeries: state.draft.type === 'Clinic series',
+    rows: [],
+    checkAnswersMode: 'clinic-cancel',
+    affectedCount,
+    bookingAction: state.bookingAction,
+    buttonText: `Cancel ${clinicTypeText}`,
+    buttonClasses: 'nhsuk-button--warning',
+    formAction: `${cancelSummaryPath(req.site_id, req.params.sessionId)}/check-answers`,
+    affectedActionHref: `${cancelSummaryPath(req.site_id, req.params.sessionId)}/affected-bookings`,
+    backHref: affectedCount > 0
+      ? `${cancelSummaryPath(req.site_id, req.params.sessionId)}/affected-bookings`
+      : `/site/${req.site_id}/clinics`,
+    emptyStateText: `There are no affected bookings for this ${clinicTypeText}. Select cancel to continue.`
+  });
+});
+
+router.get('/site/:id/clinics/cancel/:sessionId/success', (req, res) => {
+  return res.redirect(`/site/${req.site_id}/clinics/edit/${req.params.sessionId}/success`);
 });
 
 router.all('/site/:id/clinics/edit/:sessionId/details', (req, res) => {
@@ -1680,21 +1882,23 @@ router.get('/site/:id/clinics/edit/:sessionId/success', (req, res) => {
     && String(successState.sessionId) === String(req.params.sessionId)
     ? successState
     : null;
+  const isCancelMode = Boolean(matchingSuccessState?.cancelMode);
+  const itemText = matchingSuccessState?.isSeries ? 'Clinic series' : 'Clinic';
   const cancelledBookingsSummary = matchingSuccessState?.cancelledBookingsSummary;
   const cancelSummary = cancelledBookingsSummary
     ? {
-      titleText: `${matchingSuccessState?.isSeries ? 'Clinic series' : 'Clinic'} updated and ${bookingCountText(cancelledBookingsSummary.cancelledCount)} cancelled`,
+      titleText: `${itemText} ${isCancelMode ? 'cancelled' : 'updated'} and ${bookingCountText(cancelledBookingsSummary.cancelledCount)} cancelled`,
       cancelledCount: cancelledBookingsSummary.cancelledCount,
       unnotifiedCount: cancelledBookingsSummary.unnotifiedCount,
       unnotifiedBookings: cancelledBookingsSummary.unnotifiedBookings,
       nextActions: [
         {
-          href: `/site/${req.site_id}/clinics/edit/${req.params.sessionId}`,
-          text: 'Make another change'
-        },
-        {
           href: `/site/${req.site_id}/clinics`,
           text: 'Back to clinics'
+        },
+        {
+          href: `/site/${req.site_id}/availability/week`,
+          text: 'Go to week view'
         }
       ]
     }
@@ -1702,6 +1906,13 @@ router.get('/site/:id/clinics/edit/:sessionId/success', (req, res) => {
 
   return res.render('site/clinics/edit/success', {
     sessionId: req.params.sessionId,
+    titleText: isCancelMode
+      ? `${itemText} cancelled`
+      : undefined,
+    primaryHref: isCancelMode ? `/site/${req.site_id}/clinics` : undefined,
+    primaryText: isCancelMode ? 'Back to clinics' : undefined,
+    secondaryHref: isCancelMode ? `/site/${req.site_id}/availability/week` : undefined,
+    secondaryText: isCancelMode ? 'Go to week view' : undefined,
     cancelSummary,
     unaffectedChildClinics: matchingSuccessState?.unaffectedChildClinics || [],
     unaffectedChildReasonText: matchingSuccessState?.unaffectedChildReasonText || 'details'

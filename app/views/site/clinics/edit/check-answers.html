@@ -38,7 +38,9 @@
         {{ currentHtml | safe }}<br><span class="nhsuk-u-secondary-text-colour ">Previously, {{ previousText or 'Not set' }}</span>
       {% endmacro %}
 
-      <h1 class="nhsuk-heading-l">{{ pageName or 'Check your answers' }}</h1>
+      {% set resolvedPageName = pageName or 'Check your answers' %}
+
+      <h1 class="nhsuk-heading-l">{{ resolvedPageName }}</h1>
 
       {% set resolvedBookingActionText = 'No booking action selected' %}
       {% if bookingAction == 'cancel' %}
@@ -48,9 +50,16 @@
       {% endif %}
 
       {% set resolvedButtonText = buttonText or 'Save changes' %}
-      {% set resolvedButtonClasses = '' %}
+      {% set resolvedButtonClasses = buttonClasses or '' %}
+      {% if checkAnswersMode == 'clinic-cancel' %}
+        {% set resolvedButtonText = buttonText or ('Cancel clinic' if not isSeries else 'Cancel clinic series') %}
+      {% endif %}
       {% if bookingAction == 'cancel' %}
-        {% set resolvedButtonText = 'Save changes and cancel appointments' %}
+        {% if checkAnswersMode == 'clinic-cancel' %}
+          {% set resolvedButtonText = 'Cancel ' ~ ('clinic series' if isSeries else 'clinic') ~ ' and cancel appointments' %}
+        {% else %}
+          {% set resolvedButtonText = 'Save changes and cancel appointments' %}
+        {% endif %}
         {% set resolvedButtonClasses = 'nhsuk-button--warning' %}
       {% endif %}
 
@@ -174,7 +183,11 @@
         }]) %}
       {% endif %}
 
-      {{ summaryList({ rows: allRows }) }}
+      {% if allRows and (allRows | length) > 0 %}
+        {{ summaryList({ rows: allRows }) }}
+      {% elif emptyStateText %}
+        <p class="nhsuk-body">{{ emptyStateText }}</p>
+      {% endif %}
   
 
       <form action="{{ formAction or ('/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId ~ '/check-answers') }}" method="post">

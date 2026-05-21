@@ -161,7 +161,7 @@
                           </a>
                         </li>
                         <li>
-                          <a href="/not-in-this-prototype">
+                          <a href="{{ session.cancelHref or '/not-in-this-prototype' }}">
                             Cancel
                             <span class="nhsuk-u-visually-hidden"> clinic on {{ date | formatDate('EEEE d LLLL yyyy') }} at {{ session.from | nhsTime }} to {{ session.until | nhsTime }}</span>
                           </a>
