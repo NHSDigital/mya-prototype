@@ -39,6 +39,9 @@
       {% endmacro %}
 
       {% set resolvedPageName = pageName or 'Check your answers' %}
+      {% if checkAnswersMode == 'clinic-cancel' and affectedCount == 0 %}
+        {% set resolvedPageName = 'Confirm cancellation' %}
+      {% endif %}
 
       <h1 class="nhsuk-heading-l">{{ resolvedPageName }}</h1>
 
@@ -169,7 +172,24 @@
         {% set allRows = rows or [] %}
       {% endif %}
 
-      {% if affectedCount > 0 %}
+      {% if checkAnswersMode == 'clinic-cancel' and cancelFrom and cancelUntil %}
+        {% set formattedRows = [] %}
+        {% for row in allRows %}
+          {% if row.key and row.key.text == 'Times' %}
+            {% set formattedRows = formattedRows.concat([{
+              key: row.key,
+              value: {
+                text: (cancelFrom | nhsTime) + ' to ' + (cancelUntil | nhsTime)
+              }
+            }]) %}
+          {% else %}
+            {% set formattedRows = formattedRows.concat([row]) %}
+          {% endif %}
+        {% endfor %}
+        {% set allRows = formattedRows %}
+      {% endif %}
+
+      {% if affectedCount > 0 and (checkAnswersMode != 'clinic-cancel' or bookingAction) %}
         {% set allRows = allRows.concat([{
           key: { text: 'Booked appointments' },
           value: { text: resolvedBookingActionText },

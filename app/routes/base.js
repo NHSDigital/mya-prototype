@@ -204,6 +204,30 @@ function parseClosureFromBody(closureBody = {}) {
   };
 }
 
+function validateClosureWithinClinicDateRange(closure, clinicStartDate, clinicEndDate) {
+  const errors = {};
+
+  if (!closure?.startDate || !closure?.endDate) {
+    errors.startDate = 'Enter a valid closure start date';
+    errors.endDate = 'Enter a valid closure end date';
+    return errors;
+  }
+
+  if (closure.endDate < closure.startDate) {
+    errors.endDate = 'Closure end date must be on or after the start date';
+  }
+
+  if (clinicStartDate && closure.startDate < clinicStartDate) {
+    errors.startDate = 'The start date must be on or after the clinic series start date';
+  }
+
+  if (clinicEndDate && closure.endDate > clinicEndDate) {
+    errors.endDate = 'The end date must be on or before the clinic series end date';
+  }
+
+  return Object.keys(errors).length ? errors : null;
+}
+
 function toEditableClosure(closure = {}) {
   return {
     name: closure.label || '',
@@ -1456,13 +1480,32 @@ router.all('/site/:id/clinics/cancel/:sessionId/check-answers', (req, res) => {
   }
 
   const clinicTypeText = state.draft.type === 'Clinic series' ? 'clinic series' : 'clinic';
+  const dateText = state.draft.type === 'Clinic series'
+    ? `${formatShortDate(state.draft.startDate)} to ${formatShortDate(state.draft.endDate)}`
+    : formatShortDate(state.draft.startDate);
+  const timeText = `${state.draft.from || ''} to ${state.draft.until || ''}`;
+
   return res.render('site/clinics/edit/check-answers', {
     sessionId: req.params.sessionId,
     isSeries: state.draft.type === 'Clinic series',
-    rows: [],
+    rows: [
+      {
+        key: { text: state.draft.type === 'Clinic series' ? 'Dates' : 'Date' },
+        value: { text: dateText }
+      },
+      {
+        key: { text: 'Times' },
+        value: { text: timeText }
+      }
+    ].concat(affectedCount === 0 ? [{
+      key: { text: 'Booked appointments' },
+      value: { text: 'None' }
+    }] : []),
     checkAnswersMode: 'clinic-cancel',
     affectedCount,
     bookingAction: state.bookingAction,
+    cancelFrom: state.draft.from,
+    cancelUntil: state.draft.until,
     buttonText: `Cancel ${clinicTypeText}`,
     buttonClasses: 'nhsuk-button--warning',
     formAction: `${cancelSummaryPath(req.site_id, req.params.sessionId)}/check-answers`,
@@ -1647,7 +1690,8 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/add', (req, res) =
 
   if (req.method === 'POST') {
     const parsed = parseClosureFromBody(req.body?.closure || {});
-    if (!parsed) {
+    const closureErrors = validateClosureWithinClinicDateRange(parsed, state.draft.startDate, state.draft.endDate);
+    if (closureErrors) {
       return res.render('site/clinics/series/clinic-closures-form', {
         pageName: 'Add clinic closure',
         backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
@@ -1655,7 +1699,7 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/add', (req, res) =
         actionHref: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures/add'),
         mode: 'add',
         closure: toClosureFormInput(req.body?.closure || {}),
-        error: 'Enter valid closure start and end dates'
+        errors: closureErrors
       });
     }
 
@@ -1695,7 +1739,8 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/change', (r
 
   if (req.method === 'POST') {
     const parsed = parseClosureFromBody(req.body?.closure || {});
-    if (!parsed) {
+    const closureErrors = validateClosureWithinClinicDateRange(parsed, state.draft.startDate, state.draft.endDate);
+    if (closureErrors) {
       return res.render('site/clinics/series/clinic-closures-form', {
         pageName: 'Change clinic closure',
         backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
@@ -1703,7 +1748,7 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/change', (r
         actionHref: editStepPath(req.site_id, req.params.sessionId, `clinic-closures/${index}/change`),
         mode: 'change',
         closure: toClosureFormInput(req.body?.closure || toEditableClosure(current)),
-        error: 'Enter valid closure start and end dates'
+        errors: closureErrors
       });
     }
 
@@ -2065,12 +2110,15 @@ router.all('/site/:id/clinics/clinic-closures/add', (req, res) => {
 
   if (req.method === 'POST') {
     const parsed = parseClosureFromBody(req.body?.closure || {});
-    if (!parsed) {
+    const clinicStartDate = toIsoDateIfValid(req.session.data.newSession?.startDate);
+    const clinicEndDate = toIsoDateIfValid(req.session.data.newSession?.endDate);
+    const closureErrors = validateClosureWithinClinicDateRange(parsed, clinicStartDate, clinicEndDate);
+    if (closureErrors) {
       return res.render('site/clinics/series/clinic-closures-form', {
         mode: 'add',
         closure: toClosureFormInput(req.body?.closure || {}),
         actionHref: `/site/${req.site_id}/clinics/clinic-closures/add`,
-        error: 'Enter valid closure start and end dates'
+        errors: closureErrors
       });
     }
 
@@ -2117,12 +2165,15 @@ router.all('/site/:id/clinics/clinic-closures/:index/change', (req, res) => {
 
   if (req.method === 'POST') {
     const parsed = parseClosureFromBody(req.body?.closure || {});
-    if (!parsed) {
+    const clinicStartDate = toIsoDateIfValid(req.session.data.newSession?.startDate);
+    const clinicEndDate = toIsoDateIfValid(req.session.data.newSession?.endDate);
+    const closureErrors = validateClosureWithinClinicDateRange(parsed, clinicStartDate, clinicEndDate);
+    if (closureErrors) {
       return res.render('site/clinics/series/clinic-closures-form', {
         mode: 'change',
         closure: toClosureFormInput(req.body?.closure || toEditableClosure(current)),
         actionHref: `/site/${req.site_id}/clinics/clinic-closures/${index}/change`,
-        error: 'Enter valid closure start and end dates'
+        errors: closureErrors
       });
     }
 
