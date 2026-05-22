@@ -1,0 +1,28 @@
+{% extends '../layouts/design-system-addons.html' %}
+
+{% set pageName = 'Design system addons' %}
+
+{% block docsContent %}
+  <span class="nhsuk-caption-l">Prototype documentation</span>
+  <h1 class="nhsuk-heading-xl">Design system addons</h1>
+
+  <p class="nhsuk-body-l">
+    Reusable UI patterns created for this prototype that sit alongside the NHS design system.
+  </p>
+
+  <h2 class="nhsuk-heading-l">Components</h2>
+  <ul class="nhsuk-grid-row app-docs__cards">
+    <li class="nhsuk-grid-column-one-half app-docs__cards-item">
+      <article class="nhsuk-card app-docs__cards-card">
+        <div class="nhsuk-card__content">
+          <h3 class="nhsuk-card__heading nhsuk-heading-m">
+            <a class="nhsuk-card__link" href="/design-system-addons/app-card">App card</a>
+          </h3>
+          <p class="nhsuk-card__description">
+            Compact summary panel used across clinic flows to show grouped details and optional actions.
+          </p>
+        </div>
+      </article>
+    </li>
+  </ul>
+{% endblock %}
