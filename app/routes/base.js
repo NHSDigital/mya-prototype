@@ -691,21 +691,110 @@ function calculateCancellationAffectedBookings(model, siteId, siteBookings = {})
   return Array.from(affectedIds);
 }
 
+function findSessionOccurrenceForCancellation(data, siteId, sessionId) {
+  const recurringById = data?.recurring_sessions?.[siteId] || {};
+
+  for (const [recurringId, model] of Object.entries(recurringById)) {
+    const merged = mergeDailyAvailability({}, String(siteId || ''), { [recurringId]: model });
+
+    for (const [date, day] of Object.entries(merged || {})) {
+      for (const session of asArray(day?.sessions)) {
+        if (String(session?.id || '') === String(sessionId || '')) {
+          return {
+            recurringId,
+            model,
+            date,
+            session
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function calculateCancellationAffectedBookingsForOccurrence(occurrence, siteBookings = {}) {
+  const affectedIds = new Set();
+  const services = new Set(asArray(occurrence?.session?.services));
+  const slotLength = Number(occurrence?.session?.slotLength) || 10;
+  const start = DateTime.fromISO(`${occurrence?.date}T${occurrence?.session?.from || ''}`, { zone: 'Europe/London' });
+  const end = DateTime.fromISO(`${occurrence?.date}T${occurrence?.session?.until || ''}`, { zone: 'Europe/London' });
+  const slotKeys = new Set();
+
+  if (start.isValid && end.isValid && end > start) {
+    for (let dt = start; dt < end; dt = dt.plus({ minutes: slotLength })) {
+      slotKeys.add(dt.toFormat("yyyy-MM-dd'T'HH:mm"));
+    }
+  }
+
+  for (const booking of Object.values(siteBookings || {})) {
+    if (booking?.status !== 'scheduled') continue;
+
+    const sameSession = String(booking?.sessionId || '') === String(occurrence?.session?.id || '');
+    if (sameSession) {
+      affectedIds.add(String(booking.id));
+      continue;
+    }
+
+    const minute = booking?.slotKey || normalizeIsoMinute(booking?.datetime);
+    if (!minute || !slotKeys.has(minute)) continue;
+
+    const sameRecurring = String(booking?.recurringSessionId || '') === String(occurrence?.recurringId || '');
+    if (!sameRecurring) continue;
+
+    if (services.size === 0 || services.has(booking.service)) {
+      affectedIds.add(String(booking.id));
+    }
+  }
+
+  return Array.from(affectedIds);
+}
+
 function initializeCancelStateForSession(data, siteId, sessionId) {
   const state = initializeEditStateForSession(data, siteId, sessionId);
-  if (!state) return null;
-
   const siteBookings = data?.bookings?.[siteId] || {};
-  const affectedBookingIds = calculateCancellationAffectedBookings(state.original, siteId, siteBookings);
 
-  state.cancelMode = true;
-  state.currentEditField = null;
-  state.currentEditStep = null;
-  state.affectedBookingIds = affectedBookingIds;
-  state.bookingAction = null;
+  if (state) {
+    const affectedBookingIds = calculateCancellationAffectedBookings(state.original, siteId, siteBookings);
 
-  setEditState(data, state);
-  return state;
+    state.cancelMode = true;
+    state.cancelScope = 'series';
+    state.currentEditField = null;
+    state.currentEditStep = null;
+    state.affectedBookingIds = affectedBookingIds;
+    state.bookingAction = null;
+
+    setEditState(data, state);
+    return state;
+  }
+
+  const occurrence = findSessionOccurrenceForCancellation(data, siteId, sessionId);
+  if (!occurrence) return null;
+
+  const occurrenceState = {
+    siteId,
+    sessionId,
+    original: clone(occurrence.model),
+    draft: {
+      id: sessionId,
+      type: 'Single clinic',
+      startDate: occurrence.date,
+      endDate: occurrence.date,
+      from: occurrence.session.from,
+      until: occurrence.session.until,
+      services: asArray(occurrence.session.services)
+    },
+    cancelMode: true,
+    cancelScope: 'occurrence',
+    cancelRecurringId: occurrence.recurringId,
+    cancelDate: occurrence.date,
+    bookingAction: null,
+    affectedBookingIds: calculateCancellationAffectedBookingsForOccurrence(occurrence, siteBookings)
+  };
+
+  setEditState(data, occurrenceState);
+  return occurrenceState;
 }
 
 function parseDateInputToISO(input = {}) {
@@ -1113,7 +1202,7 @@ function buildWeekAvailabilitySummary(week, dailyAvailability, slotsByDate, serv
         : `/site/${siteId}/change/session/${session.id}`;
       const cancelHref = day < today || !session?.recurringId
         ? null
-        : `/site/${siteId}/clinics/cancel/${session.recurringId}`;
+        : `/site/${siteId}/clinics/cancel/${session.id}`;
 
       return {
         id: session.id,
@@ -1462,7 +1551,28 @@ router.all('/site/:id/clinics/cancel/:sessionId/check-answers', (req, res) => {
 
     data.recurring_sessions = data.recurring_sessions || {};
     data.recurring_sessions[req.site_id] = data.recurring_sessions[req.site_id] || {};
-    delete data.recurring_sessions[req.site_id][req.params.sessionId];
+
+    if (state.cancelScope === 'occurrence') {
+      const recurringSession = data.recurring_sessions[req.site_id][state.cancelRecurringId];
+      if (recurringSession) {
+        recurringSession.closures = asArray(recurringSession.closures);
+        const alreadyClosed = recurringSession.closures.some((closure) => {
+          const start = closure?.startDate;
+          const end = closure?.endDate;
+          return start && end && state.cancelDate >= start && state.cancelDate <= end;
+        });
+
+        if (!alreadyClosed) {
+          recurringSession.closures.push({
+            startDate: state.cancelDate,
+            endDate: state.cancelDate,
+            label: ''
+          });
+        }
+      }
+    } else {
+      delete data.recurring_sessions[req.site_id][req.params.sessionId];
+    }
 
     setEditSuccessState(data, {
       siteId: req.site_id,
@@ -2320,6 +2430,9 @@ router.get('/site/:id/availability/day', (req, res) => {
       const bookedTotal = sessionSlots.filter((slot) => slot?.booking_status === 'scheduled').length;
       const totalSlots = sessionSlots.length;
       const resolvedLabel = session.label || data?.recurring_sessions?.[site_id]?.[session?.recurringId]?.label || '';
+      const cancelHref = date < today || !session?.recurringId
+        ? null
+        : `/site/${site_id}/clinics/cancel/${session.id}`;
 
       return {
         id: session.id,
@@ -2339,7 +2452,8 @@ router.get('/site/:id/availability/day', (req, res) => {
         unbookedTotal: Math.max(0, totalSlots - bookedTotal),
         actionHref: date < today || !session?.recurringId
           ? null
-          : `/site/${site_id}/change/session/${session.id}?back=${encodeURIComponent(`/site/${site_id}/availability/day?date=${date}`)}`
+          : `/site/${site_id}/change/session/${session.id}?back=${encodeURIComponent(`/site/${site_id}/availability/day?date=${date}`)}`,
+        cancelHref
       };
     });
 
