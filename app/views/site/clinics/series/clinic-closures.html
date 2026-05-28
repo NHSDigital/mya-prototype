@@ -3,6 +3,7 @@
 {% if not pageName %}{% set pageName = "Clinic closures" %}{% endif %}
 {% if not backUrl %}{% set backUrl = '/site/' + site_id + '/clinics/services' %}{% endif %}
 {% if not formAction %}{% set formAction = '/site/' + site_id + '/clinics/clinic-closures' %}{% endif %}
+{% if not addClosureHref %}{% set addClosureHref = formAction + '/add' %}{% endif %}
 {% if not captionText %}{% set captionText = 'Create clinic series' %}{% endif %}
 
 {% macro closureText(closure) %}
@@ -28,7 +29,7 @@
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       {% if closures | length > 0 %}
-        <h2 class="nhsuk-heading-m">You have added {{ closures | length }} clinic closure{{ 's' if closures | length != 1 }}</h2>
+        <h2 class="nhsuk-heading-m">There {{ 'is' if closures | length == 1 else 'are' }} {{ closures | length }} clinic closure{{ 's' if closures | length != 1 }}</h2>
 
         {% set closureRows = [] %}
         {% for closure in closures %}
@@ -61,42 +62,45 @@
         {% endfor %}
 
         {{ summaryList({
-          rows: closureRows
+          rows: closureRows,
+          classes: "nhsuk-u-margin-bottom-3"
         }) }}
       {% endif %}
 
       {% if closures | length > 0 %}
-        {% set questionText = "Are there any other dates when this clinic will not run?" %}
-      {% else %}
-        {% set questionText = "Are there any dates when this clinic will not run?" %}
+        <p class="nhsuk-u-margin-bottom-6"><a class="nhsuk-link--no-visited-state" href="{{ addClosureHref }}">Add another closure</a></p>
       {% endif %}
 
       <form action="{{ formAction }}" method="post">
         <input type="hidden" name="newSession[type]" value="Clinic series">
-        {{ radios({
-          idPrefix: "add-another-closure",
-          name: "addAnother",
-          fieldset: {
-            legend: {
-              text: questionText,
-              classes: "nhsuk-fieldset__legend--m"
-            }
-          },
-          classes: "nhsuk-radios--inline",
-          hint: {
-            text: "For example, bank holidays"
-          },
-          items: [
-            {
-              value: "yes",
-              text: "Yes"
+        {% if closures | length == 0 %}
+          {{ radios({
+            idPrefix: "add-another-closure",
+            name: "addAnother",
+            fieldset: {
+              legend: {
+                text: "Are there any dates when this clinic will not run?",
+                classes: "nhsuk-fieldset__legend--m"
+              }
             },
-            {
-              value: "no",
-              text: "No"
-            }
-          ]
-        }) }}
+            classes: "nhsuk-radios--inline",
+            hint: {
+              text: "For example, bank holidays"
+            },
+            items: [
+              {
+                value: "yes",
+                text: "Yes",
+                checked: addAnother == 'yes'
+              },
+              {
+                value: "no",
+                text: "No",
+                checked: addAnother == 'no'
+              }
+            ]
+          }) }}
+        {% endif %}
 
         {{ button({
           text: "Continue"

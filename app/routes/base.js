@@ -613,6 +613,8 @@ function normalizedBookingImpact(model = {}) {
 function ensureEditStateForSession(data, siteId, sessionId) {
   const existing = getEditState(data);
   if (existing && existing.siteId === siteId && existing.sessionId === sessionId) {
+    ensureClosureTrackingState(existing);
+    setEditState(data, existing);
     return existing;
   }
 
@@ -624,11 +626,28 @@ function initializeEditStateForSession(data, siteId, sessionId) {
   if (!model) return null;
 
   const draft = modelToDraft(model);
+  const draftClosures = asArray(draft.closures)
+    .filter((closure) => closure?.startDate && closure?.endDate)
+    .map((closure, index) => ({
+      ...normalizeEditableClosure(closure),
+      _editId: `closure-${index + 1}`
+    }));
+
+  draft.closures = draftClosures;
   const state = {
     siteId,
     sessionId,
     original: clone(model),
     draft,
+    originalClosureRefs: draftClosures.map((closure) => ({
+      editId: closure._editId,
+      closure: {
+        startDate: closure.startDate,
+        endDate: closure.endDate,
+        label: closure.label
+      }
+    })),
+    nextClosureEditId: draftClosures.length + 1,
     cancelMode: false,
     bookingAction: null,
     affectedBookingIds: []
@@ -829,21 +848,187 @@ function hasEditFieldChanged(original, draft, field) {
       return JSON.stringify(asArray(original?.services).slice().sort())
         !== JSON.stringify(asArray(draft?.services).slice().sort());
     case 'closures': {
-      const normalizeClosures = (closures) => asArray(closures)
-        .filter((closure) => closure?.startDate && closure?.endDate)
-        .map((closure) => ({
-          startDate: closure.startDate,
-          endDate: closure.endDate,
-          label: closure.label || ''
-        }))
+      const sortedClosures = (closures) => normalizeClosuresForComparison(closures)
         .sort((a, b) => `${a.startDate}-${a.endDate}-${a.label}`.localeCompare(`${b.startDate}-${b.endDate}-${b.label}`));
 
-      return JSON.stringify(normalizeClosures(original?.closures))
-        !== JSON.stringify(normalizeClosures(draft?.closures));
+      return JSON.stringify(sortedClosures(original?.closures))
+        !== JSON.stringify(sortedClosures(draft?.closures));
     }
     default:
       return false;
   }
+}
+
+function normalizeClosuresForComparison(closures) {
+  return asArray(closures)
+    .filter((closure) => closure?.startDate && closure?.endDate)
+    .map((closure) => ({
+      startDate: closure.startDate,
+      endDate: closure.endDate,
+      label: String(closure.label || '').trim()
+    }));
+}
+
+function normalizeEditableClosure(closure = {}) {
+  return {
+    startDate: closure.startDate,
+    endDate: closure.endDate,
+    label: String(closure.label || '').trim(),
+    _editId: closure._editId || null
+  };
+}
+
+function ensureClosureTrackingState(state) {
+  if (!state || state?.draft?.type !== 'Clinic series') return state;
+
+  const draftClosures = asArray(state.draft.closures)
+    .filter((closure) => closure?.startDate && closure?.endDate)
+    .map((closure) => normalizeEditableClosure(closure));
+
+  let nextId = Number(state.nextClosureEditId);
+  if (!Number.isInteger(nextId) || nextId < 1) {
+    nextId = 1;
+  }
+
+  for (const closure of draftClosures) {
+    if (!closure._editId) {
+      closure._editId = `closure-${nextId}`;
+      nextId += 1;
+    }
+  }
+
+  if (!Array.isArray(state.originalClosureRefs) || state.originalClosureRefs.length === 0) {
+    state.originalClosureRefs = draftClosures.map((closure) => ({
+      editId: closure._editId,
+      closure: {
+        startDate: closure.startDate,
+        endDate: closure.endDate,
+        label: closure.label
+      }
+    }));
+  }
+
+  state.draft.closures = draftClosures;
+  state.nextClosureEditId = nextId;
+  return state;
+}
+
+function nextClosureEditId(state) {
+  state.nextClosureEditId = Number(state.nextClosureEditId);
+  if (!Number.isInteger(state.nextClosureEditId) || state.nextClosureEditId < 1) {
+    state.nextClosureEditId = 1;
+  }
+
+  const id = `closure-${state.nextClosureEditId}`;
+  state.nextClosureEditId += 1;
+  return id;
+}
+
+function closuresMatch(a, b) {
+  return String(a?.startDate || '') === String(b?.startDate || '')
+    && String(a?.endDate || '') === String(b?.endDate || '')
+    && String(a?.label || '') === String(b?.label || '');
+}
+
+function buildClosureComparisons(draftClosures, previousClosures, originalClosureRefs = []) {
+  const refs = asArray(originalClosureRefs)
+    .filter((ref) => ref?.editId && ref?.closure)
+    .map((ref) => ({
+      editId: ref.editId,
+      closure: normalizeClosuresForComparison([ref.closure])[0]
+    }))
+    .filter((ref) => ref.closure);
+
+  if (refs.length > 0) {
+    const originalById = new Map(refs.map((ref) => [ref.editId, ref.closure]));
+    const seenOriginalIds = new Set();
+    const comparisons = [];
+
+    for (const closure of asArray(draftClosures)) {
+      const current = normalizeClosuresForComparison([closure])[0];
+      if (!current) continue;
+
+      const editId = closure?._editId;
+      if (editId && originalById.has(editId)) {
+        const previous = originalById.get(editId);
+        seenOriginalIds.add(editId);
+        comparisons.push(
+          closuresMatch(current, previous)
+            ? { type: 'unchanged', current }
+            : { type: 'changed', current, previous }
+        );
+      } else {
+        comparisons.push({ type: 'added', current });
+      }
+    }
+
+    for (const ref of refs) {
+      if (!seenOriginalIds.has(ref.editId)) {
+        comparisons.push({ type: 'removed', previous: ref.closure });
+      }
+    }
+
+    return comparisons;
+  }
+
+  const current = normalizeClosuresForComparison(draftClosures);
+  const previous = normalizeClosuresForComparison(previousClosures);
+  const matchedPreviousIndexes = new Set();
+  const comparisons = [];
+
+  for (const currentClosure of current) {
+    let exactMatchIndex = -1;
+    for (let i = 0; i < previous.length; i += 1) {
+      if (matchedPreviousIndexes.has(i)) continue;
+      if (closuresMatch(currentClosure, previous[i])) {
+        exactMatchIndex = i;
+        break;
+      }
+    }
+
+    if (exactMatchIndex >= 0) {
+      matchedPreviousIndexes.add(exactMatchIndex);
+      comparisons.push({
+        type: 'unchanged',
+        current: currentClosure
+      });
+      continue;
+    }
+
+    let firstUnmatchedPreviousIndex = -1;
+    for (let i = 0; i < previous.length; i += 1) {
+      if (!matchedPreviousIndexes.has(i)) {
+        firstUnmatchedPreviousIndex = i;
+        break;
+      }
+    }
+
+    if (firstUnmatchedPreviousIndex >= 0) {
+      matchedPreviousIndexes.add(firstUnmatchedPreviousIndex);
+      comparisons.push({
+        type: 'changed',
+        current: currentClosure,
+        previous: previous[firstUnmatchedPreviousIndex]
+      });
+      continue;
+    }
+
+    comparisons.push({
+      type: 'added',
+      current: currentClosure
+    });
+  }
+
+  for (let i = 0; i < previous.length; i += 1) {
+    if (!matchedPreviousIndexes.has(i)) {
+      comparisons.push({
+        type: 'removed',
+        previous: previous[i]
+      });
+    }
+  }
+
+  return comparisons;
 }
 
 function buildChangedFieldKeysForEdit(original, draft, state) {
@@ -1781,6 +1966,21 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures', (req, res) => {
     if (addAnother === 'no') {
       return res.redirect(prepareReviewAfterEdit(data, req.site_id, state));
     }
+
+    if (closures.length > 0) {
+      return res.redirect(prepareReviewAfterEdit(data, req.site_id, state));
+    }
+
+    return res.render('site/clinics/series/clinic-closures', {
+      backUrl: editSummaryPath(req.site_id, req.params.sessionId),
+      captionText: editCaptionText(state.draft),
+      formAction: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
+      closures,
+      addAnother,
+      errors: {
+        addAnother: 'Select yes if there are dates when this clinic will not run'
+      }
+    });
   }
 
   return res.render('site/clinics/series/clinic-closures', {
@@ -1798,6 +1998,8 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/add', (req, res) =
     return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
   }
 
+  ensureClosureTrackingState(state);
+
   if (req.method === 'POST') {
     const parsed = parseClosureFromBody(req.body?.closure || {});
     const closureErrors = validateClosureWithinClinicDateRange(parsed, state.draft.startDate, state.draft.endDate);
@@ -1814,7 +2016,10 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/add', (req, res) =
     }
 
     state.draft.closures = asArray(state.draft.closures);
-    state.draft.closures.push(parsed);
+    state.draft.closures.push({
+      ...parsed,
+      _editId: nextClosureEditId(state)
+    });
     setEditState(data, state);
     return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'));
   }
@@ -1840,6 +2045,7 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/change', (r
     return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
   }
 
+  ensureClosureTrackingState(state);
   const index = Number(req.params.index);
   const closures = asArray(state.draft.closures);
   const current = closures[index];
@@ -1862,7 +2068,10 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/change', (r
       });
     }
 
-    closures[index] = parsed;
+    closures[index] = {
+      ...parsed,
+      _editId: current._editId || nextClosureEditId(state)
+    };
     state.draft.closures = closures;
     setEditState(data, state);
     return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'));
@@ -1893,10 +2102,29 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/remove', (r
   }
 
   if (req.method === 'POST') {
-    closures.splice(index, 1);
-    state.draft.closures = closures;
-    setEditState(data, state);
-    return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'));
+    const confirmRemove = req.body?.confirmRemove;
+    if (confirmRemove === 'yes') {
+      closures.splice(index, 1);
+      state.draft.closures = closures;
+      setEditState(data, state);
+      return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'));
+    }
+
+    if (confirmRemove === 'no') {
+      return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'));
+    }
+
+    return res.render('site/clinics/series/clinic-closures-remove', {
+      backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
+      captionText: editCaptionText(state.draft),
+      formAction: editStepPath(req.site_id, req.params.sessionId, `clinic-closures/${index}/remove`),
+      index,
+      closure: current,
+      confirmRemove,
+      errors: {
+        confirmRemove: 'Select yes if you want to remove this closure'
+      }
+    });
   }
 
   return res.render('site/clinics/series/clinic-closures-remove', {
@@ -2012,6 +2240,7 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
     isSeries: state.draft.type === 'Clinic series',
     rowFields: buildChangedFieldKeysForEdit(state.original, state.draft, state),
     draft: state.draft,
+    closureComparisons: buildClosureComparisons(state.draft?.closures, state.original?.closures, state.originalClosureRefs),
     previous: {
       startDate: state.original?.startDate,
       endDate: state.original?.endDate,
@@ -2021,6 +2250,7 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
       capacity: String(Number(state.original?.capacity) || 1),
       duration: String(Number(state.original?.slotLength) || 10),
       services: asArray(state.original?.services),
+      closures: asArray(state.original?.closures),
       closuresCount: asArray(state.original?.closures).length
     },
     checkAnswersMode: 'clinic-edit',
@@ -2178,7 +2408,7 @@ router.all('/site/:id/clinics/clinic-closures', (req, res) => {
     return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
   }
 
-  const closures = req.session.data.newSession.closures || [];
+  const closures = asArray(req.session.data.newSession.closures);
 
   if (req.method === 'POST') {
     const addAnother = req.body?.addAnother;
@@ -2190,9 +2420,17 @@ router.all('/site/:id/clinics/clinic-closures', (req, res) => {
       return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
     }
 
-    // Initial POST from services (or no radio selection) should stay on this page.
+    if (closures.length > 0) {
+      return res.redirect(`/site/${req.site_id}/clinics/check-answers`);
+    }
+
+    // Initial POST from services should stay on this page. Missing radio selection shows an error.
     return res.render('site/clinics/series/clinic-closures', {
-      closures
+      closures,
+      addAnother,
+      errors: {
+        addAnother: 'Select yes if there are dates when this clinic will not run'
+      }
     });
   }
 
@@ -2325,9 +2563,25 @@ router.all('/site/:id/clinics/clinic-closures/:index/remove', (req, res) => {
   }
 
   if (req.method === 'POST') {
-    closures.splice(index, 1);
-    req.session.data.newSession.closures = closures;
-    return res.redirect(`/site/${req.site_id}/clinics/clinic-closures`);
+    const confirmRemove = req.body?.confirmRemove;
+    if (confirmRemove === 'yes') {
+      closures.splice(index, 1);
+      req.session.data.newSession.closures = closures;
+      return res.redirect(`/site/${req.site_id}/clinics/clinic-closures`);
+    }
+
+    if (confirmRemove === 'no') {
+      return res.redirect(`/site/${req.site_id}/clinics/clinic-closures`);
+    }
+
+    return res.render('site/clinics/series/clinic-closures-remove', {
+      index,
+      closure: current,
+      confirmRemove,
+      errors: {
+        confirmRemove: 'Select yes if you want to remove this closure'
+      }
+    });
   }
 
   return res.render('site/clinics/series/clinic-closures-remove', {

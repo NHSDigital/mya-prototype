@@ -38,6 +38,14 @@
         {{ currentHtml | safe }}<br><span class="nhsuk-u-secondary-text-colour ">Previously, {{ previousText or 'Not set' }}</span>
       {% endmacro %}
 
+      {% macro closureText(closure) %}
+        {% set start = closure.startDate | formatDate('d MMM yyyy') if closure and closure.startDate else 'Unknown start date' %}
+        {% set end = closure.endDate | formatDate('d MMM yyyy') if closure and closure.endDate else 'Unknown end date' %}
+        {% set dates = start if start == end else (start + ' to ' + end) %}
+        {% set label = closure.label | trim if closure and closure.label else '' %}
+        {{ dates + (' - ' + label if label else '') }}
+      {% endmacro %}
+
       {% set resolvedPageName = pageName or 'Check your answers' %}
       {% if checkAnswersMode == 'clinic-cancel' and affectedCount == 0 %}
         {% set resolvedPageName = 'Confirm cancellation' %}
@@ -122,14 +130,30 @@
                 actions: { items: [{ href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/change/services', text: 'Change', visuallyHiddenText: ' services' }] }
               } %}
             {% elif field == 'closures' and isSeries %}
-              {% set closuresText = 'None added' %}
-              {% if draft.closures and (draft.closures | length) > 0 %}
-                {% set closuresText = (draft.closures | length) + ' added' %}
+              {% set closureLines = [] %}
+              {% for comparison in closureComparisons or [] %}
+                {% if comparison.type == 'removed' %}
+                  {% set closureLines = closureLines.concat(['Removed, ' + (closureText(comparison.previous) | trim)]) %}
+                {% elif comparison.type == 'changed' %}
+                  {% set closureLines = closureLines.concat([(closureText(comparison.current) | trim) + '<br><span class="nhsuk-u-secondary-text-colour">Previously, ' + (closureText(comparison.previous) | trim) + '</span>']) %}
+                {% else %}
+                  {% set closureLines = closureLines.concat([closureText(comparison.current) | trim]) %}
+                {% endif %}
+              {% endfor %}
+
+              {% if closureLines | length == 0 %}
+                {% set closureLines = ['None added'] %}
               {% endif %}
-              {% set previousClosuresText = (previous.closuresCount + ' added') if previous and previous.closuresCount and previous.closuresCount > 0 else 'None added' %}
+
+              {% set closureListHtml = '<ol class="nhsuk-list nhsuk-u-margin-bottom-0">' %}
+              {% for closureLine in closureLines %}
+                {% set closureListHtml = closureListHtml + '<li>' + closureLine + '</li>' %}
+              {% endfor %}
+              {% set closureListHtml = closureListHtml + '</ol>' %}
+
               {% set row = {
                 key: { text: 'Clinic closures' },
-                value: { html: withPrevious(closuresText, previousClosuresText) },
+                value: { html: closureListHtml | safe },
                 actions: { items: [{ href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/change/closures', text: 'Change', visuallyHiddenText: ' clinic closures' }] }
               } %}
             {% endif %}
