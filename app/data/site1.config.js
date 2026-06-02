@@ -162,6 +162,16 @@ const clinics = [
   }
 ];
 
+const legacyClinics = [
+  {
+    services: [SERVICE_IDS.COVID_ADULT, SERVICE_IDS.FLU_18_64, SERVICE_IDS.FLU_65_PLUS],
+    date: today.plus({ days: 1 }),
+    from: '09:00',
+    until: '17:00',
+    numberOfOccurances: 50
+  }
+];
+
 module.exports = {
   // ---- Static site data ----
   site: {
@@ -181,6 +191,9 @@ module.exports = {
 
   // ---- Clinics ----
   clinics,
+
+  // ---- Legacy clinics ----
+  legacyClinics,
 
   // ---- Bookings generation ----
   bookings: {

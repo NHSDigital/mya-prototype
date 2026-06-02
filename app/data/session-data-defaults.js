@@ -8,6 +8,8 @@ const catNames = require('./_lib/catNames');
 const mergeDailyAvailability = require('../helpers/recurringToDailyAvailability');
 const { DateTime } = require('luxon');
 
+const override_today = process.env.OVERRIDE_TODAY || null;
+
 const SERVICE_GROUPS = {
   FLU: {
     id: 'FLU',
@@ -255,6 +257,78 @@ function normalizeUserOverride(user = {}) {
 }
 
 const default_user = deepClone(base.user);
+
+function toLegacyDateISO(value) {
+  if (!value) return null;
+
+  if (typeof value === 'string') {
+    const asDate = DateTime.fromISO(value);
+    return asDate.isValid ? asDate.toISODate() : null;
+  }
+
+  if (typeof value?.toISODate === 'function') {
+    return value.toISODate();
+  }
+
+  return null;
+}
+
+function buildLegacySessionsBySite(configs = []) {
+  const legacyBySite = {};
+
+  configs.forEach((config) => {
+    const site_id = String(config?.site?.id || '').trim();
+    if (!site_id) return;
+
+    const legacyClinics = Array.isArray(config?.legacyClinics) ? config.legacyClinics : [];
+    const sessions = [];
+    let sequence = 0;
+
+    legacyClinics.forEach((clinic) => {
+      const startDateISO = toLegacyDateISO(clinic?.date);
+      if (!startDateISO) return;
+
+      const occurrences = Math.max(
+        1,
+        Number(clinic?.numberOfOccurances || clinic?.numberOfOccurrences) || 1
+      );
+
+      for (let occurrence = 0; occurrence < occurrences; occurrence += 1) {
+        sequence += 1;
+        const date = DateTime.fromISO(startDateISO).plus({ days: occurrence }).toISODate();
+        const fallbackBookedTotal = (sequence % 6) + 2;
+        const fallbackUnbookedTotal = ((sequence + 2) % 5) + 1;
+        const bookedTotal = Math.max(
+          0,
+          Number(clinic?.bookedTotal ?? clinic?.booked) || fallbackBookedTotal
+        );
+        const unbookedTotal = Math.max(
+          0,
+          Number(clinic?.unbookedTotal ?? clinic?.free) || fallbackUnbookedTotal
+        );
+
+        sessions.push({
+          id: `${site_id}-legacy-old-${sequence}`,
+          isLegacy: true,
+          type: 'Legacy clinic',
+          date,
+          endDate: date,
+          from: clinic?.from || '09:00',
+          until: clinic?.until || '17:00',
+          services: Array.isArray(clinic?.services) ? clinic.services : [],
+          bookedTotal,
+          unbookedTotal
+        });
+      }
+    });
+
+    legacyBySite[site_id] = sessions;
+  });
+
+  return legacyBySite;
+}
+
+const legacy_sessions_by_site = buildLegacySessionsBySite(sitesConfig);
 
 function buildRecurringDefaults({ site_id, start, end, patterns = {} }) {
   const grouped = new Map();
@@ -578,5 +652,6 @@ module.exports = {
   sites,
   daily_availability,
   bookings,
-  recurring_sessions
+  recurring_sessions,
+  legacy_sessions_by_site
 };

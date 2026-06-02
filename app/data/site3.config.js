@@ -66,6 +66,16 @@ const clinics = [
   }
 ];
 
+const legacyClinics = [
+  {
+    services: [SERVICE_IDS.COVID_ADULT],
+    date: today.plus({ days: 1 }),
+    from: '10:00',
+    until: '18:00',
+    numberOfOccurances: 50
+  }
+];
+
 module.exports = {
   // ---- Static site data ----
   site: {
@@ -85,6 +95,9 @@ module.exports = {
 
   // ---- Clinics ----
   clinics,
+
+  // ---- Legacy clinics ----
+  legacyClinics,
 
   // ---- Bookings generation ----
   bookings: {

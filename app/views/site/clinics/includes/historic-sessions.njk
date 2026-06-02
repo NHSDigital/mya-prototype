@@ -1,0 +1,57 @@
+{% set legacySessionHistory = legacySessionHistory or [] %}
+
+{% if (legacySessionHistory | length) > 0 %}
+  <h2 class="nhsuk-heading-m">Clinics created before 14 August 2026</h2>
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <p>These clinics are listed separately because of recent improvements we have made to the service. You can only change them individually.</p>
+      <p>To cancel them, use Cancel all clinics. <a href="#">You can read our guidance on why these are different and how to manage clinics (opens in a new tab)</a></p>  
+    </div>
+  </div>
+  <table class="nhsuk-table">
+    <thead class="nhsuk-table__head">
+      <tr class="nhsuk-table__row">
+        <th scope="col" class="nhsuk-table__header">Time</th>
+        <th scope="col" class="nhsuk-table__header">Services</th>
+        <th scope="col" class="nhsuk-table__header">Booked</th>
+        <th scope="col" class="nhsuk-table__header">Free</th>
+        <th scope="col" class="nhsuk-table__header">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="nhsuk-table__body">
+      {% for session in legacySessionHistory %}
+        {% set serviceCount = session.services | length %}
+        {% set bookedTotal = session.bookedTotal or 0 %}
+        {% set bookedBase = ((bookedTotal / (serviceCount if serviceCount > 0 else 1)) | round(0, 'floor')) %}
+        {% set bookedRemainder = bookedTotal % (serviceCount if serviceCount > 0 else 1) %}
+        <tr class="nhsuk-table__row">
+          <td class="nhsuk-table__cell">
+            <div>{{ session.date | formatDate('EEEE d MMMM yyyy') }}</div>
+            <strong>{{ session.from | nhsTime }} to {{ session.until | nhsTime }}</strong>
+          </td>
+          <td class="nhsuk-table__cell">
+            {% for serviceId in session.services %}
+              {{ data.services[serviceId].name if data.services[serviceId] else serviceId }}{% if not loop.last %}<br>{% endif %}
+            {% endfor %}
+          </td>
+          <td class="nhsuk-table__cell">
+            {% for serviceId in session.services %}
+              {{ bookedBase + (1 if loop.index0 < bookedRemainder else 0) }} booked{% if not loop.last %}<br>{% endif %}
+            {% endfor %}
+          </td>
+          <td class="nhsuk-table__cell">{{ session.unbookedTotal or 0 }} free</td>
+          <td class="nhsuk-table__cell">
+            <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+              <li>
+                <a href="/site/{{ site_id }}/clinics/old-change/{{ session.id }}">
+                  Change
+                  <span class="nhsuk-u-visually-hidden"> clinic on {{ session.date | formatDate('EEEE d LLLL yyyy') }} at {{ session.from | nhsTime }} to {{ session.until | nhsTime }}</span>
+                </a>
+              </li>
+            </ul>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}

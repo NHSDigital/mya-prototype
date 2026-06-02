@@ -1353,6 +1353,35 @@ function buildPastSessionHistory(siteRecurringSessions, startDate = null, endDat
   });
 }
 
+function buildLegacyAvailabilitySessions(legacySessions, date, siteId, servicesById, backHref) {
+  return asArray(legacySessions)
+    .filter((session) => session?.date === date)
+    .map((session) => {
+      const bookedTotal = Math.max(0, Number(session?.bookedTotal) || 0);
+      const unbookedTotal = Math.max(0, Number(session?.unbookedTotal) || 0);
+      const serviceIds = asArray(session.services);
+      const perServiceBase = serviceIds.length > 0 ? Math.floor(bookedTotal / serviceIds.length) : 0;
+      const perServiceRemainder = serviceIds.length > 0 ? bookedTotal % serviceIds.length : 0;
+
+      return {
+        id: session.id,
+        isLegacy: true,
+        label: session.label || 'Legacy clinic',
+        from: session.from,
+        until: session.until,
+        services: serviceIds.map((serviceId, index) => ({
+          id: serviceId,
+          name: servicesById?.[serviceId]?.name || serviceId,
+          bookedCount: perServiceBase + (index < perServiceRemainder ? 1 : 0)
+        })),
+        bookedTotal,
+        unbookedTotal,
+        actionHref: `/site/${siteId}/clinics/old-change/${session.id}${backHref ? `?back=${encodeURIComponent(backHref)}` : ''}`,
+        cancelHref: null
+      };
+    });
+}
+
 function sortSessionsForAvailability(sessions = []) {
   return asArray(sessions).slice().sort((a, b) => {
     const left = `${a?.from || ''}-${a?.until || ''}-${a?.label || ''}`;
@@ -1550,6 +1579,10 @@ router.use('/site/:id', (req, res, next) => {
     data.users_by_site = clone(sessionDataDefaults.users_by_site);
   }
 
+  if (!data.legacy_sessions_by_site && sessionDataDefaults.legacy_sessions_by_site) {
+    data.legacy_sessions_by_site = clone(sessionDataDefaults.legacy_sessions_by_site);
+  }
+
   const defaultUser = data.default_user || data.user;
   const siteUser = data.users_by_site?.[site_id];
   data.user = clone(siteUser || defaultUser);
@@ -1576,6 +1609,7 @@ router.use('/site/:id', (req, res, next) => {
   res.locals.dailyAvailability = effectiveDailyAvailability;
   res.locals.sessionHistory = buildSessionHistory(siteRecurringSessions, from, until, today);
   res.locals.pastSessionHistory = buildPastSessionHistory(siteRecurringSessions, from, until, today);
+  res.locals.legacySessionHistory = asArray(data.legacy_sessions_by_site?.[site_id]);
 
   next();
 });
@@ -2717,6 +2751,21 @@ router.get('/site/:id/availability/day', (req, res) => {
     daySummary.unbookedAppointments = Math.max(0, daySummary.totalAppointments - daySummary.bookedAppointments);
   }
 
+  const legacyDaySessions = buildLegacyAvailabilitySessions(
+    res.locals.legacySessionHistory,
+    date,
+    site_id,
+    data.services || {},
+    `/site/${site_id}/availability/day?date=${date}`
+  );
+
+  if (legacyDaySessions.length > 0) {
+    daySummary.sessions = sortSessionsForAvailability([...(daySummary.sessions || []), ...legacyDaySessions]);
+    daySummary.totalAppointments = (daySummary.totalAppointments || 0) + legacyDaySessions.reduce((sum, session) => sum + session.bookedTotal + session.unbookedTotal, 0);
+    daySummary.bookedAppointments = (daySummary.bookedAppointments || 0) + legacyDaySessions.reduce((sum, session) => sum + session.bookedTotal, 0);
+    daySummary.unbookedAppointments = Math.max(0, daySummary.totalAppointments - daySummary.bookedAppointments);
+  }
+
   res.render('site/clinics/availability/day', {
     date,
     today,
@@ -2764,6 +2813,23 @@ router.get('/site/:id/availability/week', (req, res) => {
     data?.recurring_sessions?.[site_id] || {},
     `/site/${site_id}/availability/week?date=${startFromDate}`
   );
+
+  weekDays.forEach((daySummary) => {
+    const legacyDaySessions = buildLegacyAvailabilitySessions(
+      res.locals.legacySessionHistory,
+      daySummary.date,
+      site_id,
+      data.services || {},
+      `/site/${site_id}/availability/week?date=${startFromDate}`
+    );
+
+    if (legacyDaySessions.length > 0) {
+      daySummary.sessions = sortSessionsForAvailability([...(daySummary.sessions || []), ...legacyDaySessions]);
+      daySummary.totalAppointments = (daySummary.totalAppointments || 0) + legacyDaySessions.reduce((sum, session) => sum + session.bookedTotal + session.unbookedTotal, 0);
+      daySummary.bookedAppointments = (daySummary.bookedAppointments || 0) + legacyDaySessions.reduce((sum, session) => sum + session.bookedTotal, 0);
+      daySummary.unbookedAppointments = Math.max(0, daySummary.totalAppointments - daySummary.bookedAppointments);
+    }
+  });
 
   res.render('site/clinics/availability/week', {
     date: startFromDate,
@@ -2817,6 +2883,12 @@ router.all('/site/:id/remove/:itemId', redirectLegacyToClinics);
 router.all('/site/:id/remove/:itemId/:step', redirectLegacyToClinics);
 router.all('/site/:id/change/group/:itemId', redirectLegacyToClinics);
 router.all('/site/:id/change/group/:itemId/:step', redirectLegacyToClinics);
+
+router.get('/site/:id/clinics/old-change/:sessionId', (req, res) => {
+  res.render('site/clinics/old-change-journey', {
+    backHref: req.query.back || `/site/${req.site_id}/availability/week`
+  });
+});
 
 // -----------------------------------------------------------------------------
 // EXPORT ROUTER

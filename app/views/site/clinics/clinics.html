@@ -2,7 +2,7 @@
 {% from '../../components/secondary-navigation.njk' import appSecondaryNavigation %}
 {% from '../../components/action-control-bar.njk' import appActionControlBar %}
 
-{% set pageName = "Manage clinics" %}
+{% set pageName = "Create and manage clinics" %}
 
 {% macro services(service_ids) %}
   {% set serviceTypes = [] %}
@@ -91,7 +91,11 @@
 
   {% if isSeries %}
     {% if (byDay | length) > 0 %}
-      {{ byDay | join('<br>') | safe }}
+      <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+        {% for day in byDay %}
+          <li>{{ day }}</li>
+        {% endfor %}
+      </ul>
     {% else %}
       <span class="nhsuk-u-secondary-text-colour">Not set</span>
     {% endif %}
@@ -124,7 +128,10 @@
         <tr class="nhsuk-table__row" role="row">
           <td class="nhsuk-table__cell" role="cell">{{ typeLabel(session) }}</td>
           <td class="nhsuk-table__cell" role="cell">{{ daysLabel(session) }}</td>
-          <td class="nhsuk-table__cell" role="cell">{{ timeLabel(session) }}<br>{{ dateLabel(session) }}</td>
+          <td class="nhsuk-table__cell" role="cell">
+            <div>{{ timeLabel(session) }}</div>
+            <div class="nhsuk-u-margin-top-2">{{ dateLabel(session) }}</div>
+          </td>
           <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
           {% if includeActions %}
             <td class="nhsuk-table__cell" role="cell">
@@ -169,7 +176,7 @@
               href: '/site/' ~ site_id ~ '/availability/month'
             },
             {
-              text: 'Manage clinics',
+              text: 'Create and manage clinics',
               href: '/site/' ~ site_id ~ '/clinics',
               current: true
             }
@@ -184,21 +191,29 @@
       {% set sessionHistory = sessionHistory or [] %}
       {% set pastSessionHistory = pastSessionHistory or [] %}
 
-      <h2 class="nhsuk-heading-m">Active clinics ({{ sessionHistory | length }})</h2>
+      {# <h2 class="nhsuk-heading-m">Active clinics</h2> #}
       {% if (sessionHistory | length) == 0 %}
         {{ insetText({ text: "No clinics have been created yet." }) }}
       {% else %}
         {{ clinicsTable(sessionHistory, true) }}
       {% endif %}
 
+      {% include "site/clinics/includes/historic-sessions.njk" %}
+
       {{ details({
-        summaryText: "Completed clinics (" ~ (pastSessionHistory | length) ~ ")",
+        summaryText: "Completed clinics",
         html: (
           insetText({ text: "No completed clinics" })
           if (pastSessionHistory | length) == 0
           else clinicsTable(pastSessionHistory, false)
         )
       }) }}
+
+      {% set historicSessions %}
+      
+      {% endset %}
+
+      
     </div>
   </div>
 {% endblock %}
