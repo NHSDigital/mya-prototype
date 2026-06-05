@@ -1295,6 +1295,7 @@ function buildSessionHistory(siteRecurringSessions, startDate = null, endDate = 
 
     rows.push({
       id: session.id,
+      isLegacy: Boolean(session.isLegacy || session.legacy),
       type: session.type,
       label: session.label,
       date: sessionStart,
@@ -1332,6 +1333,7 @@ function buildPastSessionHistory(siteRecurringSessions, startDate = null, endDat
 
     rows.push({
       id: session.id,
+      isLegacy: Boolean(session.isLegacy || session.legacy),
       type: session.type,
       label: session.label,
       date: sessionStart,
@@ -1607,9 +1609,53 @@ router.use('/site/:id', (req, res, next) => {
   // Expose to templates
   res.locals.slots = slots[site_id];
   res.locals.dailyAvailability = effectiveDailyAvailability;
-  res.locals.sessionHistory = buildSessionHistory(siteRecurringSessions, from, until, today);
-  res.locals.pastSessionHistory = buildPastSessionHistory(siteRecurringSessions, from, until, today);
-  res.locals.legacySessionHistory = asArray(data.legacy_sessions_by_site?.[site_id]);
+  const allSessionHistory = buildSessionHistory(siteRecurringSessions, from, until, today);
+  const allPastSessionHistory = buildPastSessionHistory(siteRecurringSessions, from, until, today);
+  const slotsByDate = slots[site_id] || {};
+  const mapLegacySummary = (session) => {
+    const sessionSlots = asArray(slotsByDate?.[session.date]).filter((slot) => {
+      if (slot?.recurringSessionId) {
+        return String(slot.recurringSessionId) === String(session.id);
+      }
+
+      return slotMatchesSession(slot, {
+        id: session.id,
+        recurringId: session.id,
+        from: session.from,
+        until: session.until
+      });
+    });
+
+    const bookedTotal = sessionSlots.filter((slot) => slot?.booking_status === 'scheduled').length;
+    const bookedByService = {};
+
+    asArray(session.services).forEach((serviceId) => {
+      bookedByService[serviceId] = 0;
+    });
+
+    sessionSlots.forEach((slot) => {
+      if (slot?.booking_status !== 'scheduled' || !slot?.booking_id) return;
+
+      const bookedService = siteBookings?.[slot.booking_id]?.service;
+      if (!bookedService) return;
+
+      bookedByService[bookedService] = (bookedByService[bookedService] || 0) + 1;
+    });
+
+    return {
+      ...session,
+      bookedTotal,
+      unbookedTotal: Math.max(0, sessionSlots.length - bookedTotal),
+      bookedByService
+    };
+  };
+
+  res.locals.sessionHistory = allSessionHistory.filter((session) => !session.isLegacy);
+  res.locals.pastSessionHistory = allPastSessionHistory.filter((session) => !session.isLegacy);
+  res.locals.legacySessionHistory = [
+    ...allSessionHistory.filter((session) => session.isLegacy),
+    ...allPastSessionHistory.filter((session) => session.isLegacy)
+  ].map(mapLegacySummary);
 
   next();
 });
@@ -2767,21 +2813,6 @@ router.get('/site/:id/availability/day', (req, res) => {
     daySummary.unbookedAppointments = Math.max(0, daySummary.totalAppointments - daySummary.bookedAppointments);
   }
 
-  const legacyDaySessions = buildLegacyAvailabilitySessions(
-    res.locals.legacySessionHistory,
-    date,
-    site_id,
-    data.services || {},
-    `/site/${site_id}/availability/day?date=${date}`
-  );
-
-  if (legacyDaySessions.length > 0) {
-    daySummary.sessions = sortSessionsForAvailability([...(daySummary.sessions || []), ...legacyDaySessions]);
-    daySummary.totalAppointments = (daySummary.totalAppointments || 0) + legacyDaySessions.reduce((sum, session) => sum + session.bookedTotal + session.unbookedTotal, 0);
-    daySummary.bookedAppointments = (daySummary.bookedAppointments || 0) + legacyDaySessions.reduce((sum, session) => sum + session.bookedTotal, 0);
-    daySummary.unbookedAppointments = Math.max(0, daySummary.totalAppointments - daySummary.bookedAppointments);
-  }
-
   res.render('site/clinics/availability/day', {
     date,
     today,
@@ -2829,23 +2860,6 @@ router.get('/site/:id/availability/week', (req, res) => {
     data?.recurring_sessions?.[site_id] || {},
     `/site/${site_id}/availability/week?date=${startFromDate}`
   );
-
-  weekDays.forEach((daySummary) => {
-    const legacyDaySessions = buildLegacyAvailabilitySessions(
-      res.locals.legacySessionHistory,
-      daySummary.date,
-      site_id,
-      data.services || {},
-      `/site/${site_id}/availability/week?date=${startFromDate}`
-    );
-
-    if (legacyDaySessions.length > 0) {
-      daySummary.sessions = sortSessionsForAvailability([...(daySummary.sessions || []), ...legacyDaySessions]);
-      daySummary.totalAppointments = (daySummary.totalAppointments || 0) + legacyDaySessions.reduce((sum, session) => sum + session.bookedTotal + session.unbookedTotal, 0);
-      daySummary.bookedAppointments = (daySummary.bookedAppointments || 0) + legacyDaySessions.reduce((sum, session) => sum + session.bookedTotal, 0);
-      daySummary.unbookedAppointments = Math.max(0, daySummary.totalAppointments - daySummary.bookedAppointments);
-    }
-  });
 
   res.render('site/clinics/availability/week', {
     date: startFromDate,

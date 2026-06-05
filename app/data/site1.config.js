@@ -1,5 +1,6 @@
 // app/data/site1.config.js
 const { DateTime } = require('luxon');
+const legacyOneDayClinics = require('./legacy-clinics');
 
 const today = DateTime.now().startOf('day');
 
@@ -27,6 +28,23 @@ const SERVICE_IDS = {
   COVID_FLU_65_PLUS: 'COVID_FLU:65+',
   RSV_ADULT: 'RSV:Adult'
 };
+
+function asOneDayClinicSeries(clinic = {}) {
+  const start = DateTime.fromISO(clinic.startDate || '');
+  const byDay = start.isValid ? [start.toFormat('cccc')] : [];
+
+  return {
+    ...clinic,
+    endDate: clinic.endDate || clinic.startDate,
+    recurrencePattern: clinic.recurrencePattern || {
+      frequency: 'Weekly',
+      interval: 1,
+      byDay
+    },
+    childSessions: clinic.childSessions || [],
+    closures: clinic.closures || []
+  };
+}
 
 const clinics = [
   {
@@ -184,7 +202,8 @@ const clinics = [
         label: 'No-bookings test window'
       }
     ]
-  }
+  },
+  ...legacyOneDayClinics.map(asOneDayClinicSeries)
 ];
 
 const legacyClinics = [

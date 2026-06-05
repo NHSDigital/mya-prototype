@@ -156,13 +156,13 @@
                       <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
                         <li>
                           <a href="{{ session.actionHref }}">
-                            {{ 'Change' if session.isLegacy else 'View and change' }}
+                            View and change
                             <span class="nhsuk-u-visually-hidden"> clinic on {{ date | formatDate('EEEE d LLLL yyyy') }} at {{ session.from | nhsTime }} to {{ session.until | nhsTime }}</span>
                           </a>
                         </li>
-                        {% if not session.isLegacy %}
+                        {% if session.cancelHref %}
                           <li>
-                            <a href="{{ session.cancelHref or '/not-in-this-prototype' }}">
+                            <a href="{{ session.cancelHref }}">
                               Cancel
                               <span class="nhsuk-u-visually-hidden"> clinic on {{ date | formatDate('EEEE d LLLL yyyy') }} at {{ session.from | nhsTime }} to {{ session.until | nhsTime }}</span>
                             </a>

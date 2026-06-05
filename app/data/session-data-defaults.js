@@ -404,6 +404,7 @@ function buildSeedRecurringDefaults(site_id, seedRecurringClinics = []) {
     output[id] = {
       id,
       label: clinic.label || `Clinic ${clinic.from || ''}`.trim(),
+      legacy: Boolean(clinic.legacy || clinic.isLegacy),
       startDate: clinic.startDate,
       endDate: clinic.endDate || clinic.startDate,
       recurrencePattern: clinic.recurrencePattern || {
