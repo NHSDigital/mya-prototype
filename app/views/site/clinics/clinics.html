@@ -191,27 +191,24 @@
       {% set sessionHistory = sessionHistory or [] %}
       {% set pastSessionHistory = pastSessionHistory or [] %}
 
-      {# <h2 class="nhsuk-heading-m">Active clinics</h2> #}
       {% if (sessionHistory | length) == 0 %}
         {{ insetText({ text: "No clinics have been created yet." }) }}
       {% else %}
         {{ clinicsTable(sessionHistory, true) }}
+        
+          {% if clinicsPagination %}
+            {{ pagination(clinicsPagination) }}
+          {% endif %}
       {% endif %}
 
-      {% include "site/clinics/includes/historic-sessions.njk" %}
-
       {{ details({
-        summaryText: "Completed clinics",
+        summaryText: "Completed clinic series",
         html: (
           insetText({ text: "No completed clinics" })
           if (pastSessionHistory | length) == 0
           else clinicsTable(pastSessionHistory, false)
         )
       }) }}
-
-      {% set historicSessions %}
-      
-      {% endset %}
 
       
     </div>

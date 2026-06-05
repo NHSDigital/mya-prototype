@@ -1278,6 +1278,109 @@ function applyAffectedBookingAction(siteBookings, affectedIds, action) {
   }
 }
 
+function isSeriesHistoryRow(session = {}) {
+  if (!session) return false;
+  if (session.type === 'Clinic series') return true;
+  return Boolean(session.date && session.endDate && session.endDate !== session.date);
+}
+
+function toPositiveInteger(value, fallback) {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return parsed;
+  }
+  return fallback;
+}
+
+function paginateItems(items = [], requestedPage = 1, perPage = 10) {
+  const totalItems = items.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
+  const currentPage = Math.min(Math.max(1, requestedPage), totalPages);
+  const startIndex = (currentPage - 1) * perPage;
+
+  return {
+    items: items.slice(startIndex, startIndex + perPage),
+    currentPage,
+    totalPages,
+    totalItems
+  };
+}
+
+function buildPaginationHref(pathname, query = {}, targetPage = 1) {
+  const params = new URLSearchParams();
+
+  Object.entries(query || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+
+    if (Array.isArray(value)) {
+      value.forEach((entry) => {
+        if (entry === undefined || entry === null || entry === '') return;
+        params.append(key, String(entry));
+      });
+      return;
+    }
+
+    params.set(key, String(value));
+  });
+
+  if (targetPage > 1) {
+    params.set('page', String(targetPage));
+  }
+
+  const queryString = params.toString();
+  return queryString ? `${pathname}?${queryString}` : pathname;
+}
+
+function buildNhsPagination(pathname, query, currentPage, totalPages) {
+  if (totalPages <= 1) return null;
+
+  const pageItem = (pageNumber) => ({
+    number: pageNumber,
+    href: buildPaginationHref(pathname, query, pageNumber),
+    current: pageNumber === currentPage
+  });
+
+  const model = {
+    items: []
+  };
+
+  const siblingCount = 2;
+  const middleStart = Math.max(2, currentPage - siblingCount);
+  const middleEnd = Math.min(totalPages - 1, currentPage + siblingCount);
+
+  model.items.push(pageItem(1));
+
+  if (middleStart > 2) {
+    model.items.push({ ellipsis: true });
+  }
+
+  for (let page = middleStart; page <= middleEnd; page += 1) {
+    model.items.push(pageItem(page));
+  }
+
+  if (middleEnd < totalPages - 1) {
+    model.items.push({ ellipsis: true });
+  }
+
+  if (totalPages > 1) {
+    model.items.push(pageItem(totalPages));
+  }
+
+  if (currentPage > 1) {
+    model.previous = {
+      href: buildPaginationHref(pathname, query, currentPage - 1)
+    };
+  }
+
+  if (currentPage < totalPages) {
+    model.next = {
+      href: buildPaginationHref(pathname, query, currentPage + 1)
+    };
+  }
+
+  return model;
+}
+
 function buildSessionHistory(siteRecurringSessions, startDate = null, endDate = null, today = null) {
   const rows = [];
 
@@ -1310,6 +1413,12 @@ function buildSessionHistory(siteRecurringSessions, startDate = null, endDate = 
   }
 
   return rows.sort((a, b) => {
+    const aIsSeries = isSeriesHistoryRow(a);
+    const bIsSeries = isSeriesHistoryRow(b);
+    if (aIsSeries !== bIsSeries) {
+      return aIsSeries ? -1 : 1;
+    }
+
     if (a.date === b.date) {
       return (a.from || '').localeCompare(b.from || '');
     }
@@ -1348,6 +1457,12 @@ function buildPastSessionHistory(siteRecurringSessions, startDate = null, endDat
   }
 
   return rows.sort((a, b) => {
+    const aIsSeries = isSeriesHistoryRow(a);
+    const bIsSeries = isSeriesHistoryRow(b);
+    if (aIsSeries !== bIsSeries) {
+      return aIsSeries ? -1 : 1;
+    }
+
     if (a.endDate === b.endDate) {
       return (a.from || '').localeCompare(b.from || '');
     }
@@ -1650,8 +1765,8 @@ router.use('/site/:id', (req, res, next) => {
     };
   };
 
-  res.locals.sessionHistory = allSessionHistory.filter((session) => !session.isLegacy);
-  res.locals.pastSessionHistory = allPastSessionHistory.filter((session) => !session.isLegacy);
+  res.locals.sessionHistory = allSessionHistory;
+  res.locals.pastSessionHistory = allPastSessionHistory.filter((session) => isSeriesHistoryRow(session));
   res.locals.legacySessionHistory = [
     ...allSessionHistory.filter((session) => session.isLegacy),
     ...allPastSessionHistory.filter((session) => session.isLegacy)
@@ -1720,7 +1835,25 @@ router.get('/site/:id', (req, res) => {
 router.get('/site/:id/clinics', (req, res) => {
   clearEditState(req.session.data);
   ensureCreateSession(req.session.data);
-  res.render('site/clinics/clinics');
+
+  const clinicsPerPage = toPositiveInteger(req.features?.clinicsPerPage, 10);
+  const requestedPage = toPositiveInteger(req.query.page, 1);
+  const paginationResult = paginateItems(res.locals.sessionHistory || [], requestedPage, clinicsPerPage);
+  const paginationQuery = { ...req.query };
+  delete paginationQuery.page;
+
+  res.locals.sessionHistory = paginationResult.items;
+
+  const clinicsPagination = buildNhsPagination(
+    `/site/${req.site_id}/clinics`,
+    paginationQuery,
+    paginationResult.currentPage,
+    paginationResult.totalPages
+  );
+
+  res.render('site/clinics/clinics', {
+    clinicsPagination
+  });
 });
 
 router.get('/site/:id/clinics/edit/:sessionId', (req, res) => {
