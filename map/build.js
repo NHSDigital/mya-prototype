@@ -422,6 +422,15 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
     );
   }
 
+  const implementation = normalizeImplementation({
+    value: versionConfig.implementation,
+    versionConfig,
+    stepPath,
+    versionId: resolvedVersion.resolvedVersionId,
+    defaultVariant,
+    defaultPrototypePath: optionalString(versionConfig.prototype_path)
+  });
+
   return {
     slug: stepSlug,
     title: requiredString(stepConfig.title, `${stepPath} -> title`),
@@ -432,6 +441,8 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
     prototypePath: optionalString(versionConfig.prototype_path),
     notes: optionalString(versionConfig.notes),
     notesHtml: renderBasicMarkdown(optionalString(versionConfig.notes)),
+    status: optionalString(versionConfig.status),
+    implementation,
     focusQuestions: normalizeStringArray(
       versionConfig.focus_questions,
       `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}.focus_questions`
@@ -552,6 +563,120 @@ function normalizeVariant({ variant, stepDir, stepPath, versionId, stepTitle, va
     screenshotAbsolutePath,
     insights: [],
     nextSteps: []
+  };
+}
+
+function normalizeImplementation({ value, versionConfig, stepPath, versionId, defaultVariant, defaultPrototypePath }) {
+  const fieldName = `${stepPath} -> versions.${versionId}.implementation`;
+  const implementation = value || {};
+
+  if (value && !isPlainObject(value)) {
+    throw validationError(fieldName, 'Expected implementation to be an object.', {
+      actual: value
+    });
+  }
+
+  const prototypeLinkValue = implementation.prototype_link || {};
+  if (implementation.prototype_link && !isPlainObject(prototypeLinkValue)) {
+    throw validationError(`${fieldName}.prototype_link`, 'Expected prototype_link to be an object.', {
+      actual: implementation.prototype_link
+    });
+  }
+
+  const ticketValue = implementation.ticket || {};
+  if (implementation.ticket && !isPlainObject(ticketValue)) {
+    throw validationError(`${fieldName}.ticket`, 'Expected ticket to be an object.', {
+      actual: implementation.ticket
+    });
+  }
+
+  const userStory = normalizeStringArray(
+    implementation.user_story,
+    `${fieldName}.user_story`
+  );
+
+  const notableComponents = ensureArray(implementation.notable_components).map((entry, index) =>
+    normalizeImplementationLink(
+      entry,
+      `${fieldName}.notable_components[${index}]`
+    )
+  );
+
+  const acceptanceCriteria = ensureArray(implementation.acceptance_criteria).map((entry, index) =>
+    normalizeAcceptanceCriterion(entry, `${fieldName}.acceptance_criteria[${index}]`)
+  );
+
+  const prototypeLink = normalizeImplementationLink(
+    {
+      label:
+        optionalString(prototypeLinkValue.label) ||
+        optionalString(defaultVariant?.label) ||
+        optionalString(versionConfig.summary),
+      href: optionalString(prototypeLinkValue.href) || defaultPrototypePath
+    },
+    `${fieldName}.prototype_link`,
+    { allowBlank: true }
+  );
+
+  const ticket = normalizeImplementationLink(
+    ticketValue,
+    `${fieldName}.ticket`,
+    { allowBlank: true }
+  );
+
+  const notes = optionalString(implementation.notes) || optionalString(versionConfig.notes);
+  const notesHtml = renderBasicMarkdown(notes);
+
+  return {
+    ticket,
+    userStory,
+    prototypeLink,
+    notableComponents,
+    acceptanceCriteria,
+    notes,
+    notesHtml,
+    hasOverview:
+      Boolean(ticket.label) ||
+      Boolean(prototypeLink.label) ||
+      notableComponents.length > 0 ||
+      userStory.length > 0
+  };
+}
+
+function normalizeImplementationLink(value, fieldName, options = {}) {
+  const allowBlank = Boolean(options.allowBlank);
+  const data = value || {};
+
+  if (!isPlainObject(data)) {
+    throw validationError(fieldName, 'Expected a link-style object with optional label and href.', {
+      actual: value
+    });
+  }
+
+  const label = optionalString(data.label);
+  const href = optionalString(data.href);
+
+  if (!allowBlank && !label) {
+    throw validationError(`${fieldName}.label`, 'Expected a non-empty string.', {
+      actual: data.label
+    });
+  }
+
+  return { label, href };
+}
+
+function normalizeAcceptanceCriterion(value, fieldName) {
+  if (!isPlainObject(value)) {
+    throw validationError(fieldName, 'Expected an acceptance criteria entry to be an object.', {
+      actual: value
+    });
+  }
+
+  return {
+    id: requiredString(value.id, `${fieldName}.id`),
+    given: optionalString(value.given),
+    when: optionalString(value.when),
+    then: normalizeStringArray(value.then, `${fieldName}.then`)
   };
 }
 
@@ -845,6 +970,17 @@ function prepareJourneysForRender(journeys, env) {
       for (const step of version.steps) {
         step.defaultVariant = step.variants.find((variant) => variant.id === step.defaultVariantId);
         step.variantIndexJson = serializeForScript(indexVariants(step.variants, env));
+        step.versionOptions = journey.versions
+          .filter((entry) => entry.steps.some((candidateStep) => candidateStep.slug === step.slug))
+          .map((entry) => ({
+            id: entry.version.id,
+            label: entry.version.label,
+            tag: entry.version.tag,
+            path:
+              entry.version.id === journey.latestVersionId
+                ? `/map/journeys/${journey.slug}/steps/${step.slug}/`
+                : `/map/journeys/${journey.slug}/versions/${entry.version.id}/steps/${step.slug}/`
+          }));
 
         for (const variant of step.variants) {
           variant.isDefaultVariant = variant.id === step.defaultVariantId;
@@ -953,6 +1089,11 @@ function writeJourneyVersionFiles({ env, versionModel, outputDir }) {
 }
 
 function createJourneyRenderModel({ journey, version, journeyPath, stepPathBase }) {
+  const steps = version.steps.map((step) => ({
+    ...step,
+    detailPath: `${stepPathBase}/${step.slug}/`
+  }));
+
   return {
     ...version,
     slug: journey.slug,
@@ -967,9 +1108,10 @@ function createJourneyRenderModel({ journey, version, journeyPath, stepPathBase 
           ? `/map/journeys/${journey.slug}/`
           : `/map/journeys/${journey.slug}/versions/${entry.version.id}/`
     })),
-    steps: version.steps.map((step) => ({
+    steps: steps.map((step, index) => ({
       ...step,
-      detailPath: `${stepPathBase}/${step.slug}/`
+      previousStep: index > 0 ? steps[index - 1] : null,
+      nextStep: index < steps.length - 1 ? steps[index + 1] : null
     }))
   };
 }
@@ -982,7 +1124,9 @@ function indexVariants(variants, env) {
       alt: variant.alt,
       screenshotPath: variant.screenshotPath,
       insightsHtml: renderBoardNotesHtml(env, variant.insights, 'None for this version'),
-      nextStepsHtml: renderBoardNotesHtml(env, variant.nextSteps, 'None for this version')
+      nextStepsHtml: renderBoardNotesHtml(env, variant.nextSteps, 'None for this version'),
+      detailScreenshotHtml: renderStepVariantScreenshotHtml(env, variant),
+      detailInsightsHtml: renderStepVariantResearchHtml(env, variant)
     };
     return result;
   }, {});
@@ -993,6 +1137,24 @@ function renderBoardNotesHtml(env, items, emptyMessage) {
     .renderString(
       '{% from "components/macros.njk" import boardNotes %}{{ boardNotes(items, emptyMessage) }}',
       { items, emptyMessage }
+    )
+    .trim();
+}
+
+function renderStepVariantScreenshotHtml(env, variant) {
+  return env
+    .renderString(
+      '{% from "components/macros.njk" import stepVariantScreenshot %}{{ stepVariantScreenshot(variant) }}',
+      { variant }
+    )
+    .trim();
+}
+
+function renderStepVariantResearchHtml(env, variant) {
+  return env
+    .renderString(
+      '{% from "components/macros.njk" import stepVariantResearch %}{{ stepVariantResearch(variant) }}',
+      { variant }
     )
     .trim();
 }

@@ -174,12 +174,35 @@ title: Step title
 versions:
   v1:
     summary: Short summary for this version of the step
+    status: Optional delivery status shown next to the version selector
     prototype_path: /optional/prototype/path
     notes: |
       Optional free-form notes for the step version.
 
       - Useful for caveats
       - Or content combinations that are not separate screenshots
+    implementation:
+      ticket:
+        label: APPT-2873
+        href: https://example.com/tickets/APPT-2873
+      user_story:
+        - As a site administrator
+        - I need to edit a clinic series
+        - So that I can manage future availability
+      prototype_link:
+        label: Start and end times
+        href: /site/1/clinics/clinic-times
+      notable_components:
+        - label: Time input (custom component)
+          href: https://example.com/components/time-input
+      acceptance_criteria:
+        - id: AC7
+          given: a user chooses to edit the clinic times
+          when: the page loads
+          then:
+            - the current clinic times are shown in the start and end time inputs in 24 hour time format
+      notes: |
+        Optional implementation notes shown in the Implementation tab.
     focus_questions:
       - Optional research question
     default_variant: default
@@ -205,6 +228,8 @@ versions:
 If `alt` is omitted, the builder generates a fallback alt from the step title and variant label.
 
 If `caption` is omitted, no caption is shown.
+
+If `implementation` is omitted, the step detail page still renders and falls back to any `prototype_path` and `notes` already defined on the step version.
 
 ## Rules
 

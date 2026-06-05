@@ -1813,23 +1813,39 @@ router.all('/site/:id/clinics/cancel/:sessionId/check-answers', (req, res) => {
     ? `${formatShortDate(state.draft.startDate)} to ${formatShortDate(state.draft.endDate)}`
     : formatShortDate(state.draft.startDate);
   const timeText = `${state.draft.from || ''} to ${state.draft.until || ''}`;
+  const rows = [
+    {
+      key: { text: state.draft.type === 'Clinic series' ? 'Dates' : 'Date' },
+      value: { text: dateText }
+    },
+    {
+      key: { text: 'Times' },
+      value: { text: timeText }
+    }
+  ];
+
+  if (affectedCount === 0) {
+    return res.render('site/clinics/edit/confirm-cancellation', {
+      sessionId: req.params.sessionId,
+      isSeries: state.draft.type === 'Clinic series',
+      rows: rows.concat([{
+        key: { text: 'Booked appointments' },
+        value: { text: 'No bookings will be affected' }
+      }]),
+      cancelFrom: state.draft.from,
+      cancelUntil: state.draft.until,
+      buttonText: `Cancel ${clinicTypeText}`,
+      buttonClasses: 'nhsuk-button--warning',
+      formAction: `${cancelSummaryPath(req.site_id, req.params.sessionId)}/check-answers`,
+      abandonHref: `/site/${req.site_id}/clinics`,
+      emptyStateText: `There are no affected bookings for this ${clinicTypeText}. Select cancel to continue.`
+    });
+  }
 
   return res.render('site/clinics/edit/check-answers', {
     sessionId: req.params.sessionId,
     isSeries: state.draft.type === 'Clinic series',
-    rows: [
-      {
-        key: { text: state.draft.type === 'Clinic series' ? 'Dates' : 'Date' },
-        value: { text: dateText }
-      },
-      {
-        key: { text: 'Times' },
-        value: { text: timeText }
-      }
-    ].concat(affectedCount === 0 ? [{
-      key: { text: 'Booked appointments' },
-      value: { text: 'None' }
-    }] : []),
+    rows,
     checkAnswersMode: 'clinic-cancel',
     affectedCount,
     bookingAction: state.bookingAction,
@@ -1839,9 +1855,8 @@ router.all('/site/:id/clinics/cancel/:sessionId/check-answers', (req, res) => {
     buttonClasses: 'nhsuk-button--warning',
     formAction: `${cancelSummaryPath(req.site_id, req.params.sessionId)}/check-answers`,
     affectedActionHref: `${cancelSummaryPath(req.site_id, req.params.sessionId)}/affected-bookings`,
-    backHref: affectedCount > 0
-      ? `${cancelSummaryPath(req.site_id, req.params.sessionId)}/affected-bookings`
-      : `/site/${req.site_id}/clinics`,
+    abandonHref: `/site/${req.site_id}/clinics`,
+    backHref: `${cancelSummaryPath(req.site_id, req.params.sessionId)}/affected-bookings`,
     emptyStateText: `There are no affected bookings for this ${clinicTypeText}. Select cancel to continue.`
   });
 });
@@ -2290,6 +2305,7 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
     checkAnswersMode: 'clinic-edit',
     affectedCount: asArray(state.affectedBookingIds).length,
     bookingAction: state.bookingAction,
+    abandonHref: editSummaryPath(req.site_id, req.params.sessionId),
     backHref: reviewBackPath(req.site_id, req.params.sessionId, state)
   });
 });

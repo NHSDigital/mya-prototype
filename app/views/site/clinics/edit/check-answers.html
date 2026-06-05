@@ -1,11 +1,5 @@
 {% extends '../../../layouts/layout.html' %}
 
-{% block beforeContent %}
-{{ backLink({
-  href: backHref
-}) }}
-{% endblock %}
-
 {% block content %}
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
@@ -47,9 +41,6 @@
       {% endmacro %}
 
       {% set resolvedPageName = pageName or 'Check your answers' %}
-      {% if checkAnswersMode == 'clinic-cancel' and affectedCount == 0 %}
-        {% set resolvedPageName = 'Confirm cancellation' %}
-      {% endif %}
 
       <h1 class="nhsuk-heading-l">{{ resolvedPageName }}</h1>
 
@@ -232,13 +223,26 @@
       {% elif emptyStateText %}
         <p class="nhsuk-body">{{ emptyStateText }}</p>
       {% endif %}
+
+      {% set defaultAbandonHref = '/site/' ~ site_id ~ '/clinics' %}
+      {% if checkAnswersMode == 'clinic-edit' %}
+        {% set defaultAbandonHref = '/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId %}
+      {% elif checkAnswersMode == 'session-change' %}
+        {% set defaultAbandonHref = '/site/' ~ site_id ~ '/change/session/' ~ sessionId %}
+      {% endif %}
+
+      {% set resolvedAbandonHref = abandonHref or defaultAbandonHref %}
+      {% set resolvedExitLinkText = 'Exit without cancelling' if checkAnswersMode == 'clinic-cancel' else 'Exit without making changes' %}
   
 
       <form action="{{ formAction or ('/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId ~ '/check-answers') }}" method="post">
-        {{ button({
-          text: resolvedButtonText,
-          classes: resolvedButtonClasses
-        }) }}
+        <div class="nhsuk-button-group">
+          {{ button({
+            text: resolvedButtonText,
+            classes: resolvedButtonClasses
+          }) }}
+          <a href="{{ resolvedAbandonHref }}" class="nhsuk-link">{{ resolvedExitLinkText }}</a>
+        </div>
       </form>
     </div>
   </div>

@@ -7,6 +7,8 @@ function updateVariant(stepSlug, variantData) {
   const screenshot = document.querySelector(`[data-map-screenshot="${stepSlug}"] img`);
   const insights = document.querySelector(`[data-map-insights="${stepSlug}"]`);
   const nextSteps = document.querySelector(`[data-map-next="${stepSlug}"]`);
+  const detailScreenshot = document.querySelector(`[data-map-detail-screenshot="${stepSlug}"]`);
+  const detailInsights = document.querySelector(`[data-map-detail-insights="${stepSlug}"]`);
 
   if (screenshot) {
     screenshot.src = variantData.screenshotPath;
@@ -19,6 +21,14 @@ function updateVariant(stepSlug, variantData) {
 
   if (nextSteps) {
     renderHtml(nextSteps, variantData.nextStepsHtml);
+  }
+
+  if (detailScreenshot) {
+    renderHtml(detailScreenshot, variantData.detailScreenshotHtml);
+  }
+
+  if (detailInsights) {
+    renderHtml(detailInsights, variantData.detailInsightsHtml);
   }
 }
 

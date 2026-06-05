@@ -1,114 +1,157 @@
 {% extends "layouts/base.njk" %}
-{% from "components/macros.njk" import textList %}
+{% from "components/macros.njk" import stepDetailList, stepVariantScreenshot, stepVariantResearch, stepImplementationPanel %}
+{% from "nhsuk/components/tabs/macro.njk" import tabs %}
+{% from "nhsuk/components/pagination/macro.njk" import pagination %}
 
 {% block content %}
   <section class="map-page-head map-page-head--simple">
     <div>
-      <span class="map-detail-eyebrow">Step {{ step.position }} of {{ journey.steps.length }}</span>
-      <h1 class="map-page-title">{{ step.title }}</h1>
-      <p class="map-page-summary">{{ step.summary }}</p>
+      <h1 class="nhsuk-heading-l map-page-title">Step {{ step.position }}: {{ step.title }}</h1>
     </div>
   </section>
 
-  <section class="map-detail-panels nhsuk-u-margin-bottom-5">
-    <div class="map-panel">
-      <h2>Step metadata</h2>
-      <dl class="map-meta-list">
-        <div>
-          <dt>Journey</dt>
-          <dd><a href="{{ journey.path }}">{{ journey.title }}</a></dd>
-        </div>
-        <div>
-          <dt>Variants</dt>
-          <dd>{{ step.variants.length }}</dd>
-        </div>
-        <div>
-          <dt>Version</dt>
-          <dd>{{ journey.version.label if journey.version else 'Unversioned' }}</dd>
-        </div>
-        <div>
-          <dt>Screen version</dt>
-          <dd>
-            {{ step.screenVersionId }}
-            {% if step.isReusedFromEarlierVersion %}
-              reused in {{ journey.version.id }}
-            {% endif %}
-          </dd>
-        </div>
-        {% if step.prototypePath %}
-          <div>
-            <dt>Prototype page</dt>
-            <dd><a href="{{ step.prototypePath }}">{{ step.prototypePath }}</a></dd>
-          </div>
-        {% endif %}
-      </dl>
-    </div>
-
-    {% if step.focusQuestions.length %}
-      <div class="map-panel">
-        <h2>Research focus</h2>
-        <ul class="map-bullet-list">
-          {% for question in step.focusQuestions %}
-            <li>{{ question }}</li>
-          {% endfor %}
-        </ul>
-      </div>
-    {% endif %}
-
-    {% if step.notesHtml %}
-      <div class="map-panel">
-        <h2>Notes</h2>
-        <div class="map-rich-text">{{ step.notesHtml | safe }}</div>
-      </div>
-    {% endif %}
-
-    {% if step.linkedInsights.length or step.linkedNextSteps.length %}
-      <div class="map-panel">
-        <h2>Connected findings</h2>
-        {% if step.linkedInsights.length %}
-          <h3>User insights</h3>
-          {{ textList(step.linkedInsights) }}
-        {% endif %}
-        {% if step.linkedNextSteps.length %}
-          <h3>What to try next</h3>
-          {{ textList(step.linkedNextSteps) }}
-        {% endif %}
-      </div>
-    {% endif %}
-  </section>
-
-  <section class="map-variant-grid">
-    {% for variant in step.variants %}
-      <article class="map-variant-card" id="variant-{{ variant.id }}">
-        <header class="map-variant-card__header">
-          <div>
-            <span class="map-detail-eyebrow">Variant</span>
-            <h2>{{ variant.label }}</h2>
-          </div>
-          {% if variant.isDefaultVariant %}
-            <span class="map-tag map-tag--soft">Default</span>
+  <section class="map-step-layout">
+    <aside class="map-step-sidebar">
+      <div class="map-step-sidebar__group">
+        <label class="nhsuk-label map-step-field-label" for="step-version">Version</label>
+        <div class="map-step-select-row">
+          <select class="nhsuk-select map-select js-map-version-select" id="step-version" aria-label="Choose a step version">
+            {% for version in step.versionOptions %}
+              <option value="{{ version.path }}" {% if version.id == journey.version.id %}selected{% endif %}>
+                {{ version.label }}
+              </option>
+            {% endfor %}
+          </select>
+          {% if step.status or journey.version.tag %}
+            <span class="map-tag">{{ step.status or journey.version.tag }}</span>
           {% endif %}
-        </header>
-
-        <figure class="map-detail-screen">
-          <img src="{{ variant.screenshotPath }}" alt="{{ variant.alt }}" loading="lazy">
-          {% if variant.caption %}
-            <figcaption>{{ variant.caption }}</figcaption>
-          {% endif %}
-        </figure>
-
-        <div class="map-detail-grid">
-          <section class="map-panel">
-            <h3>User insights</h3>
-            {{ textList(variant.insights, 'No user insights yet.') }}
-          </section>
-
-          <section class="map-panel">
-            <h3>What to try next</h3>
-            {{ textList(variant.nextSteps, 'No follow-up ideas yet.') }}
-          </section>
         </div>
-      </article>
-    {% endfor %}
+      </div>
+
+      <div class="map-step-sidebar__group">
+        <label class="nhsuk-label map-step-field-label" for="step-variant">Variant</label>
+        <div class="map-step-select-row">
+          <select
+            class="nhsuk-select map-select js-map-variant-select"
+            id="step-variant"
+            data-step-slug="{{ step.slug }}"
+            data-default-variant-id="{{ step.defaultVariantId }}"
+            aria-label="Choose a step variant">
+            {% for variant in step.variants %}
+              <option value="{{ variant.id }}" {% if variant.isDefaultVariant %}selected{% endif %}>{{ variant.label }}</option>
+            {% endfor %}
+          </select>
+          <script type="application/json" class="js-map-variant-data">{{ step.variantIndexJson | safe }}</script>
+        </div>
+      </div>
+    </aside>
+
+    <section class="map-step-content">
+      {% set screenshotTab %}
+        <div class="map-step-panel">
+          <div data-map-detail-screenshot="{{ step.slug }}">
+            {{ stepVariantScreenshot(step.defaultVariant) }}
+          </div>
+        </div>
+      {% endset %}
+
+      {% set insightsTab %}
+        <div class="map-step-panel">
+          <div data-map-detail-insights="{{ step.slug }}">
+            {{ stepVariantResearch(step.defaultVariant) }}
+          </div>
+
+          {% if step.focusQuestions.length %}
+            <section class="map-panel">
+              <h2 class="nhsuk-heading-m">Research focus</h2>
+              <ul class="nhsuk-list nhsuk-list--bullet">
+                {% for question in step.focusQuestions %}
+                  <li class="nhsuk-body-m">{{ question }}</li>
+                {% endfor %}
+              </ul>
+            </section>
+          {% endif %}
+
+          {% if step.linkedInsights.length or step.linkedNextSteps.length %}
+            <section class="map-panel">
+              <h2 class="nhsuk-heading-m">Connected findings</h2>
+              {% if step.linkedInsights.length %}
+                <h3 class="nhsuk-heading-s">User insights</h3>
+                {{ stepDetailList(step.linkedInsights) }}
+              {% endif %}
+              {% if step.linkedNextSteps.length %}
+                <h3 class="nhsuk-heading-s">What to try next</h3>
+                {{ stepDetailList(step.linkedNextSteps) }}
+              {% endif %}
+            </section>
+          {% endif %}
+        </div>
+      {% endset %}
+
+      {% set implementationTab %}
+        <div class="map-step-panel">
+          {{ stepImplementationPanel(step) }}
+        </div>
+      {% endset %}
+
+      {{ tabs({
+        title: "Step detail sections",
+        classes: "map-step-tabs",
+        idPrefix: "map-step-tab",
+        items: [
+          {
+            label: "Screenshot",
+            id: "map-step-tab-screenshot",
+            panel: {
+              html: screenshotTab
+            }
+          },
+          {
+            label: "User insights",
+            id: "map-step-tab-insights",
+            panel: {
+              html: insightsTab
+            }
+          },
+          {
+            label: "Implementation",
+            id: "map-step-tab-implementation",
+            panel: {
+              html: implementationTab
+            }
+          }
+        ]
+      }) }}
+
+      {% if step.previousStep %}
+        {% set previousPagination = {
+          href: step.previousStep.detailPath,
+          text: "Previous step",
+          labelText: "Step " ~ step.previousStep.position ~ ": " ~ step.previousStep.title
+        } %}
+      {% else %}
+        {% set previousPagination = null %}
+      {% endif %}
+
+      {% if step.nextStep %}
+        {% set nextPagination = {
+          href: step.nextStep.detailPath,
+          text: "Next step",
+          labelText: "Step " ~ step.nextStep.position ~ ": " ~ step.nextStep.title
+        } %}
+      {% else %}
+        {% set nextPagination = null %}
+      {% endif %}
+
+      {% if previousPagination or nextPagination %}
+        <div class="map-step-pagination">
+          {{ pagination({
+            landmarkLabel: "Step navigation",
+            previous: previousPagination,
+            next: nextPagination
+          }) }}
+        </div>
+      {% endif %}
+    </section>
   </section>
 {% endblock %}

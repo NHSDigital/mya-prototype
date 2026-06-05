@@ -822,6 +822,9 @@ router.all('/site/:id/change/session/:itemId/check-answers', (req, res) => {
     checkAnswersMode: 'session-change',
     affectedCount: asArray(state.affectedBookingIds).length,
     bookingAction: state.bookingAction,
+    abandonHref: state.returnTo
+      ? `${changeSummaryPath(req.site_id, req.params.itemId)}?back=${encodeURIComponent(state.returnTo)}`
+      : changeSummaryPath(req.site_id, req.params.itemId),
     formAction: `${changeSummaryPath(req.site_id, req.params.itemId)}/check-answers`,
     affectedActionHref: `${changeSummaryPath(req.site_id, req.params.itemId)}/affected-bookings`,
     backHref: reviewBackPath(req.site_id, req.params.itemId, state)

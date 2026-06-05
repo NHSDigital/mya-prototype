@@ -341,54 +341,128 @@
   width: 100%;
 }
 
-.map-detail-grid,
-.map-variant-grid,
-.map-detail-panels {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.map-detail-grid,
-.map-detail-panels {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  padding: 0 24px;
-}
-
-.map-variant-grid {
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  padding: 0 24px;
-}
-
-.map-variant-card {
-  display: grid;
-  gap: 1rem;
-}
-
-.map-variant-card__header {
-  align-items: start;
-  display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-}
-
-.map-detail-screen {
+.map-detail-screen,
+.map-step-display-screen {
   background: var(--map-surface);
   border: 1px solid var(--map-border);
   margin: 0;
   padding: 10px;
 }
 
-.map-detail-screen img {
+.map-detail-screen img,
+.map-step-display-screen img {
   display: block;
   height: auto;
   width: 100%;
 }
 
-.map-detail-screen figcaption {
+.map-detail-screen figcaption,
+.map-step-display-screen figcaption {
   color: var(--map-muted);
   font-size: 14px;
   line-height: 24px;
   margin-top: 0.75rem;
+}
+
+.map-step-layout {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: 300px minmax(0, 1fr);
+  padding: 0 24px;
+}
+
+.map-step-sidebar {
+  align-self: start;
+  display: grid;
+  gap: 1rem;
+}
+
+.map-step-sidebar__group {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.map-step-select-row {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.map-step-select-row .map-select {
+  flex: 1 1 auto;
+}
+
+.map-step-content {
+  min-width: 0;
+}
+
+.map-site--step .map-main {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.map-site--step .nhsuk-breadcrumb,
+.map-site--step .map-page-head,
+.map-site--step .map-step-layout {
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 1200px;
+}
+
+.map-site--step .nhsuk-breadcrumb {
+  margin-top: 0;
+  padding-top: 16px;
+}
+
+.map-site--step .map-page-head {
+  padding-top: 8px;
+}
+
+.map-site--step .map-step-tabs {
+  margin-bottom: 0;
+}
+
+.map-site--step .map-step-tabs .nhsuk-tabs__title {
+  margin-bottom: 16px;
+}
+
+.map-site--step .map-step-tabs .nhsuk-tabs__panel {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.map-step-panel {
+  background: var(--map-surface);
+  border: 1px solid var(--map-border);
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.25rem;
+}
+
+.map-step-tab-sections {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.map-step-panel > .map-panel {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.map-step-pagination {
+  margin-top: 2rem;
+}
+
+.map-implementation-story p,
+.map-implementation-components p {
+  margin: 0;
+}
+
+.map-acceptance-item__content p {
+  margin: 0;
 }
 
 .map-bullet-list {
@@ -419,6 +493,10 @@
   .map-page-head {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .map-step-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 640px) {
@@ -435,15 +513,19 @@
   .nhsuk-breadcrumb,
   .map-page-head,
   .map-overview-grid,
-  .map-detail-panels,
-  .map-variant-grid {
+  .map-step-layout {
     padding-left: 16px;
     padding-right: 16px;
   }
 
   .map-overview-card,
   .map-panel,
-  .map-variant-card {
+  .map-step-panel {
     padding: 1.25rem;
+  }
+
+  .map-step-select-row {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

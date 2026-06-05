@@ -8,6 +8,8 @@ const pastSeriesEnd = today.minus({ months: 2 }).toISODate();
 const pastSingleDate = today.minus({ days: 45 }).toISODate();
 const ongoingSeriesStart = today.minus({ days: 21 }).toISODate();
 const ongoingSeriesEnd = today.plus({ months: 2 }).toISODate();
+const emptySeriesStart = today.minus({ days: 3 }).toISODate();
+const emptySeriesEnd = DateTime.fromISO(emptySeriesStart).plus({ months: 1 }).toISODate();
 const futureSingleDate = today.plus({ days: 3 }).toISODate();
 const childSessionIn2Days = today.plus({ days: 2 }).toISODate();
 const childSessionIn3Days = today.plus({ days: 3 }).toISODate();
@@ -159,6 +161,29 @@ const clinics = [
     slotLength: 15,
     services: [SERVICE_IDS.RSV_ADULT],
     capacity: 1
+  },
+  {
+    label: 'Empty series',
+    startDate: emptySeriesStart,
+    endDate: emptySeriesEnd,
+    recurrencePattern: {
+      frequency: 'Weekly',
+      interval: 1,
+      byDay: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    },
+    from: '10:00',
+    until: '14:00',
+    slotLength: 15,
+    services: [SERVICE_IDS.RSV_ADULT],
+    capacity: 1,
+    childSessions: [],
+    closures: [
+      {
+        startDate: emptySeriesStart,
+        endDate: emptySeriesEnd,
+        label: 'No-bookings test window'
+      }
+    ]
   }
 ];
 
