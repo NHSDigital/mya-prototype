@@ -19,3 +19,40 @@ versions:
       - id: running-today
         label: Clinics running today
         screenshot: screenshots/day-view-v2-running-today.png
+  v3:
+    summary: The day view reached from Clinics in round 3 navigation testing.
+    status: ready for dev
+    default_variant: scheduled
+    implementation:
+      user_story:
+        - As a site administrator
+        - I need to review and manage clinics from the day view tabs
+        - So that I can quickly see scheduled, cancelled, and running clinics for the selected day
+      acceptance_criteria:
+        - id: AC1
+          given: a user opens the day view for a selected date
+          when: the page loads
+          then:
+            - the heading shows the selected date in full
+            - the heading includes (today) when the selected date is today
+        - id: AC2
+          given: a user is on the day view
+          when: the tabs are shown
+          then:
+            - Scheduled, Cancelled, and Clinics running today tabs are shown with counts
+        - id: AC3
+          given: a user opens the Clinics running today tab
+          when: clinics are listed for that day
+          then:
+            - each clinic row shows View and change
+            - each clinic row shows Cancel when a cancel action is available
+    variants:
+      - id: scheduled
+        label: Scheduled
+        screenshot: screenshots/day-view-v3-scheduled.png
+      - id: cancelled
+        label: Cancelled
+        screenshot: screenshots/day-view-v3-cancelled.png
+      - id: running-today
+        label: Clinics running today
+        screenshot: screenshots/day-view-v3-running-today.png

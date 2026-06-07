@@ -3,60 +3,68 @@
 {% from "nhsuk/components/tabs/macro.njk" import tabs %}
 {% from "nhsuk/components/pagination/macro.njk" import pagination %}
 
+{% macro stepVersionControl(step, journey) %}
+  <div class="nhsuk-form-group">
+    <label class="nhsuk-label" for="step-version">Version</label>
+    <div class="map-step-control" data-map-control="step-version">
+      <select
+        class="nhsuk-select map-select"
+        id="step-version"
+        data-map-version-select
+        aria-label="Choose a step version">
+        {% for version in step.versionOptions %}
+          <option value="{{ version.path }}" {% if version.id == journey.version.id %}selected{% endif %}>
+            {{ version.label }}
+          </option>
+        {% endfor %}
+      </select>
+      {% if step.status or journey.version.tag %}
+        <strong class="nhsuk-tag map-step-status">{{ step.status or journey.version.tag }}</strong>
+      {% endif %}
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro stepVariantControl(step) %}
+  <div class="nhsuk-form-group">
+    <label class="nhsuk-label" for="step-variant">Variant</label>
+    <div class="map-step-control" data-map-control="step-variant">
+      <select
+        class="nhsuk-select map-select"
+        id="step-variant"
+        data-map-variant-select
+        data-map-step-slug="{{ step.slug }}"
+        data-map-default-variant-id="{{ step.defaultVariantId }}"
+        aria-label="Choose a step variant">
+        {% for variant in step.variants %}
+          <option value="{{ variant.id }}" {% if variant.isDefaultVariant %}selected{% endif %}>{{ variant.label }}</option>
+        {% endfor %}
+      </select>
+      <script type="application/json" data-map-variant-data>{{ step.variantIndexJson | safe }}</script>
+    </div>
+  </div>
+{% endmacro %}
+
 {% block content %}
   <section class="map-page-head map-page-head--simple">
-    <div>
-      <h1 class="nhsuk-heading-l map-page-title">Step {{ step.position }}: {{ step.title }}</h1>
-    </div>
+    <h1 class="nhsuk-heading-l nhsuk-u-margin-bottom-2">Step {{ step.position }}: {{ step.title }}</h1>
   </section>
 
-  <section class="map-step-layout">
-    <aside class="map-step-sidebar">
-      <div class="map-step-sidebar__group">
-        <label class="nhsuk-label map-step-field-label" for="step-version">Version</label>
-        <div class="map-step-select-row">
-          <select class="nhsuk-select map-select js-map-version-select" id="step-version" aria-label="Choose a step version">
-            {% for version in step.versionOptions %}
-              <option value="{{ version.path }}" {% if version.id == journey.version.id %}selected{% endif %}>
-                {{ version.label }}
-              </option>
-            {% endfor %}
-          </select>
-          {% if step.status or journey.version.tag %}
-            <span class="map-tag">{{ step.status or journey.version.tag }}</span>
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="map-step-sidebar__group">
-        <label class="nhsuk-label map-step-field-label" for="step-variant">Variant</label>
-        <div class="map-step-select-row">
-          <select
-            class="nhsuk-select map-select js-map-variant-select"
-            id="step-variant"
-            data-step-slug="{{ step.slug }}"
-            data-default-variant-id="{{ step.defaultVariantId }}"
-            aria-label="Choose a step variant">
-            {% for variant in step.variants %}
-              <option value="{{ variant.id }}" {% if variant.isDefaultVariant %}selected{% endif %}>{{ variant.label }}</option>
-            {% endfor %}
-          </select>
-          <script type="application/json" class="js-map-variant-data">{{ step.variantIndexJson | safe }}</script>
-        </div>
-      </div>
+  <section class="nhsuk-grid-row map-step-grid">
+    <aside class="nhsuk-grid-column-one-third map-step-controls">
+      {{ stepVersionControl(step, journey) }}
+      {{ stepVariantControl(step) }}
     </aside>
 
-    <section class="map-step-content">
+    <section class="nhsuk-grid-column-two-thirds map-step-main">
       {% set screenshotTab %}
-        <div class="map-step-panel">
-          <div data-map-detail-screenshot="{{ step.slug }}">
-            {{ stepVariantScreenshot(step.defaultVariant) }}
-          </div>
+        <div data-map-detail-screenshot="{{ step.slug }}">
+          {{ stepVariantScreenshot(step.defaultVariant) }}
         </div>
       {% endset %}
 
       {% set insightsTab %}
-        <div class="map-step-panel">
+        <div class="map-step-tab-content">
           <div data-map-detail-insights="{{ step.slug }}">
             {{ stepVariantResearch(step.defaultVariant) }}
           </div>
@@ -89,59 +97,77 @@
       {% endset %}
 
       {% set implementationTab %}
-        <div class="map-step-panel">
-          {{ stepImplementationPanel(step) }}
+        <div data-map-detail-implementation="{{ step.slug }}">
+          {{ stepImplementationPanel({ implementation: step.defaultVariant.implementation }) }}
         </div>
       {% endset %}
 
-      {{ tabs({
-        title: "Step detail sections",
-        classes: "map-step-tabs",
-        idPrefix: "map-step-tab",
-        items: [
-          {
-            label: "Screenshot",
-            id: "map-step-tab-screenshot",
-            panel: {
-              html: screenshotTab
-            }
-          },
-          {
-            label: "User insights",
-            id: "map-step-tab-insights",
-            panel: {
-              html: insightsTab
-            }
-          },
-          {
-            label: "Implementation",
-            id: "map-step-tab-implementation",
-            panel: {
-              html: implementationTab
-            }
-          }
-        ]
-      }) }}
+      {% set showImplementationTab = (step.status or '') | lower == 'ready for dev' %}
 
-      {% if step.previousStep %}
-        {% set previousPagination = {
-          href: step.previousStep.detailPath,
-          text: "Previous step",
-          labelText: "Step " ~ step.previousStep.position ~ ": " ~ step.previousStep.title
-        } %}
+      {% if showImplementationTab %}
+        {{ tabs({
+          title: "Step detail sections",
+          classes: "map-step-tabs",
+          idPrefix: "map-step-tab",
+          items: [
+            {
+              label: "Screenshot",
+              id: "map-step-tab-screenshot",
+              panel: {
+                html: screenshotTab
+              }
+            },
+            {
+              label: "User insights",
+              id: "map-step-tab-insights",
+              panel: {
+                html: insightsTab
+              }
+            },
+            {
+              label: "Implementation",
+              id: "map-step-tab-implementation",
+              panel: {
+                html: implementationTab
+              }
+            }
+          ]
+        }) }}
       {% else %}
-        {% set previousPagination = null %}
+        {{ tabs({
+          title: "Step detail sections",
+          classes: "map-step-tabs",
+          idPrefix: "map-step-tab",
+          items: [
+            {
+              label: "Screenshot",
+              id: "map-step-tab-screenshot",
+              panel: {
+                html: screenshotTab
+              }
+            },
+            {
+              label: "User insights",
+              id: "map-step-tab-insights",
+              panel: {
+                html: insightsTab
+              }
+            }
+          ]
+        }) }}
       {% endif %}
 
-      {% if step.nextStep %}
-        {% set nextPagination = {
-          href: step.nextStep.detailPath,
-          text: "Next step",
-          labelText: "Step " ~ step.nextStep.position ~ ": " ~ step.nextStep.title
-        } %}
-      {% else %}
-        {% set nextPagination = null %}
-      {% endif %}
+      {% set previousPagination = step.previousStep and {
+        href: step.previousStep.detailPath,
+        text: "Previous step",
+        labelText: "Step " ~ step.previousStep.position ~ ": " ~ step.previousStep.title
+      } or null %}
+
+      {% set nextPagination = step.nextStep and {
+        href: step.nextStep.detailPath,
+        text: "Next step",
+        labelText: "Step " ~ step.nextStep.position ~ ": " ~ step.nextStep.title
+      } or null %}
 
       {% if previousPagination or nextPagination %}
         <div class="map-step-pagination">

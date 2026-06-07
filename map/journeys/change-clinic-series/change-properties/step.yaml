@@ -25,7 +25,6 @@ versions:
         screenshot: screenshots/closures-remove.png
   v2:
     summary: Users enter the new properties for the clinic series.
-    status: Ready for dev
     prototype_path: /site/clinics/edit/clinic-times
     default_variant: start-and-end-times
     implementation:

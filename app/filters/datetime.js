@@ -111,29 +111,32 @@ module.exports = function registerDateTimeFilters(filters = {}) {
   //follow the nhs date range logic
   //https://service-manual.nhs.uk/content/numbers-measurements-dates-time#ranges
   filters.nhsDateRange = (firstDate, secondDate, linkWord = 'to', tz = DEFAULT_TZ) => {
-
-    const dt1 = toDateTime(firstDate, tz);
-    const dt2 = toDateTime(secondDate, tz);
+    const dt1 = toDateTime(firstDate, tz).startOf('day');
+    const dt2 = toDateTime(secondDate, tz).startOf('day');
 
     if (!dt1.isValid || !dt2.isValid) return '';
 
+    const start = dt1 <= dt2 ? dt1 : dt2;
+    const end = dt1 <= dt2 ? dt2 : dt1;
+    const connector = String(linkWord || 'to').trim() || 'to';
+
     //same day
-    if (dt1.hasSame(dt2, 'day')) {
-      return dt1.toFormat(DEFAULT_FORMAT);
+    if (start.hasSame(end, 'day')) {
+      return start.toFormat(DEFAULT_FORMAT);
     }
 
     //same month and year
-    if (dt1.hasSame(dt2, 'month') && dt1.hasSame(dt2, 'year')) {
-      return `${dt1.toFormat('d')} ${linkWord} ${dt2.toFormat(DEFAULT_FORMAT)}`;
+    if (start.hasSame(end, 'month') && start.hasSame(end, 'year')) {
+      return `${start.toFormat('d')} ${connector} ${end.toFormat(DEFAULT_FORMAT)}`;
     }
 
     //same year
-    if (dt1.hasSame(dt2, 'year')) {
-      return `${dt1.toFormat('d LLLL')} ${linkWord} ${dt2.toFormat(DEFAULT_FORMAT)}`;
+    if (start.hasSame(end, 'year')) {
+      return `${start.toFormat('d LLLL')} ${connector} ${end.toFormat(DEFAULT_FORMAT)}`;
     }
 
     //different years
-    return `${dt1.toFormat(DEFAULT_FORMAT)} ${linkWord} ${dt2.toFormat(DEFAULT_FORMAT)}`;
+    return `${start.toFormat(DEFAULT_FORMAT)} ${connector} ${end.toFormat(DEFAULT_FORMAT)}`;
   }
 
   filters.isDateBetween = (input, startDate, endDate, tz = DEFAULT_TZ) => {

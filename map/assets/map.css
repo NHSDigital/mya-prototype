@@ -344,7 +344,6 @@
 .map-detail-screen,
 .map-step-display-screen {
   background: var(--map-surface);
-  border: 1px solid var(--map-border);
   margin: 0;
   padding: 10px;
 }
@@ -364,35 +363,37 @@
   margin-top: 0.75rem;
 }
 
-.map-step-layout {
-  display: grid;
-  gap: 2rem;
-  grid-template-columns: 300px minmax(0, 1fr);
+.map-step-grid {
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 1200px;
   padding: 0 24px;
 }
 
-.map-step-sidebar {
+.map-step-controls {
   align-self: start;
-  display: grid;
-  gap: 1rem;
 }
 
-.map-step-sidebar__group {
-  display: grid;
-  gap: 0.5rem;
+.map-step-controls .nhsuk-form-group {
+  margin-bottom: 1rem;
 }
 
-.map-step-select-row {
+.map-step-control {
   align-items: center;
   display: flex;
   gap: 0.75rem;
 }
 
-.map-step-select-row .map-select {
+.map-step-control .map-select {
   flex: 1 1 auto;
 }
 
-.map-step-content {
+.map-step-status {
+  margin: 0;
+}
+
+.map-step-main {
   min-width: 0;
 }
 
@@ -403,7 +404,7 @@
 
 .map-site--step .nhsuk-breadcrumb,
 .map-site--step .map-page-head,
-.map-site--step .map-step-layout {
+.map-site--step .map-step-grid {
   box-sizing: border-box;
   margin-left: auto;
   margin-right: auto;
@@ -411,45 +412,20 @@
 }
 
 .map-site--step .nhsuk-breadcrumb {
+  display: block;
   margin-top: 0;
   padding-top: 16px;
+  width: 100%;
 }
 
 .map-site--step .map-page-head {
   padding-top: 8px;
 }
 
-.map-site--step .map-step-tabs {
-  margin-bottom: 0;
-}
-
-.map-site--step .map-step-tabs .nhsuk-tabs__title {
-  margin-bottom: 16px;
-}
-
-.map-site--step .map-step-tabs .nhsuk-tabs__panel {
-  background: transparent;
-  border: 0;
-  padding: 0;
-}
-
-.map-step-panel {
-  background: var(--map-surface);
-  border: 1px solid var(--map-border);
-  display: grid;
-  gap: 1.5rem;
-  padding: 1.25rem;
-}
-
+.map-step-tab-content,
 .map-step-tab-sections {
   display: grid;
   gap: 1.5rem;
-}
-
-.map-step-panel > .map-panel {
-  background: transparent;
-  border: 0;
-  padding: 0;
 }
 
 .map-step-pagination {
@@ -494,8 +470,10 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .map-step-layout {
-    grid-template-columns: minmax(0, 1fr);
+  .map-step-controls,
+  .map-step-main {
+    float: none;
+    width: 100%;
   }
 }
 
@@ -513,18 +491,17 @@
   .nhsuk-breadcrumb,
   .map-page-head,
   .map-overview-grid,
-  .map-step-layout {
+  .map-step-grid {
     padding-left: 16px;
     padding-right: 16px;
   }
 
   .map-overview-card,
-  .map-panel,
-  .map-step-panel {
+  .map-panel {
     padding: 1.25rem;
   }
 
-  .map-step-select-row {
+  .map-step-control {
     align-items: stretch;
     flex-direction: column;
   }

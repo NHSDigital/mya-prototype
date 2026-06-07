@@ -3,12 +3,24 @@ function renderHtml(target, html) {
   target.innerHTML = html || '';
 }
 
+function getControlDataElement(selectElement) {
+  const controlElement = selectElement.closest('[data-map-control]');
+  if (controlElement) {
+    return controlElement.querySelector('[data-map-variant-data], .js-map-variant-data');
+  }
+
+  return selectElement.parentElement
+    ? selectElement.parentElement.querySelector('[data-map-variant-data], .js-map-variant-data')
+    : null;
+}
+
 function updateVariant(stepSlug, variantData) {
   const screenshot = document.querySelector(`[data-map-screenshot="${stepSlug}"] img`);
   const insights = document.querySelector(`[data-map-insights="${stepSlug}"]`);
   const nextSteps = document.querySelector(`[data-map-next="${stepSlug}"]`);
   const detailScreenshot = document.querySelector(`[data-map-detail-screenshot="${stepSlug}"]`);
   const detailInsights = document.querySelector(`[data-map-detail-insights="${stepSlug}"]`);
+  const detailImplementation = document.querySelector(`[data-map-detail-implementation="${stepSlug}"]`);
 
   if (screenshot) {
     screenshot.src = variantData.screenshotPath;
@@ -30,18 +42,28 @@ function updateVariant(stepSlug, variantData) {
   if (detailInsights) {
     renderHtml(detailInsights, variantData.detailInsightsHtml);
   }
+
+  if (detailImplementation) {
+    renderHtml(detailImplementation, variantData.detailImplementationHtml);
+  }
 }
 
-document.querySelectorAll('.js-map-variant-select').forEach((selectElement) => {
-  const stepSlug = selectElement.dataset.stepSlug;
-  const defaultVariantId = selectElement.dataset.defaultVariantId;
-  const dataElement = selectElement.parentElement.querySelector('.js-map-variant-data');
+document.querySelectorAll('[data-map-variant-select], .js-map-variant-select').forEach((selectElement) => {
+  const stepSlug = selectElement.dataset.mapStepSlug || selectElement.dataset.stepSlug;
+  const defaultVariantId = selectElement.dataset.mapDefaultVariantId || selectElement.dataset.defaultVariantId;
+  const dataElement = getControlDataElement(selectElement);
 
-  if (!stepSlug || !dataElement) {
+  if (!stepSlug || !dataElement || !dataElement.textContent) {
     return;
   }
 
-  const variantIndex = JSON.parse(dataElement.textContent);
+  let variantIndex;
+
+  try {
+    variantIndex = JSON.parse(dataElement.textContent);
+  } catch {
+    return;
+  }
 
   if (defaultVariantId && variantIndex[defaultVariantId]) {
     selectElement.value = defaultVariantId;
@@ -56,7 +78,7 @@ document.querySelectorAll('.js-map-variant-select').forEach((selectElement) => {
   });
 });
 
-document.querySelectorAll('.js-map-version-select').forEach((selectElement) => {
+document.querySelectorAll('[data-map-version-select], .js-map-version-select').forEach((selectElement) => {
   selectElement.addEventListener('change', () => {
     const targetPath = selectElement.value;
     if (targetPath) {
