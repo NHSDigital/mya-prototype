@@ -72,3 +72,4 @@ coverage
 
 # Prototype map
 /map/tmp-inbox
+/app/assets/map-reload-trigger.txt

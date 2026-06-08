@@ -8,3 +8,10 @@ versions:
         screenshot: screenshots/home-v1.png
   v2:
     use: v1
+  v3:
+    summary: The home page used in round 3 navigation testing.
+    status: ready for dev
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/home-v3.png

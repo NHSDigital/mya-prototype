@@ -34,6 +34,7 @@ const NHSUK_NUNJUCKS_DIR = path.join(
   'dist'
 );
 const BUILD_STAMP_PATH = path.join(DIST_DIR, '.build-stamp.json');
+const BROWSER_RELOAD_TRIGGER_PATH = path.join(MAP_DIR, '..', 'app', 'assets', 'map-reload-trigger.txt');
 const JOURNEY_VERSION_FILE_PATTERN = /^journey\.(.+)\.ya?ml$/i;
 
 class MapValidationError extends Error {
@@ -65,6 +66,10 @@ function buildMapSite() {
     BUILD_STAMP_PATH,
     `${JSON.stringify({ sourceSignature: getSourceSignature() }, null, 2)}\n`
   );
+
+  if ((process.env.NODE_ENV || 'development') !== 'production') {
+    writeFile(BROWSER_RELOAD_TRIGGER_PATH, `${new Date().toISOString()}\n`);
+  }
 
   return {
     journeysCount: journeys.length,
@@ -219,7 +224,8 @@ function loadJourneyVersion({ journeyDir, journeySlug, entry, versionsMeta }) {
     version: {
       id: versionId,
       label: versionLabel,
-      tag: optionalString(config.tag) || optionalString(versionMeta.tag)
+      tag: optionalString(config.tag) || optionalString(versionMeta.tag),
+      status: optionalString(config.status)
     },
     journeyFindings: normalizeFindingGroup(
       config.journey_findings,
@@ -390,7 +396,8 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
   });
   const versionConfig = resolvedVersion.config;
 
-  const variants = ensureArray(versionConfig.variants).map((variant, variantIndex) =>
+  const rawVariants = ensureArray(versionConfig.variants);
+  const variants = rawVariants.map((variant, variantIndex) =>
     normalizeVariant({
       variant,
       variantIndex,
@@ -431,6 +438,27 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
     defaultPrototypePath: optionalString(versionConfig.prototype_path)
   });
 
+  const variantsWithImplementation = variants.map((variant, variantIndex) => {
+    const rawVariant = rawVariants[variantIndex] || {};
+    const hasVariantImplementation =
+      isPlainObject(rawVariant) && Object.prototype.hasOwnProperty.call(rawVariant, 'implementation');
+
+    return {
+      ...variant,
+      implementation: normalizeImplementation({
+        value: hasVariantImplementation ? rawVariant.implementation : versionConfig.implementation,
+        versionConfig,
+        stepPath,
+        versionId: resolvedVersion.resolvedVersionId,
+        defaultVariant: variant,
+        defaultPrototypePath: optionalString(versionConfig.prototype_path),
+        fieldName: hasVariantImplementation
+          ? `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}.variants[${variantIndex}].implementation`
+          : `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}.implementation`
+      })
+    };
+  });
+
   return {
     slug: stepSlug,
     title: requiredString(stepConfig.title, `${stepPath} -> title`),
@@ -447,7 +475,7 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
       versionConfig.focus_questions,
       `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}.focus_questions`
     ),
-    variants,
+    variants: variantsWithImplementation,
     defaultVariantId,
     detailPath: `/map/journeys/${journeySlug}/versions/${versionId}/steps/${stepSlug}/`,
     requestedVersionId: versionId,
@@ -566,44 +594,52 @@ function normalizeVariant({ variant, stepDir, stepPath, versionId, stepTitle, va
   };
 }
 
-function normalizeImplementation({ value, versionConfig, stepPath, versionId, defaultVariant, defaultPrototypePath }) {
-  const fieldName = `${stepPath} -> versions.${versionId}.implementation`;
+function normalizeImplementation({
+  value,
+  versionConfig,
+  stepPath,
+  versionId,
+  defaultVariant,
+  defaultPrototypePath,
+  fieldName
+}) {
+  const resolvedFieldName = fieldName || `${stepPath} -> versions.${versionId}.implementation`;
   const implementation = value || {};
 
   if (value && !isPlainObject(value)) {
-    throw validationError(fieldName, 'Expected implementation to be an object.', {
+    throw validationError(resolvedFieldName, 'Expected implementation to be an object.', {
       actual: value
     });
   }
 
   const prototypeLinkValue = implementation.prototype_link || {};
   if (implementation.prototype_link && !isPlainObject(prototypeLinkValue)) {
-    throw validationError(`${fieldName}.prototype_link`, 'Expected prototype_link to be an object.', {
+    throw validationError(`${resolvedFieldName}.prototype_link`, 'Expected prototype_link to be an object.', {
       actual: implementation.prototype_link
     });
   }
 
   const ticketValue = implementation.ticket || {};
   if (implementation.ticket && !isPlainObject(ticketValue)) {
-    throw validationError(`${fieldName}.ticket`, 'Expected ticket to be an object.', {
+    throw validationError(`${resolvedFieldName}.ticket`, 'Expected ticket to be an object.', {
       actual: implementation.ticket
     });
   }
 
   const userStory = normalizeStringArray(
     implementation.user_story,
-    `${fieldName}.user_story`
+    `${resolvedFieldName}.user_story`
   );
 
   const notableComponents = ensureArray(implementation.notable_components).map((entry, index) =>
     normalizeImplementationLink(
       entry,
-      `${fieldName}.notable_components[${index}]`
+      `${resolvedFieldName}.notable_components[${index}]`
     )
   );
 
   const acceptanceCriteria = ensureArray(implementation.acceptance_criteria).map((entry, index) =>
-    normalizeAcceptanceCriterion(entry, `${fieldName}.acceptance_criteria[${index}]`)
+    normalizeAcceptanceCriterion(entry, `${resolvedFieldName}.acceptance_criteria[${index}]`)
   );
 
   const prototypeLink = normalizeImplementationLink(
@@ -614,13 +650,13 @@ function normalizeImplementation({ value, versionConfig, stepPath, versionId, de
         optionalString(versionConfig.summary),
       href: optionalString(prototypeLinkValue.href) || defaultPrototypePath
     },
-    `${fieldName}.prototype_link`,
+    `${resolvedFieldName}.prototype_link`,
     { allowBlank: true }
   );
 
   const ticket = normalizeImplementationLink(
     ticketValue,
-    `${fieldName}.ticket`,
+    `${resolvedFieldName}.ticket`,
     { allowBlank: true }
   );
 
@@ -1126,7 +1162,8 @@ function indexVariants(variants, env) {
       insightsHtml: renderBoardNotesHtml(env, variant.insights, 'None for this version'),
       nextStepsHtml: renderBoardNotesHtml(env, variant.nextSteps, 'None for this version'),
       detailScreenshotHtml: renderStepVariantScreenshotHtml(env, variant),
-      detailInsightsHtml: renderStepVariantResearchHtml(env, variant)
+      detailInsightsHtml: renderStepVariantResearchHtml(env, variant),
+      detailImplementationHtml: renderStepImplementationHtml(env, variant.implementation)
     };
     return result;
   }, {});
@@ -1155,6 +1192,19 @@ function renderStepVariantResearchHtml(env, variant) {
     .renderString(
       '{% from "components/macros.njk" import stepVariantResearch %}{{ stepVariantResearch(variant) }}',
       { variant }
+    )
+    .trim();
+}
+
+function renderStepImplementationHtml(env, implementation) {
+  return env
+    .renderString(
+      '{% from "components/macros.njk" import stepImplementationPanel %}{{ stepImplementationPanel(step) }}',
+      {
+        step: {
+          implementation
+        }
+      }
     )
     .trim();
 }

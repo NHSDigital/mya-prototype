@@ -10,3 +10,10 @@ versions:
       - id: completed
         label: Completed clinics
         screenshot: screenshots/clinics-list-v2-completed.png
+  v3:
+    summary: The create and manage clinics view reached from Clinics in round 3 navigation testing.
+    status: ready for dev
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/clinics-list-v3.png

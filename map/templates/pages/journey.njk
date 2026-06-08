@@ -3,6 +3,7 @@
 {% from "nhsuk/components/breadcrumb/macro.njk" import breadcrumb %}
 
 {% block chrome %}
+  {% set isReadyForDev = journey.version and ((journey.version.status or '') | lower == 'ready for dev') %}
   <section class="map-sticky-header">
     {% if breadcrumbParams %}
       {{ breadcrumb(breadcrumbParams) }}
@@ -10,6 +11,9 @@
     <section class="map-page-head">
       <div>
         <h1 class="map-page-title">{{ journey.title }}</h1>
+        {% if isReadyForDev %}
+          <strong class="nhsuk-tag nhsuk-tag--green nhsuk-u-margin-top-2">Ready for dev</strong>
+        {% endif %}
       </div>
       {% if journey.version %}
         <div>

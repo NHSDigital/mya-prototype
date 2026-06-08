@@ -3,7 +3,8 @@
 {% from '../../../components/action-control-bar.njk' import appActionControlBar %}
 {% from 'nhsuk/components/card/macro.njk' import card %}
 
-{% set pageName = weekHeading or (week[0] | formatDate('d LLLL') ~ ' to ' ~ week[6] | formatDate('d LLLL yyyy')) %}
+{% set isThisWeek = today >= week[0] and today <= week[6] %}
+{% set pageName = (week[0] | nhsDateRange(week[6])) ~ (isThisWeek and ' (this week)' or '') %}
 
 {% block content %}
   <div class="nhsuk-grid-row">
@@ -37,11 +38,11 @@
 
       {{ pagination({
         previous: {
-          labelText: previousWeekLabel or (previousWeek.start | formatDate('d') ~ " to " ~ previousWeek.end | formatDate('d LLL')),
+          labelText: (previousWeek.start | formatDate('d') ~ " to " ~ previousWeek.end | formatDate('d LLL')),
           href: "/site/" ~ site_id ~ "/availability/week?date=" ~ previousWeek.start
         },
         next: {
-          labelText: nextWeekLabel or (nextWeek.start | formatDate('d') ~ " to " ~ nextWeek.end | formatDate('d LLL')),
+          labelText: (nextWeek.start | formatDate('d') ~ " to " ~ nextWeek.end | formatDate('d LLL')),
           href: "/site/" ~ site_id ~ "/availability/week?date=" ~ nextWeek.start
         }
       }) }}

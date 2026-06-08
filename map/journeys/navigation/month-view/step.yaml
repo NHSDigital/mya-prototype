@@ -6,3 +6,10 @@ versions:
       - id: default
         label: Default
         screenshot: screenshots/month-view-v2.png
+  v3:
+    summary: The month view reached from Clinics in round 3 navigation testing.
+    status: ready for dev
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/month-view-v3.png
