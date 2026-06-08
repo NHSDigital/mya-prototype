@@ -29,6 +29,10 @@
   padding: 0 24px 32px;
 }
 
+.map-width-container {
+  max-width: 1200px;
+}
+
 .map-sticky-header {
   background: var(--map-bg);
   border-bottom: 1px solid var(--map-border);

@@ -224,7 +224,8 @@ function loadJourneyVersion({ journeyDir, journeySlug, entry, versionsMeta }) {
     version: {
       id: versionId,
       label: versionLabel,
-      tag: optionalString(config.tag) || optionalString(versionMeta.tag)
+      tag: optionalString(config.tag) || optionalString(versionMeta.tag),
+      status: optionalString(config.status)
     },
     journeyFindings: normalizeFindingGroup(
       config.journey_findings,

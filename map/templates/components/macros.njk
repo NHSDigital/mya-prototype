@@ -137,49 +137,41 @@
 
 {% macro stepImplementationPanel(step) %}
   {% if step.implementation.hasOverview %}
-    <section class="map-panel">
-      <h2 class="nhsuk-heading-l">Overview</h2>
-      <dl class="nhsuk-summary-list">
-        {{ stepImplementationRows(step.implementation) }}
-      </dl>
-    </section>
+    <h2 class="nhsuk-heading-m">Overview</h2>
+    <dl class="nhsuk-summary-list">
+      {{ stepImplementationRows(step.implementation) }}
+    </dl>
   {% endif %}
 
   {% if step.implementation.acceptanceCriteria.length %}
-    <section class="map-panel">
-      <h2 class="nhsuk-heading-l">Acceptance criteria</h2>
-      <dl class="nhsuk-summary-list">
-        {% for criterion in step.implementation.acceptanceCriteria %}
-          <div class="nhsuk-summary-list__row">
-            <dt class="nhsuk-summary-list__key">{{ criterion.id }}</dt>
-            <dd class="nhsuk-summary-list__value map-acceptance-item__content">
-              {% if criterion.given %}
-                <p class="nhsuk-body-m"><strong>Given</strong> {{ criterion.given }}</p>
-              {% endif %}
-              {% if criterion.when %}
-                <p class="nhsuk-body-m"><strong>When</strong> {{ criterion.when }}</p>
-              {% endif %}
-              {% for line in criterion.then %}
-                <p class="nhsuk-body-m"><strong>Then</strong> {{ line }}</p>
-              {% endfor %}
-            </dd>
-          </div>
-        {% endfor %}
-      </dl>
-    </section>
+    <h2 class="nhsuk-heading-m">Acceptance criteria</h2>
+    <dl class="nhsuk-summary-list">
+      {% for criterion in step.implementation.acceptanceCriteria %}
+        <div class="nhsuk-summary-list__row">
+          <dt class="nhsuk-summary-list__key">{{ criterion.id }}</dt>
+          <dd class="nhsuk-summary-list__value map-acceptance-item__content">
+            {% if criterion.given %}
+              <p class="nhsuk-body-m"><strong>Given</strong> {{ criterion.given }}</p>
+            {% endif %}
+            {% if criterion.when %}
+              <p class="nhsuk-body-m"><strong>When</strong> {{ criterion.when }}</p>
+            {% endif %}
+            {% for line in criterion.then %}
+              <p class="nhsuk-body-m"><strong>Then</strong> {{ line }}</p>
+            {% endfor %}
+          </dd>
+        </div>
+      {% endfor %}
+    </dl>
   {% endif %}
 
   {% if step.implementation.notesHtml %}
-    <section class="map-panel">
-      <h2 class="nhsuk-heading-l">Notes</h2>
-      <div class="map-rich-text">{{ step.implementation.notesHtml | safe }}</div>
-    </section>
+    <h2 class="nhsuk-heading-l">Notes</h2>
+    <div class="map-rich-text">{{ step.implementation.notesHtml | safe }}</div>
   {% endif %}
 
   {% if not step.implementation.hasOverview and not step.implementation.acceptanceCriteria.length and not step.implementation.notesHtml %}
-    <section class="map-panel">
-      <h2 class="nhsuk-heading-l">Implementation</h2>
-      <p class="nhsuk-body-m map-empty-state">No implementation notes yet.</p>
-    </section>
+    <h2 class="nhsuk-heading-l">Implementation</h2>
+    <p class="nhsuk-body-m map-empty-state">No implementation notes yet.</p>
   {% endif %}
 {% endmacro %}
