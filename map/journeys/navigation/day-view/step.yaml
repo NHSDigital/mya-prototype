@@ -42,14 +42,3 @@ versions:
           prototype_link:
             href: /site/1/availability/day#cancelled
             label: Day view (cancelled)
-      - id: running-today
-        label: Clinics running today
-        screenshot: screenshots/day-view-v3-running-today.png
-        notes_file: notes/day-view-v3-running-today.md
-        implementation:
-          user_story:
-            - As a site administrator
-            - I need to review and manage clinics from the day view tabs
-            - So that I can quickly see scheduled, cancelled, and running clinics for the selected day
-          prototype_link:
-            href: /site/1/availability/day#clinics-running-today
