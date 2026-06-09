@@ -10,6 +10,7 @@ Project context:
 - Shared version metadata is in [map/versions.yaml](../../map/versions.yaml).
 - Read [map/README.md](../../map/README.md) for map structure and notes_file rules.
 - Existing prompts in [/.github/prompts](.) show expected workflow style.
+- Treat screenshots as reference artifacts, not the sole source of truth for complex UI behavior.
 
 Inputs:
 - Journey: ${input:journey:Which journey? For example: navigation}
@@ -54,7 +55,20 @@ Start by doing this:
 6. If baseline is "previous version", identify the nearest earlier version and summarize key differences.
 7. If baseline is "live baseline":
    - look for live reference evidence in `map/tmp-inbox` first
-   - if none is present, ask for live baseline evidence before writing "changes from live"
+  - require at least one machine-readable live baseline evidence file (`.md`, `.yaml`, or `.json`) that summarizes observed UI behavior per step/variant
+  - if only screenshots are present, ask for a structured evidence summary before writing "changes from live"
+  - do not infer complex visual behavior from screenshots alone
+  - if structured evidence is still missing, continue with non-diff sections and write `No confirmed changes for this section.` in `Changes from baseline`
+
+Live baseline evidence guidance:
+- A good evidence file should include, per step/variant:
+  - page/screen name and route
+  - visible headings, navigation labels, and key CTA labels
+  - table/list structure and column labels (if present)
+  - empty/error states observed
+  - accessibility-relevant text (for example visually hidden context, hint text, status text)
+  - confidence notes for uncertain observations
+- Keep screenshot filenames alongside those observations as references.
 
 Required note sections (for each step and variant in the selected journey version):
 1. `Changes from baseline`
@@ -89,7 +103,7 @@ File-writing rules (when output = "write files"):
 
 Decision rules for baseline:
 - Prefer `previous version` for product iteration diffs.
-- Use `live baseline` when the user provides current-production evidence (screenshots, recordings, audited notes).
+- Use `live baseline` when the user provides current-production evidence plus machine-readable observations.
 - Do not represent live baseline as a normal tested version by default.
 - Once you've done with files in `map/tmp-inbox`, you should delete them to avoid confusion with future evidence.
 
