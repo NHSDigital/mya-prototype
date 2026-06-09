@@ -9,6 +9,8 @@ versions:
   v3:
     summary: The month view reached from Clinics in round 3 navigation testing.
     status: ready for dev
+    prototype_path: /site/1/availability/month
+    notes_file: notes/month-view-v3.md
     variants:
       - id: default
         label: Default

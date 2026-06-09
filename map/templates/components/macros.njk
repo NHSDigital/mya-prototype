@@ -119,7 +119,13 @@
   {% if implementation.prototypeLink.label %}
     <div class="nhsuk-summary-list__row">
       <dt class="nhsuk-summary-list__key">Prototype link</dt>
-      <dd class="nhsuk-summary-list__value">{{ stepImplementationLink(implementation.prototypeLink) }}</dd>
+      <dd class="nhsuk-summary-list__value">
+        {% if implementation.prototypeLink.href %}
+          <a href="{{ implementation.prototypeLink.href }}" target="_blank" rel="noopener noreferrer">{{ implementation.prototypeLink.label }} (opens in a new tab)</a>
+        {% else %}
+          {{ implementation.prototypeLink.label }}
+        {% endif %}
+      </dd>
     </div>
   {% endif %}
 
@@ -166,7 +172,6 @@
   {% endif %}
 
   {% if step.implementation.notesHtml %}
-    <h2 class="nhsuk-heading-l">Notes</h2>
     <div class="map-rich-text">{{ step.implementation.notesHtml | safe }}</div>
   {% endif %}
 

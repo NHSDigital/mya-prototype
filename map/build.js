@@ -19,6 +19,15 @@ try {
   );
 }
 
+let MarkdownIt;
+try {
+  MarkdownIt = require('markdown-it');
+} catch {
+  throw new Error(
+    'The /map folder requires the "markdown-it" package. Install it in the prototype with `npm install markdown-it`.'
+  );
+}
+
 const MAP_DIR = __dirname;
 const DIST_DIR = path.join(MAP_DIR, 'dist');
 const JOURNEYS_DIR = path.join(MAP_DIR, 'journeys');
@@ -36,6 +45,15 @@ const NHSUK_NUNJUCKS_DIR = path.join(
 const BUILD_STAMP_PATH = path.join(DIST_DIR, '.build-stamp.json');
 const BROWSER_RELOAD_TRIGGER_PATH = path.join(MAP_DIR, '..', 'app', 'assets', 'map-reload-trigger.txt');
 const JOURNEY_VERSION_FILE_PATTERN = /^journey\.(.+)\.ya?ml$/i;
+const MARKDOWN_HEADING_CLASS_BY_TAG = {
+  h1: 'nhsuk-heading-l',
+  h2: 'nhsuk-heading-m',
+  h3: 'nhsuk-heading-s',
+  h4: 'nhsuk-heading-xs',
+  h5: 'nhsuk-heading-xs',
+  h6: 'nhsuk-heading-xs'
+};
+const markdownRenderer = createMarkdownRenderer();
 
 class MapValidationError extends Error {
   constructor(message) {
@@ -396,6 +414,13 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
   });
   const versionConfig = resolvedVersion.config;
 
+  const stepNotes = resolveNotesContent({
+    notes: versionConfig.notes,
+    notesFile: versionConfig.notes_file,
+    stepDir,
+    fieldName: `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}`
+  });
+
   const rawVariants = ensureArray(versionConfig.variants);
   const variants = rawVariants.map((variant, variantIndex) =>
     normalizeVariant({
@@ -435,7 +460,8 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
     stepPath,
     versionId: resolvedVersion.resolvedVersionId,
     defaultVariant,
-    defaultPrototypePath: optionalString(versionConfig.prototype_path)
+    defaultPrototypePath: optionalString(versionConfig.prototype_path),
+    defaultNotes: stepNotes.notes
   });
 
   const variantsWithImplementation = variants.map((variant, variantIndex) => {
@@ -452,6 +478,7 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
         versionId: resolvedVersion.resolvedVersionId,
         defaultVariant: variant,
         defaultPrototypePath: optionalString(versionConfig.prototype_path),
+        defaultNotes: optionalString(variant.notes) || stepNotes.notes,
         fieldName: hasVariantImplementation
           ? `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}.variants[${variantIndex}].implementation`
           : `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}.implementation`
@@ -467,8 +494,9 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
       `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}.summary`
     ),
     prototypePath: optionalString(versionConfig.prototype_path),
-    notes: optionalString(versionConfig.notes),
-    notesHtml: renderBasicMarkdown(optionalString(versionConfig.notes)),
+    notes: stepNotes.notes,
+    notesHtml: stepNotes.notesHtml,
+    notesFile: stepNotes.notesFile,
     status: optionalString(versionConfig.status),
     implementation,
     focusQuestions: normalizeStringArray(
@@ -582,6 +610,13 @@ function normalizeVariant({ variant, stepDir, stepPath, versionId, stepTitle, va
     );
   }
 
+  const variantNotes = resolveNotesContent({
+    notes: variant.notes,
+    notesFile: variant.notes_file,
+    stepDir,
+    fieldName: variantField
+  });
+
   return {
     id,
     label: requiredString(variant.label, `${variantField}.label`),
@@ -589,9 +624,85 @@ function normalizeVariant({ variant, stepDir, stepPath, versionId, stepTitle, va
     alt: optionalString(variant.alt) || defaultVariantAlt(stepTitle, variant.label),
     screenshotSource,
     screenshotAbsolutePath,
+    notes: variantNotes.notes,
+    notesHtml: variantNotes.notesHtml,
+    notesFile: variantNotes.notesFile,
     insights: [],
     nextSteps: []
   };
+}
+
+function resolveNotesContent({ notes, notesFile, stepDir, fieldName }) {
+  const inlineNotes = optionalString(notes);
+  const markdownFile = optionalString(notesFile);
+
+  if (inlineNotes && markdownFile) {
+    throw validationError(
+      `${fieldName}.notes_file`,
+      'Use either "notes" or "notes_file", not both.',
+      {
+        actual: markdownFile
+      }
+    );
+  }
+
+  const resolvedNotes = markdownFile
+    ? readMarkdownFile({
+        stepDir,
+        relativePath: markdownFile,
+        fieldName: `${fieldName}.notes_file`
+      })
+    : inlineNotes;
+
+  return {
+    notes: resolvedNotes,
+    notesHtml: renderBasicMarkdown(resolvedNotes),
+    notesFile: markdownFile
+  };
+}
+
+function readMarkdownFile({ stepDir, relativePath, fieldName }) {
+  const markdownPath = requiredString(relativePath, fieldName);
+
+  if (path.isAbsolute(markdownPath)) {
+    throw validationError(fieldName, 'Expected notes_file to be a relative path inside the step folder.', {
+      actual: markdownPath
+    });
+  }
+
+  if (!/\.md$/i.test(markdownPath)) {
+    throw validationError(fieldName, 'Expected notes_file to point to a .md file.', {
+      actual: markdownPath
+    });
+  }
+
+  const stepRoot = path.resolve(stepDir);
+  const absolutePath = path.resolve(stepRoot, markdownPath);
+
+  if (absolutePath !== stepRoot && !absolutePath.startsWith(`${stepRoot}${path.sep}`)) {
+    throw validationError(fieldName, 'notes_file must stay inside the step folder.', {
+      actual: markdownPath
+    });
+  }
+
+  if (!fs.existsSync(absolutePath)) {
+    throw new MapValidationError(
+      [
+        'Referenced markdown notes file does not exist.',
+        `Field: ${fieldName}`,
+        `Value: ${formatValue(markdownPath)}`,
+        `Expected file: ${absolutePath}`
+      ].join('\n')
+    );
+  }
+
+  if (!fs.statSync(absolutePath).isFile()) {
+    throw validationError(fieldName, 'Expected notes_file to point to a file.', {
+      actual: markdownPath
+    });
+  }
+
+  return fs.readFileSync(absolutePath, 'utf8');
 }
 
 function normalizeImplementation({
@@ -601,6 +712,7 @@ function normalizeImplementation({
   versionId,
   defaultVariant,
   defaultPrototypePath,
+  defaultNotes,
   fieldName
 }) {
   const resolvedFieldName = fieldName || `${stepPath} -> versions.${versionId}.implementation`;
@@ -660,7 +772,7 @@ function normalizeImplementation({
     { allowBlank: true }
   );
 
-  const notes = optionalString(implementation.notes) || optionalString(versionConfig.notes);
+  const notes = optionalString(implementation.notes) || optionalString(defaultNotes);
   const notesHtml = renderBasicMarkdown(notes);
 
   return {
@@ -1005,7 +1117,7 @@ function prepareJourneysForRender(journeys, env) {
 
       for (const step of version.steps) {
         step.defaultVariant = step.variants.find((variant) => variant.id === step.defaultVariantId);
-        step.variantIndexJson = serializeForScript(indexVariants(step.variants, env));
+        step.variantIndexJson = serializeForScript(indexVariants(step.variants, env, step.notesHtml));
         step.versionOptions = journey.versions
           .filter((entry) => entry.steps.some((candidateStep) => candidateStep.slug === step.slug))
           .map((entry) => ({
@@ -1152,7 +1264,7 @@ function createJourneyRenderModel({ journey, version, journeyPath, stepPathBase 
   };
 }
 
-function indexVariants(variants, env) {
+function indexVariants(variants, env, stepNotesHtml = '') {
   return variants.reduce((result, variant) => {
     result[variant.id] = {
       label: variant.label,
@@ -1161,6 +1273,7 @@ function indexVariants(variants, env) {
       screenshotPath: variant.screenshotPath,
       insightsHtml: renderBoardNotesHtml(env, variant.insights, 'None for this version'),
       nextStepsHtml: renderBoardNotesHtml(env, variant.nextSteps, 'None for this version'),
+      notesHtml: variant.notesHtml || stepNotesHtml || '<p class="map-empty-state">None for this version</p>',
       detailScreenshotHtml: renderStepVariantScreenshotHtml(env, variant),
       detailInsightsHtml: renderStepVariantResearchHtml(env, variant),
       detailImplementationHtml: renderStepImplementationHtml(env, variant.implementation)
@@ -1314,6 +1427,43 @@ function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
+function createMarkdownRenderer() {
+  const renderer = new MarkdownIt({
+    html: false,
+    linkify: true,
+    typographer: false
+  });
+
+  const renderToken = renderer.renderer.renderToken.bind(renderer.renderer);
+
+  function addClassRule(tokenType, className) {
+    renderer.renderer.rules[tokenType] = function(tokens, idx, options, env, self) {
+      tokens[idx].attrJoin('class', className);
+      return renderToken(tokens, idx, options, env, self);
+    };
+  }
+
+  addClassRule('paragraph_open', 'nhsuk-body');
+  addClassRule('bullet_list_open', 'nhsuk-list nhsuk-list--bullet');
+  addClassRule('ordered_list_open', 'nhsuk-list nhsuk-list--number');
+  addClassRule('blockquote_open', 'nhsuk-inset-text');
+  addClassRule('table_open', 'nhsuk-table');
+  addClassRule('thead_open', 'nhsuk-table__head');
+  addClassRule('tbody_open', 'nhsuk-table__body');
+  addClassRule('tr_open', 'nhsuk-table__row');
+  addClassRule('th_open', 'nhsuk-table__header');
+  addClassRule('td_open', 'nhsuk-table__cell');
+
+  renderer.renderer.rules.heading_open = function(tokens, idx, options, env, self) {
+    const headingTag = tokens[idx].tag;
+    const headingClass = MARKDOWN_HEADING_CLASS_BY_TAG[headingTag] || 'nhsuk-heading-xs';
+    tokens[idx].attrJoin('class', headingClass);
+    return renderToken(tokens, idx, options, env, self);
+  };
+
+  return renderer;
+}
+
 function renderBasicMarkdown(markdown) {
   const source = optionalString(markdown).replace(/\r\n/g, '\n');
 
@@ -1321,58 +1471,7 @@ function renderBasicMarkdown(markdown) {
     return '';
   }
 
-  const blocks = [];
-  const paragraphLines = [];
-  const listItems = [];
-
-  function flushParagraph() {
-    if (!paragraphLines.length) return;
-    blocks.push(`<p>${escapeHtml(paragraphLines.join(' '))}</p>`);
-    paragraphLines.length = 0;
-  }
-
-  function flushList() {
-    if (!listItems.length) return;
-    blocks.push(
-      `<ul class="map-bullet-list">${listItems
-        .map((item) => `<li>${escapeHtml(item)}</li>`)
-        .join('')}</ul>`
-    );
-    listItems.length = 0;
-  }
-
-  for (const rawLine of source.split('\n')) {
-    const line = rawLine.trim();
-
-    if (!line) {
-      flushParagraph();
-      flushList();
-      continue;
-    }
-
-    if (line.startsWith('- ')) {
-      flushParagraph();
-      listItems.push(line.slice(2).trim());
-      continue;
-    }
-
-    flushList();
-    paragraphLines.push(line);
-  }
-
-  flushParagraph();
-  flushList();
-
-  return blocks.join('\n');
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return markdownRenderer.render(source).trim();
 }
 
 function emptyDir(dirPath) {

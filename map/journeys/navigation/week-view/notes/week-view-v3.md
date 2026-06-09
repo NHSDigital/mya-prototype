@@ -1,0 +1,2 @@
+- "Add session" should be renamed to "Add clinic"
+- "Add clinic" should start the add clinic journey

@@ -13,6 +13,8 @@ versions:
   v3:
     summary: The create and manage clinics view reached from Clinics in round 3 navigation testing.
     status: ready for dev
+    prototype_path: /site/1/clinics
+    notes_file: notes/clinics-list-v3.md
     variants:
       - id: default
         label: Default

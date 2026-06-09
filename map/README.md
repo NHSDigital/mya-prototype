@@ -51,13 +51,13 @@ Homepage section metadata and journey ordering live in `map/sections.yaml`.
 ## Minimal integration in a prototype
 
 1. Copy the whole `/map` folder into the root of the prototype.
-2. Install `js-yaml` and `nunjucks` in that prototype if they are not already available:
+1. Install `js-yaml`, `nunjucks`, and `markdown-it` in that prototype if they are not already available:
 
 ```bash
-npm install js-yaml nunjucks
+npm install js-yaml nunjucks markdown-it
 ```
 
-3. Mount the router from `app/routes.js`:
+1. Mount the router from `app/routes.js`:
 
 ```js
 router.use('/', require('../map/router'));
@@ -212,9 +212,11 @@ versions:
         screenshot: screenshots/default.png
         alt: Optional accessible alt text
         caption: Optional caption shown below the screenshot
+        notes_file: notes/default-view.md
 
   v2:
     summary: Updated summary for this version of the step
+    notes_file: notes/step-v2.md
     default_variant: alternative
     variants:
       - id: alternative
@@ -229,6 +231,10 @@ If `alt` is omitted, the builder generates a fallback alt from the step title an
 
 If `caption` is omitted, no caption is shown.
 
+If `notes_file` is set, it must point to a `.md` file inside that step folder (for example `notes/default-view.md`).
+
+Use either `notes` or `notes_file` for a given step version or variant, not both.
+
 If `implementation` is omitted, the step detail page still renders and falls back to any `prototype_path` and `notes` already defined on the step version.
 
 ## Rules
@@ -242,7 +248,7 @@ If `implementation` is omitted, the step detail page still renders and falls bac
 - Every step listed in that `step_order` must either have a matching `versions.vX` block in its `step.yaml`, or an earlier `versions.vY` block that can be reused automatically.
 - If there is no exact `versions.vX`, the builder falls back to the nearest earlier step version.
 - A `versions.vX` block can still be a pure alias like `use: v1` when you want to make the reuse explicit.
-- `notes` is optional on a step version and supports simple markdown paragraphs and `-` bullet lists on the step detail page.
+- `notes` is optional on a step version and supports full markdown (via `markdown-it`) on the step detail page.
 - Alias blocks are strict: if you use `use`, it must be the only field in that version block.
 - The latest journey page at `/map/journeys/<journey>/` is resolved from the version tagged `Latest`, or the highest `vX` if no tag is present.
 - Cross-step and dependency findings are shown on step detail pages as connected findings.

@@ -4,7 +4,7 @@
 {% set editBasePath = '/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId %}
 {% set isSeries = draft.type == 'Clinic series' %}
 {% set pageName = 'Change clinic series' if isSeries else 'Change single clinic' %}
-{% set detailsTitle = 'Series details' if isSeries else 'Clinic details' %}
+{% set datesTitle = 'Dates' if isSeries else 'Date' %}
 {% set vaccinatorText = draft.capacity ~ ' vaccinator' %}
 {% if draft.capacity != 1 %}
   {% set vaccinatorText = vaccinatorText ~ 's' %}
@@ -152,7 +152,7 @@
       <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
 
       {{ appCard({
-        title: detailsTitle,
+        title: datesTitle,
         action: {
           href: editBasePath ~ '/details',
           text: 'Change',

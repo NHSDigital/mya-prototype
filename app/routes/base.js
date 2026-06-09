@@ -1386,7 +1386,7 @@ function buildSessionHistory(siteRecurringSessions, startDate = null, endDate = 
     if (a.date === b.date) {
       return (a.from || '').localeCompare(b.from || '');
     }
-    return b.date.localeCompare(a.date);
+    return a.date.localeCompare(b.date);
   });
 }
 
@@ -1427,10 +1427,10 @@ function buildPastSessionHistory(siteRecurringSessions, startDate = null, endDat
       return aIsSeries ? -1 : 1;
     }
 
-    if (a.endDate === b.endDate) {
+    if (a.date === b.date) {
       return (a.from || '').localeCompare(b.from || '');
     }
-    return b.endDate.localeCompare(a.endDate);
+    return a.date.localeCompare(b.date);
   });
 }
 
