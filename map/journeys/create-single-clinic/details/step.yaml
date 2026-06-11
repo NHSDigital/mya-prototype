@@ -2,7 +2,10 @@ title: Dates
 versions:
   v2:
     summary: Set the date for the clinic.
-    prototype_path: /site/1/clinics/details
+    implementation:
+      prototype_link:
+        href: /site/1/clinics/details
+        label: Dates
     variants:
       - id: default
         label: default

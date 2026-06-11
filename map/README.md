@@ -175,7 +175,6 @@ versions:
   v1:
     summary: Short summary for this version of the step
     status: Optional delivery status shown next to the version selector
-    prototype_path: /optional/prototype/path
     notes: |
       Optional free-form notes for the step version.
 
@@ -235,7 +234,7 @@ If `notes_file` is set, it must point to a `.md` file inside that step folder (f
 
 Use either `notes` or `notes_file` for a given step version or variant, not both.
 
-If `implementation` is omitted, the step detail page still renders and falls back to any `prototype_path` and `notes` already defined on the step version.
+If `implementation` is omitted, the step detail page still renders and shows any available notes.
 
 ## Rules
 

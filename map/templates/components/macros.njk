@@ -51,7 +51,9 @@
 
 {% macro stepVariantScreenshot(variant) %}
   <figure class="map-step-display-screen">
-    <img src="{{ variant.screenshotPath }}" alt="{{ variant.alt }}" loading="lazy">
+    <a href="{{ variant.screenshotPath }}" target="_blank" rel="noopener noreferrer" aria-label="Open screenshot in a new tab">
+      <img src="{{ variant.screenshotPath }}" alt="{{ variant.alt }}" loading="lazy">
+    </a>
     {% if variant.caption %}
       <figcaption>{{ variant.caption }}</figcaption>
     {% endif %}

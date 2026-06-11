@@ -2,7 +2,10 @@ title: Clinic times
 versions:
   v2:
     summary: Define start and end times for each clinic.
-    prototype_path: /site/1/clinics/clinic-times
+    implementation:
+      prototype_link:
+        href: /site/1/clinics/clinic-times
+        label: Clinic times
     variants:
       - id: default
         label: Submitted state

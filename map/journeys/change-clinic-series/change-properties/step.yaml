@@ -2,7 +2,10 @@ title: Change properties
 versions:
   v1:
     summary: Users enter the new properties for the clinic series.
-    prototype_path: /site/clinics/edit/check-answers
+    implementation:
+      prototype_link:
+        href: /site/clinics/edit/check-answers
+        label: Change properties
     default_variant: start-and-end-times
     variants:
       - id: start-and-end-times
@@ -25,7 +28,6 @@ versions:
         screenshot: screenshots/closures-remove.png
   v2:
     summary: Users enter the new properties for the clinic series.
-    prototype_path: /site/clinics/edit/clinic-times
     default_variant: start-and-end-times
     implementation:
       ticket:

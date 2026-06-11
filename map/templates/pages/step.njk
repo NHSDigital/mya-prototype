@@ -69,15 +69,6 @@
             {{ stepVariantResearch(step.defaultVariant) }}
           </div>
 
-          <section class="map-panel">
-            <h2 class="nhsuk-heading-m">Notes</h2>
-            <div data-map-detail-notes="{{ step.slug }}">
-              <div class="map-rich-text">
-                {{ (step.defaultVariant.notesHtml or step.notesHtml or '<p class="map-empty-state">None for this version</p>') | safe }}
-              </div>
-            </div>
-          </section>
-
           {% if step.focusQuestions.length %}
             <section class="map-panel">
               <h2 class="nhsuk-heading-m">Research focus</h2>

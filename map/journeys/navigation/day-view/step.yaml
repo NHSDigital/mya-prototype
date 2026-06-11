@@ -23,7 +23,10 @@ versions:
     summary: The day view reached from Clinics in round 3 navigation testing.
     status: ready for dev
     default_variant: scheduled
-    prototype_path: /site/1/availability/day
+    implementation:
+      prototype_link:
+        href: /site/1/availability/day
+        label: Day view
     notes_file: notes/day-view-v3.md
     variants:
       - id: scheduled

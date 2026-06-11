@@ -2,7 +2,10 @@ title: Clinic closures
 versions:
   v2:
     summary: Review and manage closure dates for the clinic series.
-    prototype_path: /site/1/clinics/clinic-closures
+    implementation:
+      prototype_link:
+        href: /site/1/clinics/clinic-closures
+        label: Clinic closures
     default_variant: default
     variants:
       - id: default

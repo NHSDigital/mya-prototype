@@ -2,7 +2,10 @@ title: Check answers
 versions:
   v2:
     summary: Review clinic details before publishing.
-    prototype_path: /site/1/clinics/check-answers
+    implementation:
+      prototype_link:
+        href: /site/1/clinics/check-answers
+        label: Check answers
     variants:
       - id: default
         label: default

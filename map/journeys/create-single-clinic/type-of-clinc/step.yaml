@@ -2,7 +2,10 @@ title: Type of clinic
 versions:
   v2:
     summary: Select the type of clinic to create.
-    prototype_path: /site/1/clinics/type-of-clinc?new=1
+    implementation:
+      prototype_link:
+        href: /site/1/clinics/type-of-clinc?new=1
+        label: Type of clinic
     variants:
       - id: default
         label: default

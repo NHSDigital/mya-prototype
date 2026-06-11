@@ -460,7 +460,6 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
     stepPath,
     versionId: resolvedVersion.resolvedVersionId,
     defaultVariant,
-    defaultPrototypePath: optionalString(versionConfig.prototype_path),
     defaultNotes: stepNotes.notes
   });
 
@@ -477,7 +476,6 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
         stepPath,
         versionId: resolvedVersion.resolvedVersionId,
         defaultVariant: variant,
-        defaultPrototypePath: optionalString(versionConfig.prototype_path),
         defaultNotes: optionalString(variant.notes) || stepNotes.notes,
         fieldName: hasVariantImplementation
           ? `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}.variants[${variantIndex}].implementation`
@@ -493,7 +491,6 @@ function loadStepVersion({ journeyDir, journeySlug, stepSlug, versionId }) {
       versionConfig.summary,
       `${stepPath} -> versions.${resolvedVersion.resolvedVersionId}.summary`
     ),
-    prototypePath: optionalString(versionConfig.prototype_path),
     notes: stepNotes.notes,
     notesHtml: stepNotes.notesHtml,
     notesFile: stepNotes.notesFile,
@@ -711,7 +708,6 @@ function normalizeImplementation({
   stepPath,
   versionId,
   defaultVariant,
-  defaultPrototypePath,
   defaultNotes,
   fieldName
 }) {
@@ -760,7 +756,7 @@ function normalizeImplementation({
         optionalString(prototypeLinkValue.label) ||
         optionalString(defaultVariant?.label) ||
         optionalString(versionConfig.summary),
-      href: optionalString(prototypeLinkValue.href) || defaultPrototypePath
+      href: optionalString(prototypeLinkValue.href)
     },
     `${resolvedFieldName}.prototype_link`,
     { allowBlank: true }
@@ -1431,7 +1427,7 @@ function createMarkdownRenderer() {
   const renderer = new MarkdownIt({
     html: false,
     linkify: true,
-    typographer: false
+    typographer: true
   });
 
   const renderToken = renderer.renderer.renderToken.bind(renderer.renderer);

@@ -1,19 +1,18 @@
-## Navigation changes
+## Changes compared with live
 
-### Main navigation
+- Replace the live top navigation items "View availability" and "Create availability" with a single "Clinics" item.
+- Rename the live "View availability" homepage card to "Clinics".
+- Change the card description to "View appointments and manage clinics for your site".
+- Remove the live "Create availability" homepage card.
+- Keep "Change site details", "Manage users", and "Reports" as separate homepage cards.
 
-1. Rename "View availability" to "Clinics"
-2. Remove "Create availability"
+## NHS components and patterns
 
-### Cards
+- Use the [Summary list component](https://service-manual.nhs.uk/design-system/components/summary-list) for the site metadata.
+- Use the [Primary card with chevron pattern](https://service-manual.nhs.uk/design-system/components/card#primary-card) for homepage navigation cards.
+- Keep the site status as an [NHS tag](https://service-manual.nhs.uk/design-system/components/tag).
 
-On the homepage, we use [Primary card with chevron](https://service-manual.nhs.uk/design-system/components/card#primary-card) to display information about every section in MYA.
+## Markup and structure
 
-#### Changes to the "View availability" card
+- Keep the site name as the page `<h1>`.
 
-1. Change the title from "View availability" to Clinics
-2. Change the content to: "View appointments and manage clinics for your site."
-
-#### Changes to the "Create availability" card
-
-This card should be removed

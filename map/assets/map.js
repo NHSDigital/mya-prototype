@@ -14,43 +14,28 @@ function getControlDataElement(selectElement) {
     : null;
 }
 
-function getVariantIdFromHash(variantIndex) {
-  const hash = (window.location.hash || '').replace(/^#/, '');
-  if (!hash) return '';
-
-  let candidate = '';
-
-  if (hash.includes('=')) {
-    const params = new URLSearchParams(hash);
-    candidate = params.get('variant') || '';
-  } else {
-    try {
-      candidate = decodeURIComponent(hash);
-    } catch {
-      candidate = hash;
-    }
-  }
+function getVariantIdFromQuery(variantIndex) {
+  const params = new URLSearchParams(window.location.search || '');
+  const candidate = params.get('variant') || '';
 
   return Object.prototype.hasOwnProperty.call(variantIndex, candidate) ? candidate : '';
 }
 
-function setVariantHash(variantId) {
+function setVariantQuery(variantId) {
   if (!variantId) return;
 
-  const nextHash = `variant=${encodeURIComponent(variantId)}`;
-  const currentHash = (window.location.hash || '').replace(/^#/, '');
-  if (currentHash === nextHash) return;
+  const currentUrl = new URL(window.location.href);
+  if (currentUrl.searchParams.get('variant') === variantId) return;
+
+  currentUrl.searchParams.set('variant', variantId);
+  const nextUrl = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
 
   if (window.history && typeof window.history.replaceState === 'function') {
-    window.history.replaceState(
-      null,
-      '',
-      `${window.location.pathname}${window.location.search}#${nextHash}`
-    );
+    window.history.replaceState(null, '', nextUrl);
     return;
   }
 
-  window.location.hash = nextHash;
+  window.location.assign(nextUrl);
 }
 
 function updateVariant(stepSlug, variantData) {
@@ -115,9 +100,9 @@ document.querySelectorAll('[data-map-variant-select], .js-map-variant-select').f
     return;
   }
 
-  const hashVariantId = getVariantIdFromHash(variantIndex);
+  const queryVariantId = getVariantIdFromQuery(variantIndex);
   const initialVariantId =
-    hashVariantId
+    queryVariantId
     || (defaultVariantId && variantIndex[defaultVariantId] ? defaultVariantId : '')
     || (variantIndex[selectElement.value] ? selectElement.value : '')
     || Object.keys(variantIndex)[0];
@@ -132,20 +117,7 @@ document.querySelectorAll('[data-map-variant-select], .js-map-variant-select').f
     const selectedVariant = variantIndex[selectedVariantId];
     if (selectedVariant) {
       updateVariant(stepSlug, selectedVariant);
-      setVariantHash(selectedVariantId);
-    }
-  });
-
-  window.addEventListener('hashchange', () => {
-    const hashVariantId = getVariantIdFromHash(variantIndex);
-    if (!hashVariantId || hashVariantId === selectElement.value) {
-      return;
-    }
-
-    const hashVariant = variantIndex[hashVariantId];
-    if (hashVariant) {
-      selectElement.value = hashVariantId;
-      updateVariant(stepSlug, hashVariant);
+      setVariantQuery(selectedVariantId);
     }
   });
 });
