@@ -9,3 +9,18 @@ step_order:
   - week-view
   - month-view
   - clinics-list
+
+findings:
+  - scope: step
+    step: day-view
+    insights:
+      - In round 2 testing, participants were generally able to find how to edit an individual clinic from week view without prompting.
+      - Earlier difficulty finding single-clinic editing in round 1 appeared to be linked more to top-level navigation structure than to day or week view controls.
+      - We de-scoped "Clinics running today" from the day view variants in round 3 to focus on the core scheduled and cancelled views, but this is an important user need to consider for future iterations.
+
+  - scope: step
+    step: clinics-list
+    insights:
+      - The label "Clinics list" led users to expect a literal list of all clinics, which made an aggregated clinic-series view harder for some participants to interpret.
+      - Renaming this area to "Create and manage clinics" is intended to better signal where users go to create and manage clinics.
+      - There is an unvalidated but important user need to see completed clinic series so users can confirm a series has ended rather than been deleted and refer back to previous setup details.
