@@ -13,7 +13,7 @@
 
 {% block beforeContent %}
 {{ backLink({
-  href: '/site/' + site_id + '/clinics'
+  href: backHref or ('/site/' + site_id + '/clinics')
 }) }}
 {% endblock %}
 
@@ -161,7 +161,7 @@
         },
         items: [
           {
-            key: 'Start date',
+            key: 'Start date' if isSeries else 'Date',
             value: draft.startDate | nhsDate
           },
           {

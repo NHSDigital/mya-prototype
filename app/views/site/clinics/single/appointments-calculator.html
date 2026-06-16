@@ -5,7 +5,7 @@
 {% if not backUrl %}{% set backUrl = '/site/' + site_id + '/clinics/clinic-times' %}{% endif %}
 {% if not formAction %}{% set formAction = '/site/' + site_id + '/clinics/services' %}{% endif %}
 {% if not captionText %}{% set captionText = 'Create a single clinic' %}{% endif %}
-{% set canChangeDuration = features and features.allowDurationChange %}
+{% set durationCanChange = canChangeDuration if canChangeDuration is defined else true %}
 
 {% set startHour = data.newSession.startTime.hour or '09' %}
 {% set startMinute = data.newSession.startTime.minute or '00' %}
@@ -41,10 +41,10 @@
           suffix: "minutes",
           spellcheck: false,
           value: data.newSession.duration or '10',
-          disabled: not canChangeDuration
+          disabled: not durationCanChange
         }) }}
 
-        {% if not canChangeDuration %}
+        {% if not durationCanChange %}
           <input type="hidden" name="newSession[duration]" value="{{ data.newSession.duration or '10' }}">
         {% endif %}
 

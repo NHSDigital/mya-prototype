@@ -43,7 +43,11 @@ function bookingBucketKeysForBooking(booking, timezone) {
     keys.push(bookingBucketKey({ slotKey, recurringSessionId: booking.recurringSessionId }));
   }
 
-  keys.push(bookingBucketKey({ slotKey }));
+  // Only fall back to time-only matching for bookings that have no session identity.
+  // This prevents cross-clinic assignment when two sessions share the same datetime.
+  if (!booking?.sessionId && !booking?.recurringSessionId) {
+    keys.push(bookingBucketKey({ slotKey }));
+  }
 
   return keys;
 }

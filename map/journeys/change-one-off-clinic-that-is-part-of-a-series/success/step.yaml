@@ -1,13 +1,7 @@
 title: Success
 versions:
-  v1:
-    summary: The confirmation step after the single clinic has been updated.
-    variants:
-      - id: default
-        label: Default confirmation
-        screenshot: screenshots/success-v1.png
   v3:
-    summary: The confirmation step after the single clinic has been updated.
+    summary: The confirmation step after the clinic has been updated.
     default_variant: keep-or-no-bookings
     variants:
       - id: keep-or-no-bookings

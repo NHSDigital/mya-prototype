@@ -1,18 +1,9 @@
-title: Clinic times
+title: Change pages
 versions:
-  v1:
-    summary: The step where a user changes the start and end time for the single clinic.
-    variants:
-      - id: default
-        label: Default view
-        screenshot: screenshots/clinic-times-v1.png
   v3:
-    summary: The step where a user changes the key details for a single clinic.
-    default_variant: date
+    summary: The change pages for times and capacity or services.
+    default_variant: times-and-capacity-changeable
     variants:
-      - id: date
-        label: Date
-        screenshot: screenshots/date-v3.png
       - id: times-and-capacity-changeable
         label: "Times and capacity: changeable"
         screenshot: screenshots/times-and-capacity-changeable-v3.png

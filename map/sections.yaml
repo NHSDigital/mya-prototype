@@ -9,6 +9,7 @@ sections:
     journeys:
       - change-clinic-series
       - change-single-clinic
+      - change-one-off-clinic-that-is-part-of-a-series
 
   - id: create-clinics
     title: Create Clinics

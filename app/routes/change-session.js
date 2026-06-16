@@ -115,6 +115,41 @@ function normalizeBackHref(back) {
   return value;
 }
 
+function normalizeSessionType(type) {
+  if (type === 'Single date') return 'Single clinic';
+  if (type === 'Weekly session' || type === 'Weekly sessions' || type === 'Weekly repeating') {
+    return 'Clinic series';
+  }
+  return type;
+}
+
+function isStandaloneSingleClinicModel(model = {}) {
+  const sessionType = normalizeSessionType(model?.type);
+  if (sessionType === 'Single clinic') return true;
+  if (sessionType === 'Clinic series') return false;
+  return Boolean(model?.startDate && model?.endDate && model.startDate === model.endDate);
+}
+
+function clinicEditPath(siteId, sessionId, suffix = '') {
+  return `/site/${siteId}/clinics/edit/${sessionId}${suffix}`;
+}
+
+function withOptionalBackHref(path, backHref) {
+  if (!backHref) return path;
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}back=${encodeURIComponent(backHref)}`;
+}
+
+function redirectToSingleClinicEdit(req, res, state, suffix = '') {
+  if (state?.journeyType !== 'single-clinic' || !state?.parentSessionId) {
+    return false;
+  }
+
+  const targetPath = clinicEditPath(req.site_id, state.parentSessionId, suffix);
+  res.redirect(withOptionalBackHref(targetPath, state.returnTo));
+  return true;
+}
+
 function changeFieldToStep(field, isCombinedTimesAndCapacity = false) {
   switch (field) {
     case 'name':
@@ -147,10 +182,6 @@ function changeFieldsForStep(step, isCombinedTimesAndCapacity = false) {
 
 function useCombinedTimesAndCapacity(features = {}) {
   return Boolean(features?.combinedTimesAndCapacity);
-}
-
-function allowDurationChange(features = {}) {
-  return Boolean(features?.allowDurationChange);
 }
 
 function getChangeState(data) {
@@ -565,7 +596,7 @@ function ensureChangeStateForSession(req, res) {
   const requestedBackHref = normalizeBackHref(req.query?.back);
   const existing = getChangeState(data);
 
-  if (existing && existing.siteId === siteId && existing.itemId === itemId) {
+  if (existing && existing.siteId === siteId && existing.itemId === itemId && existing.originalParent) {
     existing.useCombinedTimesAndCapacity = isCombinedTimesAndCapacity;
     if (requestedBackHref) {
       existing.returnTo = requestedBackHref;
@@ -580,8 +611,18 @@ function ensureChangeStateForSession(req, res) {
   const parentModel = data?.recurring_sessions?.[siteId]?.[target.session.recurringId];
   if (!parentModel) return null;
 
+  if (isStandaloneSingleClinicModel(parentModel)) {
+    clearChangeState(data);
+    return {
+      journeyType: 'single-clinic',
+      parentSessionId: parentModel.id,
+      returnTo: requestedBackHref || null
+    };
+  }
+
   const originalChild = findChildSessionForDate(target.date, parentModel.childSessions);
   const state = {
+    journeyType: 'one-off-series-clinic',
     siteId,
     itemId,
     date: target.date,
@@ -616,6 +657,10 @@ router.get('/site/:id/change/:type/:itemId', (req, res) => {
     return res.redirect(`/site/${req.site_id}/availability/week`);
   }
 
+  if (redirectToSingleClinicEdit(req, res, state)) {
+    return;
+  }
+
   return res.render('site/clinics/edit/summary-child', {
     pageName: 'Change clinic',
     itemId: req.params.itemId,
@@ -630,6 +675,10 @@ router.all('/site/:id/change/session/:itemId/details', (req, res) => {
   const state = ensureChangeStateForSession(req, res);
   if (!state) {
     return res.redirect(`/site/${req.site_id}/availability/week`);
+  }
+
+  if (redirectToSingleClinicEdit(req, res, state, '/details')) {
+    return;
   }
 
   if (state.currentEditStep !== 'details') {
@@ -658,6 +707,10 @@ router.all('/site/:id/change/session/:itemId/clinic-times', (req, res) => {
     return res.redirect(`/site/${req.site_id}/availability/week`);
   }
 
+  if (redirectToSingleClinicEdit(req, res, state, '/clinic-times')) {
+    return;
+  }
+
   if (state.currentEditStep !== 'clinic-times') {
     setCurrentChangeStep(state, 'clinic-times');
     setChangeState(req.session.data, state);
@@ -680,11 +733,9 @@ router.all('/site/:id/change/session/:itemId/clinic-times', (req, res) => {
     backUrl: changeSummaryPath(req.site_id, req.params.itemId),
     captionText: formatDisplayDate(state.date),
     formAction: nextPath,
+    canChangeDuration: false,
     includeCapacityFields: state.useCombinedTimesAndCapacity,
-    showSimplifiedCapacityCalculator: state.useCombinedTimesAndCapacity,
-    features: {
-      allowDurationChange: allowDurationChange(req.features)
-    }
+    showSimplifiedCapacityCalculator: state.useCombinedTimesAndCapacity
   });
 });
 
@@ -692,6 +743,10 @@ router.all('/site/:id/change/session/:itemId/appointments-calculator', (req, res
   const state = ensureChangeStateForSession(req, res);
   if (!state) {
     return res.redirect(`/site/${req.site_id}/availability/week`);
+  }
+
+  if (redirectToSingleClinicEdit(req, res, state, '/appointments-calculator')) {
+    return;
   }
 
   if (state.useCombinedTimesAndCapacity) {
@@ -726,6 +781,10 @@ router.all('/site/:id/change/session/:itemId/services', (req, res) => {
     return res.redirect(`/site/${req.site_id}/availability/week`);
   }
 
+  if (redirectToSingleClinicEdit(req, res, state, '/services')) {
+    return;
+  }
+
   if (state.currentEditStep !== 'services') {
     setCurrentChangeStep(state, 'services');
     setChangeState(req.session.data, state);
@@ -755,6 +814,10 @@ router.get('/site/:id/change/session/:itemId/change/:field', (req, res) => {
     return res.redirect(`/site/${req.site_id}/availability/week`);
   }
 
+  if (redirectToSingleClinicEdit(req, res, state, `/change/${req.params.field}`)) {
+    return;
+  }
+
   const step = changeFieldToStep(req.params.field, state.useCombinedTimesAndCapacity);
   if (!step) {
     return res.redirect(changeSummaryPath(req.site_id, req.params.itemId));
@@ -769,6 +832,10 @@ router.all('/site/:id/change/session/:itemId/affected-bookings', (req, res) => {
   const state = ensureChangeStateForSession(req, res);
   if (!state) {
     return res.redirect(`/site/${req.site_id}/availability/week`);
+  }
+
+  if (redirectToSingleClinicEdit(req, res, state, '/affected-bookings')) {
+    return;
   }
 
   const affectedCount = asArray(state.affectedBookingIds).length;
@@ -804,6 +871,10 @@ router.all('/site/:id/change/session/:itemId/check-answers', (req, res) => {
   const state = ensureChangeStateForSession(req, res);
   if (!state) {
     return res.redirect(`/site/${req.site_id}/availability/week`);
+  }
+
+  if (redirectToSingleClinicEdit(req, res, state, '/check-answers')) {
+    return;
   }
 
   if (req.method === 'POST') {

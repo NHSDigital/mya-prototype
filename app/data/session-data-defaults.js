@@ -405,6 +405,7 @@ function buildSeedRecurringDefaults(site_id, seedRecurringClinics = []) {
       id,
       label: clinic.label || `Clinic ${clinic.from || ''}`.trim(),
       legacy: Boolean(clinic.legacy || clinic.isLegacy),
+      excludeFromBookingGeneration: Boolean(clinic.excludeFromBookingGeneration || clinic.noBookings),
       startDate: clinic.startDate,
       endDate: clinic.endDate || clinic.startDate,
       recurrencePattern: clinic.recurrencePattern || {
@@ -617,6 +618,12 @@ for (const cfg of sitesConfig) {
     : baseAvailability;
 
   const slots = generateSlots(effectiveAvailability);
+  const slotsForBookingGeneration = slots.filter((slot) => {
+    const recurringSessionId = String(slot?.recurringSessionId || '').trim();
+    if (!recurringSessionId) return true;
+
+    return !Boolean(recurringSessionsForSite?.[recurringSessionId]?.excludeFromBookingGeneration);
+  });
 
   const {
     overrides: bookingOverrides,
@@ -626,7 +633,7 @@ for (const cfg of sitesConfig) {
 
   const generatedBookings = generateBookings({
     site_id,
-    slots,
+    slots: slotsForBookingGeneration,
     ...bookingGeneratorConfig,
     names: catNames
   });
@@ -635,7 +642,7 @@ for (const cfg of sitesConfig) {
     generatedBookings,
     [...toArray(bookingOverrides), ...toArray(manualBookingOverrides)],
     site_id,
-    slots
+    slotsForBookingGeneration
   );
 
   daily_availability[site_id] = baseAvailability;

@@ -6,7 +6,7 @@
 {% if not captionText %}{% set captionText = 'Create clinic series' %}{% endif %}
 {% if not includeCapacityFields %}{% set includeCapacityFields = false %}{% endif %}
 {% if not showSimplifiedCapacityCalculator %}{% set showSimplifiedCapacityCalculator = false %}{% endif %}
-{% set canChangeDuration = features and features.allowDurationChange %}
+{% set durationCanChange = canChangeDuration if canChangeDuration is defined else true %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -92,24 +92,28 @@
 
           {{ input({
             label: {
-              text: "How long are your appointments?",
+              text: "How long do you need for each appointment?",
               classes: "nhsuk-label--m"
             },
             hint: {
-              text: "Appointment length must be a maximum of 60 minutes"
+              text: "Appointment length must be a maximum of 60 minutes" if durationCanChange else (
+                'You cannot change the appointment length once there are bookings for this clinic. This clinic has ' ~ durationBookingCount ~ ' booking' ~ ('' if durationBookingCount == 1 else 's') ~ '.'
+                if durationBookingCount is defined
+                else 'You cannot change the appointment length once there are bookings for this clinic'
+              )
             },
             id: "duration",
             inputmode: "numeric",
             name: "newSession[duration]",
             classes: "nhsuk-input--width-2",
             suffix: "minutes",
-            value: data.newSession.duration or '10',
+            value: data.newSession.duration,
             spellcheck: false,
-            disabled: not canChangeDuration
+            disabled: not durationCanChange
           }) }}
 
-          {% if not canChangeDuration %}
-            <input type="hidden" name="newSession[duration]" value="{{ data.newSession.duration or '10' }}">
+          {% if not durationCanChange %}
+            <input type="hidden" name="newSession[duration]" value="{{ data.newSession.duration }}">
           {% endif %}
 
           {% if showSimplifiedCapacityCalculator %}

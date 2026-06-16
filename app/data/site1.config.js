@@ -18,6 +18,8 @@ const childSessionIn4Days = today.plus({ days: 4 }).toISODate();
 const childSessionIn5Days = today.plus({ days: 5 }).toISODate();
 const childSessionIn6Days = today.plus({ days: 6 }).toISODate();
 const childSessionIn7Days = today.plus({ days: 7 }).toISODate();
+const noBookingsSingleDateA = today.plus({ days: 9 }).toISODate();
+const noBookingsSingleDateB = today.plus({ days: 10 }).toISODate();
 const nextTuesdayDate = today.plus({ days: (2 - today.weekday + 7) % 7 }).toISODate();
 
 const SERVICE_IDS = {
@@ -74,6 +76,24 @@ const clinics = [
         label: 'Maintenance window'
       }
     ]
+  },
+  {
+    label: 'No bookings Mon, Thu clinic series 10:00',
+    startDate: ongoingSeriesStart,
+    endDate: ongoingSeriesEnd,
+    recurrencePattern: {
+      frequency: 'Weekly',
+      interval: 1,
+      byDay: ['Monday', 'Thursday']
+    },
+    from: '10:00',
+    until: '14:00',
+    slotLength: 20,
+    services: [SERVICE_IDS.COVID_ADULT, SERVICE_IDS.FLU_65_PLUS],
+    capacity: 1,
+    childSessions: [],
+    closures: [],
+    excludeFromBookingGeneration: true
   },
   {
     label: 'One off RSV',
@@ -179,6 +199,38 @@ const clinics = [
     slotLength: 15,
     services: [SERVICE_IDS.RSV_ADULT],
     capacity: 1
+  },
+  {
+    label: 'No-booking single RSV A',
+    startDate: noBookingsSingleDateA,
+    endDate: noBookingsSingleDateA,
+    recurrencePattern: {
+      frequency: 'Weekly',
+      interval: 1,
+      byDay: [DateTime.fromISO(noBookingsSingleDateA).toFormat('cccc')]
+    },
+    from: '09:30',
+    until: '11:30',
+    slotLength: 10,
+    services: [SERVICE_IDS.RSV_ADULT],
+    capacity: 1,
+    excludeFromBookingGeneration: true
+  },
+  {
+    label: 'No-booking single RSV B',
+    startDate: noBookingsSingleDateB,
+    endDate: noBookingsSingleDateB,
+    recurrencePattern: {
+      frequency: 'Weekly',
+      interval: 1,
+      byDay: [DateTime.fromISO(noBookingsSingleDateB).toFormat('cccc')]
+    },
+    from: '14:00',
+    until: '16:00',
+    slotLength: 10,
+    services: [SERVICE_IDS.RSV_ADULT],
+    capacity: 1,
+    excludeFromBookingGeneration: true
   },
   {
     label: 'Empty series',
