@@ -115,14 +115,14 @@ function normalizeBackHref(back) {
   return value;
 }
 
-function changeFieldToStep(field) {
+function changeFieldToStep(field, isCombinedTimesAndCapacity = false) {
   switch (field) {
     case 'name':
       return 'details';
     case 'time':
       return 'clinic-times';
     case 'capacity':
-      return 'appointments-calculator';
+      return isCombinedTimesAndCapacity ? 'clinic-times' : 'appointments-calculator';
     case 'services':
       return 'services';
     default:
@@ -130,19 +130,27 @@ function changeFieldToStep(field) {
   }
 }
 
-function changeFieldsForStep(step) {
+function changeFieldsForStep(step, isCombinedTimesAndCapacity = false) {
   switch (step) {
     case 'details':
       return ['name'];
     case 'clinic-times':
-      return ['time'];
+      return isCombinedTimesAndCapacity ? ['time', 'capacity'] : ['time'];
     case 'appointments-calculator':
-      return ['capacity'];
+      return isCombinedTimesAndCapacity ? [] : ['capacity'];
     case 'services':
       return ['services'];
     default:
       return [];
   }
+}
+
+function useCombinedTimesAndCapacity(features = {}) {
+  return Boolean(features?.combinedTimesAndCapacity);
+}
+
+function allowDurationChange(features = {}) {
+  return Boolean(features?.allowDurationChange);
 }
 
 function getChangeState(data) {
@@ -180,7 +188,7 @@ function setCurrentChangeStep(state, step) {
 }
 
 function currentEditableFields(state) {
-  return changeFieldsForStep(state?.currentEditStep);
+  return changeFieldsForStep(state?.currentEditStep, Boolean(state?.useCombinedTimesAndCapacity));
 }
 
 function findEffectiveSession(dailyAvailability, itemId) {
@@ -553,10 +561,12 @@ function ensureChangeStateForSession(req, res) {
   const data = req.session.data;
   const siteId = req.site_id;
   const itemId = req.params.itemId;
+  const isCombinedTimesAndCapacity = useCombinedTimesAndCapacity(req.features);
   const requestedBackHref = normalizeBackHref(req.query?.back);
   const existing = getChangeState(data);
 
   if (existing && existing.siteId === siteId && existing.itemId === itemId) {
+    existing.useCombinedTimesAndCapacity = isCombinedTimesAndCapacity;
     if (requestedBackHref) {
       existing.returnTo = requestedBackHref;
       setChangeState(data, existing);
@@ -580,6 +590,7 @@ function ensureChangeStateForSession(req, res) {
     originalChild: clone(originalChild),
     draft: buildChildDraft(parentModel, target.session, target.date),
     returnTo: requestedBackHref || null,
+    useCombinedTimesAndCapacity: isCombinedTimesAndCapacity,
     currentEditStep: null,
     bookingAction: null,
     affectedBookingIds: []
@@ -654,14 +665,26 @@ router.all('/site/:id/change/session/:itemId/clinic-times', (req, res) => {
 
   if (req.method === 'POST') {
     updateDraftFromTimes(state, req.body?.newSession || {});
+    if (state.useCombinedTimesAndCapacity) {
+      updateDraftFromAppointments(state, req.body?.newSession || {});
+    }
     return res.redirect(prepareReviewAfterChange(req.session.data, req.site_id, req.params.itemId, state));
   }
+
+  const nextPath = state.useCombinedTimesAndCapacity
+    ? changeStepPath(req.site_id, req.params.itemId, 'services')
+    : changeStepPath(req.site_id, req.params.itemId, 'appointments-calculator');
 
   setChangeTemplateData(res, req.session.data, state);
   return res.render('site/clinics/series/clinic-times', {
     backUrl: changeSummaryPath(req.site_id, req.params.itemId),
     captionText: formatDisplayDate(state.date),
-    formAction: changeStepPath(req.site_id, req.params.itemId, 'clinic-times')
+    formAction: nextPath,
+    includeCapacityFields: state.useCombinedTimesAndCapacity,
+    showSimplifiedCapacityCalculator: state.useCombinedTimesAndCapacity,
+    features: {
+      allowDurationChange: allowDurationChange(req.features)
+    }
   });
 });
 
@@ -669,6 +692,10 @@ router.all('/site/:id/change/session/:itemId/appointments-calculator', (req, res
   const state = ensureChangeStateForSession(req, res);
   if (!state) {
     return res.redirect(`/site/${req.site_id}/availability/week`);
+  }
+
+  if (state.useCombinedTimesAndCapacity) {
+    return res.redirect(changeStepPath(req.site_id, req.params.itemId, 'clinic-times'));
   }
 
   if (state.currentEditStep !== 'appointments-calculator') {
@@ -709,10 +736,14 @@ router.all('/site/:id/change/session/:itemId/services', (req, res) => {
     return res.redirect(prepareReviewAfterChange(req.session.data, req.site_id, req.params.itemId, state));
   }
 
+  const backUrl = state.useCombinedTimesAndCapacity
+    ? changeStepPath(req.site_id, req.params.itemId, 'clinic-times')
+    : changeStepPath(req.site_id, req.params.itemId, 'appointments-calculator');
+
   setChangeTemplateData(res, req.session.data, state);
   return res.render('site/clinics/series/services', {
     pageName: 'Services',
-    backUrl: changeSummaryPath(req.site_id, req.params.itemId),
+    backUrl,
     captionText: formatDisplayDate(state.date),
     formAction: changeStepPath(req.site_id, req.params.itemId, 'services')
   });
@@ -724,7 +755,7 @@ router.get('/site/:id/change/session/:itemId/change/:field', (req, res) => {
     return res.redirect(`/site/${req.site_id}/availability/week`);
   }
 
-  const step = changeFieldToStep(req.params.field);
+  const step = changeFieldToStep(req.params.field, state.useCombinedTimesAndCapacity);
   if (!step) {
     return res.redirect(changeSummaryPath(req.site_id, req.params.itemId));
   }
@@ -816,6 +847,7 @@ router.all('/site/:id/change/session/:itemId/check-answers', (req, res) => {
       from: state.draft.parentFrom,
       until: state.draft.parentUntil,
       capacity: String(state.draft.parentCapacity),
+      duration: String(state.draft.duration),
       services: asArray(state.draft.parentServices)
     },
     checkAnswersMode: 'session-change',
