@@ -12,3 +12,9 @@ versions:
       - id: default
         label: default
         screenshot: screenshots/change-clinic-v2.png
+  v3:
+    summary: The starting point for updating a single clinic in a clinic series.
+    variants:
+      - id: default
+        label: Default view
+        screenshot: screenshots/change-clinic-v3.png
