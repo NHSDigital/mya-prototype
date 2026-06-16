@@ -24,3 +24,36 @@ versions:
       - id: cancel-bookings
         label: Cancel affected appointments
         screenshot: screenshots/check-answers-v2-cancel.png
+  v3:
+    summary: The review step where people confirm the final set of changes before saving them.
+    default_variant: times-and-capacity-keep
+    notes: |
+      Round 3 screenshots are grouped by what was changed and whether booked appointments are kept or cancelled.
+    variants:
+      - id: times-and-capacity-keep
+        label: Times and capacity - keep booked appointments
+        screenshot: screenshots/check-answers-v3-times-and-capacity-keep.png
+      - id: times-and-capacity-cancel
+        label: Times and capacity - cancel affected appointments
+        screenshot: screenshots/check-answers-v3-times-and-capacity-cancel.png
+      - id: dates-keep
+        label: Dates - keep booked appointments
+        screenshot: screenshots/check-answers-v3-dates-keep.png
+      - id: dates-cancel
+        label: Dates - cancel affected appointments
+        screenshot: screenshots/check-answers-v3-dates-cancel.png
+      - id: day-pattern-keep
+        label: Day pattern - keep booked appointments
+        screenshot: screenshots/check-answers-v3-day-pattern-keep.png
+      - id: day-pattern-cancel
+        label: Day pattern - cancel affected appointments
+        screenshot: screenshots/check-answers-v3-day-pattern-cancel.png
+      - id: services-keep
+        label: Services - keep booked appointments
+        screenshot: screenshots/check-answers-v3-services-keep.png
+      - id: services-cancel
+        label: Services - cancel affected appointments
+        screenshot: screenshots/check-answers-v3-services-cancel.png
+      - id: closures-keep
+        label: Closures - keep booked appointments
+        screenshot: screenshots/check-answers-v3-closures-keep.png

@@ -3,6 +3,8 @@
 module.exports = {
   allAvailability: false,
   cancelDateRange: true,
-  clinicsPerPage: 10
+  clinicsPerPage: 10,
+  combinedTimesAndCapacity: true,
+  allowDurationChange: false
 }
 

@@ -72,25 +72,57 @@
           {% endif %}
         {% endset %}
 
-        {{ summaryList({
-          rows: [
+        {% set isCombinedTimesAndCapacity = features and features.combinedTimesAndCapacity %}
+        {% set timesAndCapacitySummaryHtml %}
+          Start time: {{ startTime | nhsTime }}<br>
+          End time: {{ endTime | nhsTime }}<br>
+          Vaccinators: {{ data.newSession.capacity }}<br>
+          Appointment length: {{ data.newSession.duration }} minutes
+        {% endset %}
+
+        {% set checkAnswersRows = [
+          {
+            key: {
+              text: "Date"
+            },
+            value: {
+              text: displayDate
+            },
+            actions: {
+              items: [
+                {
+                  href: "/site/" + site_id + "/clinics/details",
+                  text: "Change",
+                  visuallyHiddenText: " date"
+                }
+              ]
+            }
+          }
+        ] %}
+
+        {% if isCombinedTimesAndCapacity %}
+          {% set checkAnswersRows = checkAnswersRows.concat([
             {
               key: {
-                text: "Date"
+                text: "Times and capacity"
               },
               value: {
-                text: displayDate
+                html: timesAndCapacitySummaryHtml
               },
               actions: {
                 items: [
                   {
-                    href: "/site/" + site_id + "/clinics/details",
+                    href: "/site/" + site_id + "/clinics/clinic-times",
                     text: "Change",
-                    visuallyHiddenText: " date"
+                    visuallyHiddenText: " times and capacity"
                   }
                 ]
               }
-            }, {
+            }
+          ]) %}
+        {% else %}
+          {% set checkAnswersRows = checkAnswersRows.concat([
+            {
               key: {
                 text: "Time"
               },
@@ -145,24 +177,32 @@
                   }
                 ]
               }
-            }, {
-              key: {
-                text: "Services available"
-              },
-              value: {
-                 html: servicesSummaryHtml
-              },
-              actions: {
-                items: [
-                  {
-                    href: "/site/" + site_id + "/clinics/services",
-                    text: "Change",
-                    visuallyHiddenText: " services available"
-                  }
-                ]
-              }
             }
-          ]
+          ]) %}
+        {% endif %}
+
+        {% set checkAnswersRows = checkAnswersRows.concat([
+          {
+            key: {
+              text: "Services available"
+            },
+            value: {
+              html: servicesSummaryHtml
+            },
+            actions: {
+              items: [
+                {
+                  href: "/site/" + site_id + "/clinics/services",
+                  text: "Change",
+                  visuallyHiddenText: " services available"
+                }
+              ]
+            }
+          }
+        ]) %}
+
+        {{ summaryList({
+          rows: checkAnswersRows
         }) }}
 
         <h2 class="nhsuk-heading-m nhsuk-u-margin-top-6">Before you continue</h2>

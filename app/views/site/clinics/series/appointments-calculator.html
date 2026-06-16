@@ -8,6 +8,7 @@
 {% if not capacityLabel %}{% set capacityLabel = "How many vaccinators are in this clinic?" %}{% endif %}
 {% if not capacitySuffixText %}{% set capacitySuffixText = "vaccinators" %}{% endif %}
 {% if hideDuration and not fixedDuration %}{% set fixedDuration = data.newSession.duration %}{% endif %}
+{% set canChangeDuration = features and features.allowDurationChange %}
 
 {% set startHour = data.newSession.startTime.hour or '09' %}
 {% set startMinute = data.newSession.startTime.minute or '00' %}
@@ -46,8 +47,13 @@
           classes: "nhsuk-input--width-2",
           suffix: "minutes",
           spellcheck: false,
-          value: data.newSession.duration
+          value: data.newSession.duration or '10',
+          disabled: not canChangeDuration
         }) }}
+
+        {% if not canChangeDuration %}
+          <input type="hidden" name="newSession[duration]" value="{{ data.newSession.duration or '10' }}">
+        {% endif %}
         {% endif %}
 
         {{ input({

@@ -1,13 +1,13 @@
-id: v2
+id: v3
+tag: Latest
 title: Add a clinic series
-summary: End-to-end flow for creating a new clinic series.
+summary: End-to-end flow for creating a new clinic series with combined time and capacity step.
 
 step_order:
   - type-of-clinc
   - details
   - days
   - clinic-times
-  - appointments-calculator
   - services
   - clinic-closures
   - clinic-closures-add

@@ -659,7 +659,6 @@ router.all('/site/:id/change/session/:itemId/clinic-times', (req, res) => {
 
   setChangeTemplateData(res, req.session.data, state);
   return res.render('site/clinics/series/clinic-times', {
-    pageName: 'Clinic times',
     backUrl: changeSummaryPath(req.site_id, req.params.itemId),
     captionText: formatDisplayDate(state.date),
     formAction: changeStepPath(req.site_id, req.params.itemId, 'clinic-times')

@@ -65,9 +65,28 @@
         {% set resolvedButtonClasses = 'nhsuk-button--warning' %}
       {% endif %}
 
+      {% set isCombinedTimesAndCapacity = features and features.combinedTimesAndCapacity %}
+      {% set rowFieldsToRender = rowFields or [] %}
+      {% if checkAnswersMode == 'clinic-edit' and isCombinedTimesAndCapacity and rowFields %}
+        {% set hasTimesAndCapacityChange = false %}
+        {% set rowFieldsWithoutTimesAndCapacity = [] %}
+        {% for field in rowFields %}
+          {% if field == 'time' or field == 'capacity' or field == 'duration' %}
+            {% set hasTimesAndCapacityChange = true %}
+          {% else %}
+            {% set rowFieldsWithoutTimesAndCapacity = rowFieldsWithoutTimesAndCapacity.concat([field]) %}
+          {% endif %}
+        {% endfor %}
+
+        {% set rowFieldsToRender = rowFieldsWithoutTimesAndCapacity %}
+        {% if hasTimesAndCapacityChange %}
+          {% set rowFieldsToRender = rowFieldsToRender.concat(['times-and-capacity']) %}
+        {% endif %}
+      {% endif %}
+
       {% set allRows = [] %}
       {% if rowFields and draft %}
-        {% for field in rowFields %}
+        {% for field in rowFieldsToRender %}
           {% set row = null %}
 
           {% if checkAnswersMode == 'clinic-edit' %}
@@ -91,6 +110,39 @@
                 key: { text: 'Days' },
                 value: { html: withPrevious((draft.days or []) | join(', '), previousDaysText) },
                 actions: { items: [{ href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/change/days', text: 'Change', visuallyHiddenText: ' days' }] }
+              } %}
+            {% elif field == 'times-and-capacity' %}
+              {% set startParts = (draft.from or '').split(':') %}
+              {% set endParts = (draft.until or '').split(':') %}
+              {% set startMinutes = (startParts[0] | int * 60) + (startParts[1] | int) %}
+              {% set endMinutes = (endParts[0] | int * 60) + (endParts[1] | int) %}
+              {% set sessionMinutes = endMinutes - startMinutes %}
+              {% set totalAppointmentsPerClinic = 0 %}
+              {% if sessionMinutes > 0 and (draft.duration | int) > 0 and (draft.capacity | int) > 0 %}
+                {% set totalAppointmentsPerClinic = (sessionMinutes // (draft.duration | int)) * (draft.capacity | int) %}
+              {% endif %}
+
+              {% set currentTimesAndCapacityHtml %}
+                Start time: {{ draft.from | nhsTime }}<br>
+                End time: {{ draft.until | nhsTime }}<br>
+                Vaccinators: {{ draft.capacity }}<br>
+                Appointment length: {{ draft.duration }} minutes
+                {% if isSeries %}
+                  <br>Total appointments per clinic: {{ totalAppointmentsPerClinic }}
+                {% endif %}
+              {% endset %}
+
+              {% set previousTimesAndCapacityText =
+                'Start time ' + ((previous.from | nhsTime) if previous and previous.from else 'Not set')
+                + ', end time ' + ((previous.until | nhsTime) if previous and previous.until else 'Not set')
+                + ', vaccinators ' + (previous.capacity if previous and previous.capacity else 'Not set')
+                + ', appointment length ' + ((previous.duration + ' minutes') if previous and previous.duration else 'Not set')
+              %}
+
+              {% set row = {
+                key: { text: 'Times and capacity' },
+                value: { html: withPrevious(currentTimesAndCapacityHtml, previousTimesAndCapacityText) },
+                actions: { items: [{ href: '/site/' + site_id + '/clinics/edit/' + sessionId + '/clinic-times', text: 'Change', visuallyHiddenText: ' times and capacity' }] }
               } %}
             {% elif field == 'time' %}
               {% set previousTimeText = ((previous.from | nhsTime) + ' to ' + (previous.until | nhsTime)) if previous and previous.from and previous.until else 'Not set' %}

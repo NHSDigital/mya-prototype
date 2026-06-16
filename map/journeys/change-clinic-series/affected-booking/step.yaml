@@ -12,3 +12,9 @@ versions:
         screenshot: screenshots/affected-bookings.png
   v2:
     use: v1
+  v3:
+    summary: Updated booking impact view used in round 3 testing.
+    variants:
+      - id: default
+        label: Default warning
+        screenshot: screenshots/affected-bookings-v3.png
