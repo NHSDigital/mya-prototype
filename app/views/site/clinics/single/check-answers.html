@@ -62,7 +62,7 @@
 
         {% set servicesSummaryHtml %}
           {% if servicesAvailable and (servicesAvailable | length > 0) %}
-            <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+            <ul class="nhsuk-list nhsuk-u-margin-top-0 nhsuk-u-margin-bottom-0">
               {% for serviceName in servicesAvailable %}
                 <li>{{ serviceName }}</li>
               {% endfor %}
@@ -74,10 +74,12 @@
 
         {% set isCombinedTimesAndCapacity = features and features.combinedTimesAndCapacity %}
         {% set timesAndCapacitySummaryHtml %}
-          Start time: {{ startTime | nhsTime }}<br>
-          End time: {{ endTime | nhsTime }}<br>
-          Vaccinators: {{ data.newSession.capacity }}<br>
-          Appointment length: {{ data.newSession.duration }} minutes
+          <ul class="nhsuk-list nhsuk-u-margin-top-0 nhsuk-u-margin-bottom-0">
+            <li>Start time: {{ startTime | nhsTime }}</li>
+            <li>End time: {{ endTime | nhsTime }}</li>
+            <li>Vaccinators: {{ data.newSession.capacity }}</li>
+            <li>Appointment length: {{ data.newSession.duration }} minutes</li>
+          </ul>
         {% endset %}
 
         {% set checkAnswersRows = [

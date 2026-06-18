@@ -11,6 +11,12 @@ function asArray(value) {
   return [value];
 }
 
+function normalizeServiceIds(value) {
+  return asArray(value)
+    .map((serviceId) => String(serviceId || '').trim())
+    .filter(Boolean);
+}
+
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -26,25 +32,29 @@ function formatDisplayDate(dateISO) {
 }
 
 function applyServiceOperations(baseServices = [], operations = []) {
-  let services = [...asArray(baseServices)];
+  let services = normalizeServiceIds(baseServices);
 
   for (const change of asArray(operations)) {
     if (!change || typeof change !== 'object') continue;
 
     if (change.operation === 'replace') {
-      services = asArray(change.values);
+      services = normalizeServiceIds(change.values);
       continue;
     }
 
     if (change.operation === 'add' && change.service) {
-      if (!services.includes(change.service)) {
-        services.push(change.service);
+      const serviceId = String(change.service).trim();
+      if (!serviceId) continue;
+      if (!services.includes(serviceId)) {
+        services.push(serviceId);
       }
       continue;
     }
 
     if (change.operation === 'remove' && change.service) {
-      services = services.filter((service) => service !== change.service);
+      const serviceId = String(change.service).trim();
+      if (!serviceId) continue;
+      services = services.filter((service) => service !== serviceId);
     }
   }
 
@@ -56,14 +66,15 @@ function normalizeServiceOperations(operations = []) {
     .filter((operation) => operation?.operation && operation?.service)
     .map((operation) => ({
       operation: operation.operation,
-      service: operation.service
+      service: String(operation.service).trim()
     }))
+    .filter((operation) => operation.service)
     .sort((a, b) => `${a.operation}-${a.service}`.localeCompare(`${b.operation}-${b.service}`));
 }
 
 function buildServiceOperations(parentServices = [], selectedServices = []) {
-  const parent = asArray(parentServices);
-  const selected = asArray(selectedServices);
+  const parent = normalizeServiceIds(parentServices);
+  const selected = normalizeServiceIds(selectedServices);
   const operations = [];
 
   for (const service of parent) {
@@ -238,26 +249,49 @@ function findEffectiveSession(dailyAvailability, itemId) {
 }
 
 function buildChildDraft(parentModel, effectiveSession, dateISO) {
+  const baselineName = effectiveSession?.label || parentModel?.label || '';
+  const baselineFrom = effectiveSession?.from || parentModel?.from || '';
+  const baselineUntil = effectiveSession?.until || parentModel?.until || '';
+  const baselineCapacity = Number(effectiveSession?.capacity ?? parentModel?.capacity) || 1;
   const resolvedServices = asArray(effectiveSession?.services).length > 0
-    ? asArray(effectiveSession.services)
+    ? normalizeServiceIds(effectiveSession.services)
     : applyServiceOperations(parentModel?.services, findChildSessionForDate(dateISO, parentModel?.childSessions)?.services);
 
   return {
     date: dateISO,
-    name: effectiveSession?.label || parentModel?.label || '',
-    from: effectiveSession?.from || parentModel?.from || '',
-    until: effectiveSession?.until || parentModel?.until || '',
-    startTime: toTimeParts(effectiveSession?.from || parentModel?.from || ''),
-    endTime: toTimeParts(effectiveSession?.until || parentModel?.until || ''),
-    capacity: Number(effectiveSession?.capacity ?? parentModel?.capacity) || 1,
+    name: baselineName,
+    from: baselineFrom,
+    until: baselineUntil,
+    startTime: toTimeParts(baselineFrom),
+    endTime: toTimeParts(baselineUntil),
+    capacity: baselineCapacity,
     duration: Number(parentModel?.slotLength) || 10,
     services: resolvedServices,
-    parentName: parentModel?.label || '',
-    parentFrom: parentModel?.from || '',
-    parentUntil: parentModel?.until || '',
-    parentCapacity: Number(parentModel?.capacity) || 1,
-    parentServices: asArray(parentModel?.services)
+    parentName: baselineName,
+    parentFrom: baselineFrom,
+    parentUntil: baselineUntil,
+    parentCapacity: baselineCapacity,
+    parentServices: resolvedServices
   };
+}
+
+function rebaselineDraftForExistingState(state) {
+  if (!state?.draft || !state?.originalParent) return;
+
+  const parentModel = state.originalParent;
+  const originalChild = state.originalChild || findChildSessionForDate(state.date, parentModel?.childSessions);
+  const baselineName = originalChild?.label || parentModel?.label || '';
+  const baselineFrom = originalChild?.from || parentModel?.from || '';
+  const baselineUntil = originalChild?.until || parentModel?.until || '';
+  const baselineCapacity = Number(originalChild?.capacity ?? parentModel?.capacity) || 1;
+  const baselineServices = applyServiceOperations(parentModel?.services, originalChild?.services);
+
+  state.draft.services = normalizeServiceIds(state.draft.services);
+  state.draft.parentName = baselineName;
+  state.draft.parentFrom = baselineFrom;
+  state.draft.parentUntil = baselineUntil;
+  state.draft.parentCapacity = baselineCapacity;
+  state.draft.parentServices = baselineServices;
 }
 
 function childDraftToNewSession(draft) {
@@ -300,7 +334,7 @@ function updateDraftFromAppointments(state, newSession = {}) {
 }
 
 function updateDraftFromServices(state, newSession = {}) {
-  state.draft.services = asArray(newSession.services);
+  state.draft.services = normalizeServiceIds(newSession.services);
 }
 
 function buildChildOverride(parentModel, draft) {
@@ -405,8 +439,8 @@ function hasFieldChanged(state, field) {
     case 'capacity':
       return (Number(state.draft.capacity) || 1) !== (Number(state.draft.parentCapacity) || 1);
     case 'services':
-      return JSON.stringify(asArray(state.draft.services).slice().sort())
-        !== JSON.stringify(asArray(state.draft.parentServices).slice().sort());
+      return JSON.stringify(normalizeServiceIds(state.draft.services).slice().sort())
+        !== JSON.stringify(normalizeServiceIds(state.draft.parentServices).slice().sort());
     default:
       return false;
   }
@@ -414,7 +448,8 @@ function hasFieldChanged(state, field) {
 
 function buildChangedFieldKeysForCheckAnswers(state) {
   const editableFields = currentEditableFields(state);
-  const changedFields = editableFields
+  const candidateFields = ['name', 'time', 'capacity', 'services'];
+  const changedFields = candidateFields
     .filter((field) => hasFieldChanged(state, field));
 
   if (changedFields.length > 0) {
@@ -598,10 +633,12 @@ function ensureChangeStateForSession(req, res) {
 
   if (existing && existing.siteId === siteId && existing.itemId === itemId && existing.originalParent) {
     existing.useCombinedTimesAndCapacity = isCombinedTimesAndCapacity;
+    rebaselineDraftForExistingState(existing);
     if (requestedBackHref) {
       existing.returnTo = requestedBackHref;
-      setChangeState(data, existing);
     }
+
+    setChangeState(data, existing);
     return existing;
   }
 
@@ -724,15 +761,11 @@ router.all('/site/:id/change/session/:itemId/clinic-times', (req, res) => {
     return res.redirect(prepareReviewAfterChange(req.session.data, req.site_id, req.params.itemId, state));
   }
 
-  const nextPath = state.useCombinedTimesAndCapacity
-    ? changeStepPath(req.site_id, req.params.itemId, 'services')
-    : changeStepPath(req.site_id, req.params.itemId, 'appointments-calculator');
-
   setChangeTemplateData(res, req.session.data, state);
   return res.render('site/clinics/series/clinic-times', {
     backUrl: changeSummaryPath(req.site_id, req.params.itemId),
     captionText: formatDisplayDate(state.date),
-    formAction: nextPath,
+    formAction: changeStepPath(req.site_id, req.params.itemId, 'clinic-times'),
     canChangeDuration: false,
     includeCapacityFields: state.useCombinedTimesAndCapacity,
     showSimplifiedCapacityCalculator: state.useCombinedTimesAndCapacity
