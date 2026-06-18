@@ -5,7 +5,7 @@
 - Replace the live top navigation item "View availability" with "Clinics"; remove "Create availability".
 - Add "Create and manage clinics" to the secondary navigation after "Month view".
 - Remove the live "Change availability" button from the page-level action controls.
-- Remove the site-name caption above the page heading; do not render an `nhsuk-caption-l` before the `<h1>`.
+- Remove the site-name caption above the page heading.
 - Change the page heading from the live date-only form to a full `<h1>` date that appends "(today)" when the selected date is today.
 - Keep "Print page" as the only visible action control on the day view.
 - Add appointment counts to tab labels, for example "Scheduled (10)" and "Cancelled (4)".

@@ -689,6 +689,11 @@ router.get('/site/:id/change/:type/:itemId', (req, res) => {
     return res.redirect(`/site/${req.site_id}/availability/week`);
   }
 
+  const shouldDiscardChanges = req.query?.discard === '1' || req.query?.discard === 'true';
+  if (shouldDiscardChanges) {
+    clearChangeState(req.session.data);
+  }
+
   const state = ensureChangeStateForSession(req, res);
   if (!state) {
     return res.redirect(`/site/${req.site_id}/availability/week`);
@@ -732,7 +737,6 @@ router.all('/site/:id/change/session/:itemId/details', (req, res) => {
   return res.render('site/clinics/series/details', {
     pageName: 'Clinic name',
     backUrl: changeSummaryPath(req.site_id, req.params.itemId),
-    captionText: formatDisplayDate(state.date),
     formAction: changeStepPath(req.site_id, req.params.itemId, 'details'),
     hideDateFields: true
   });
@@ -764,7 +768,6 @@ router.all('/site/:id/change/session/:itemId/clinic-times', (req, res) => {
   setChangeTemplateData(res, req.session.data, state);
   return res.render('site/clinics/series/clinic-times', {
     backUrl: changeSummaryPath(req.site_id, req.params.itemId),
-    captionText: formatDisplayDate(state.date),
     formAction: changeStepPath(req.site_id, req.params.itemId, 'clinic-times'),
     canChangeDuration: false,
     includeCapacityFields: state.useCombinedTimesAndCapacity,
@@ -800,7 +803,6 @@ router.all('/site/:id/change/session/:itemId/appointments-calculator', (req, res
   return res.render('site/clinics/series/appointments-calculator', {
     pageName: 'Number of vaccinators',
     backUrl: changeSummaryPath(req.site_id, req.params.itemId),
-    captionText: formatDisplayDate(state.date),
     formAction: changeStepPath(req.site_id, req.params.itemId, 'appointments-calculator'),
     hideDuration: true,
     fixedDuration: state.draft.duration,
@@ -836,7 +838,6 @@ router.all('/site/:id/change/session/:itemId/services', (req, res) => {
   return res.render('site/clinics/series/services', {
     pageName: 'Services',
     backUrl,
-    captionText: formatDisplayDate(state.date),
     formAction: changeStepPath(req.site_id, req.params.itemId, 'services')
   });
 });
@@ -958,8 +959,8 @@ router.all('/site/:id/change/session/:itemId/check-answers', (req, res) => {
     affectedCount: asArray(state.affectedBookingIds).length,
     bookingAction: state.bookingAction,
     abandonHref: state.returnTo
-      ? `${changeSummaryPath(req.site_id, req.params.itemId)}?back=${encodeURIComponent(state.returnTo)}`
-      : changeSummaryPath(req.site_id, req.params.itemId),
+      ? `${changeSummaryPath(req.site_id, req.params.itemId)}?back=${encodeURIComponent(state.returnTo)}&discard=1`
+      : `${changeSummaryPath(req.site_id, req.params.itemId)}?discard=1`,
     formAction: `${changeSummaryPath(req.site_id, req.params.itemId)}/check-answers`,
     affectedActionHref: `${changeSummaryPath(req.site_id, req.params.itemId)}/affected-bookings`,
     backHref: reviewBackPath(req.site_id, req.params.itemId, state)

@@ -399,9 +399,6 @@ function editStepPath(siteId, sessionId, step) {
   return `${editSummaryPath(siteId, sessionId)}/${step}`;
 }
 
-function editCaptionText(draft) {
-  return draft?.type === 'Clinic series' ? 'Edit clinic series' : 'Edit single clinic';
-}
 
 function editStepForField(field, isSeries, isCombinedTimesAndCapacity) {
   switch (field) {
@@ -2098,7 +2095,6 @@ router.all('/site/:id/clinics/edit/:sessionId/details', (req, res) => {
   setEditTemplateData(res, data, state);
   return res.render(`site/clinics/${state.draft.type === 'Clinic series' ? 'series' : 'single'}/details`, {
     backUrl: editSummaryPath(req.site_id, req.params.sessionId),
-    captionText: editCaptionText(state.draft),
     formAction: editStepPath(req.site_id, req.params.sessionId, 'details')
   });
 });
@@ -2125,7 +2121,6 @@ router.all('/site/:id/clinics/edit/:sessionId/days', (req, res) => {
   setEditTemplateData(res, data, state);
   return res.render('site/clinics/series/days', {
     backUrl: editSummaryPath(req.site_id, req.params.sessionId),
-    captionText: editCaptionText(state.draft),
     formAction: editStepPath(req.site_id, req.params.sessionId, 'days')
   });
 });
@@ -2161,7 +2156,6 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-times', (req, res) => {
   setEditTemplateData(res, data, state);
   return res.render(`site/clinics/${state.draft.type === 'Clinic series' ? 'series' : 'single'}/clinic-times`, {
     backUrl: editSummaryPath(req.site_id, req.params.sessionId),
-    captionText: editCaptionText(state.draft),
     formAction: editStepPath(req.site_id, req.params.sessionId, 'clinic-times'),
     canChangeDuration: canEditDuration,
     durationBookingCount,
@@ -2201,7 +2195,6 @@ router.all('/site/:id/clinics/edit/:sessionId/appointments-calculator', (req, re
   setEditTemplateData(res, data, state);
   return res.render(`site/clinics/${state.draft.type === 'Clinic series' ? 'series' : 'single'}/appointments-calculator`, {
     backUrl: editSummaryPath(req.site_id, req.params.sessionId),
-    captionText: editCaptionText(state.draft),
     formAction: editStepPath(req.site_id, req.params.sessionId, 'appointments-calculator'),
     canChangeDuration: canEditDuration,
     hideDuration: state.currentEditField === 'capacity',
@@ -2231,7 +2224,6 @@ router.all('/site/:id/clinics/edit/:sessionId/services', (req, res) => {
   setEditTemplateData(res, data, state);
   return res.render(`site/clinics/${state.draft.type === 'Clinic series' ? 'series' : 'single'}/services`, {
     backUrl: editSummaryPath(req.site_id, req.params.sessionId),
-    captionText: editCaptionText(state.draft),
     formAction: editStepPath(req.site_id, req.params.sessionId, 'services')
   });
 });
@@ -2268,7 +2260,6 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures', (req, res) => {
 
     return res.render('site/clinics/series/clinic-closures', {
       backUrl: editSummaryPath(req.site_id, req.params.sessionId),
-      captionText: editCaptionText(state.draft),
       formAction: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
       closures,
       addAnother,
@@ -2280,7 +2271,6 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures', (req, res) => {
 
   return res.render('site/clinics/series/clinic-closures', {
     backUrl: editSummaryPath(req.site_id, req.params.sessionId),
-    captionText: editCaptionText(state.draft),
     formAction: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
     closures
   });
@@ -2304,7 +2294,6 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/add', (req, res) =
       return res.render('site/clinics/series/clinic-closures-form', {
         pageName: 'Add clinic closure',
         backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
-        captionText: editCaptionText(state.draft),
         actionHref: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures/add'),
         mode: 'add',
         closure: toClosureFormInput(req.body?.closure || {}),
@@ -2324,7 +2313,6 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/add', (req, res) =
   return res.render('site/clinics/series/clinic-closures-form', {
     pageName: 'Add clinic closure',
     backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
-    captionText: editCaptionText(state.draft),
     actionHref: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures/add'),
     mode: 'add',
     closure: toClosureFormInput({
@@ -2359,7 +2347,6 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/change', (r
       return res.render('site/clinics/series/clinic-closures-form', {
         pageName: 'Change clinic closure',
         backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
-        captionText: editCaptionText(state.draft),
         actionHref: editStepPath(req.site_id, req.params.sessionId, `clinic-closures/${index}/change`),
         mode: 'change',
         closure: toClosureFormInput(req.body?.closure || toEditableClosure(current)),
@@ -2379,7 +2366,6 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/change', (r
   return res.render('site/clinics/series/clinic-closures-form', {
     pageName: 'Change clinic closure',
     backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
-    captionText: editCaptionText(state.draft),
     actionHref: editStepPath(req.site_id, req.params.sessionId, `clinic-closures/${index}/change`),
     mode: 'change',
     closure: toClosureFormInput(toEditableClosure(current))
@@ -2417,7 +2403,6 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/remove', (r
 
     return res.render('site/clinics/series/clinic-closures-remove', {
       backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
-      captionText: editCaptionText(state.draft),
       formAction: editStepPath(req.site_id, req.params.sessionId, `clinic-closures/${index}/remove`),
       index,
       closure: current,
@@ -2430,7 +2415,6 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/remove', (r
 
   return res.render('site/clinics/series/clinic-closures-remove', {
     backUrl: editStepPath(req.site_id, req.params.sessionId, 'clinic-closures'),
-    captionText: editCaptionText(state.draft),
     formAction: editStepPath(req.site_id, req.params.sessionId, `clinic-closures/${index}/remove`),
     index,
     closure: current

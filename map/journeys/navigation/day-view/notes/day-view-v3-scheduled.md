@@ -17,7 +17,7 @@
 ## Markup and structure
 
 - Render the selected date as `<h1 class="nhsuk-heading-l">`.
-- Do not render `<span class="nhsuk-caption-l">Dean's pharmacy</span>` or any other site-name caption above the `<h1>`.
+- Do not render a site-name caption above the `<h1>`.
 
 ## Behaviour and data
 

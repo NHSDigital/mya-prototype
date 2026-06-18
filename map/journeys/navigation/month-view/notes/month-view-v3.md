@@ -3,7 +3,7 @@
 - Replace the live top navigation item "View availability" with "Clinics"; remove "Create availability".
 - Add "Create and manage clinics" to the secondary navigation after "Month view".
 - Remove the live "Change availability" button.
-- Remove the live site-name caption above the page heading; do not render an `nhsuk-caption-l` before the `<h1>`.
+- Remove the live site-name caption above the page heading.
 - Change the heading from "View availability for June 2026" to "June 2026".
 - Append "(this month)" to the heading when the selected month contains today.
 - Change the summary label from "Unbooked" to "Free".
