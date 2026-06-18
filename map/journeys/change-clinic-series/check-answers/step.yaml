@@ -26,6 +26,7 @@ versions:
         screenshot: screenshots/check-answers-v2-cancel.png
   v3:
     summary: The review step where people confirm the final set of changes before saving them.
+    status: ready for dev
     default_variant: times-and-capacity-keep
     notes: |
       Round 3 screenshots are grouped by what was changed and whether booked appointments are kept or cancelled.

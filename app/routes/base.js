@@ -8,6 +8,10 @@ const enhanceData = require('../helpers/enhanceData');
 const { buildCancelledBookingsSummary } = require('../helpers/cancelledBookingsSummary');
 const mergeDailyAvailability = require('../helpers/recurringToDailyAvailability');
 const sessionDataDefaults = require('../data/session-data-defaults');
+const {
+  getClinicEditSuccessDocVariant,
+  listClinicEditSuccessDocVariantIds
+} = require('../data/doc-variants/clinic-edit-success');
 
 const override_today = process.env.OVERRIDE_TODAY || null;
 
@@ -308,6 +312,11 @@ function bookingCountText(count) {
 
 function useCombinedTimesAndCapacity(features = {}) {
   return Boolean(features?.combinedTimesAndCapacity);
+}
+
+function isDocVariantPreviewEnabled(features = {}) {
+  const isProduction = String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+  return Boolean(features?.docVariantPreview) && !isProduction;
 }
 
 function durationBookingCountForModel(model, siteId, siteBookings = {}) {
@@ -2567,11 +2576,27 @@ router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
 
 router.get('/site/:id/clinics/edit/:sessionId/success', (req, res) => {
   const successState = getEditSuccessState(req.session.data);
-  const matchingSuccessState = successState
+  const previewVariantId = typeof req.query?.docVariant === 'string'
+    ? req.query.docVariant.trim()
+    : '';
+  const previewEnabled = isDocVariantPreviewEnabled(req.features);
+  const previewSuccessState = previewEnabled
+    ? getClinicEditSuccessDocVariant(previewVariantId)
+    : null;
+
+  if (previewEnabled && previewVariantId && !previewSuccessState) {
+    return res.status(400).send(
+      `Unknown docVariant "${previewVariantId}". Available variants: ${listClinicEditSuccessDocVariantIds().join(', ')}`
+    );
+  }
+
+  const matchingSuccessState = previewSuccessState || (
+    successState
     && String(successState.siteId) === String(req.site_id)
     && String(successState.sessionId) === String(req.params.sessionId)
     ? successState
-    : null;
+    : null
+  );
   const isCancelMode = Boolean(matchingSuccessState?.cancelMode);
   const itemText = matchingSuccessState?.isSeries ? 'Clinic series' : 'Clinic';
   const cancelledBookingsSummary = matchingSuccessState?.cancelledBookingsSummary;
