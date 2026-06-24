@@ -769,7 +769,7 @@ router.all('/site/:id/change/session/:itemId/clinic-times', (req, res) => {
   return res.render('site/clinics/series/clinic-times', {
     backUrl: changeSummaryPath(req.site_id, req.params.itemId),
     formAction: changeStepPath(req.site_id, req.params.itemId, 'clinic-times'),
-    canChangeDuration: false,
+    canChangeAppointmentLength: false,
     includeCapacityFields: state.useCombinedTimesAndCapacity,
     showSimplifiedCapacityCalculator: state.useCombinedTimesAndCapacity
   });

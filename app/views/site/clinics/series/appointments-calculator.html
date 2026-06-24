@@ -7,7 +7,8 @@
 {% if not capacityLabel %}{% set capacityLabel = "How many vaccinators are in this clinic?" %}{% endif %}
 {% if not capacitySuffixText %}{% set capacitySuffixText = "vaccinators" %}{% endif %}
 {% if hideDuration and not fixedDuration %}{% set fixedDuration = data.newSession.duration %}{% endif %}
-{% set durationCanChange = canChangeDuration if canChangeDuration is defined else true %}
+{% set durationCanChange = canChangeAppointmentLength if canChangeAppointmentLength is defined else (features and (features.canChangeAppointmentLength is defined) and features.canChangeAppointmentLength) %}
+{% if not (canChangeAppointmentLength is defined) and not (features and (features.canChangeAppointmentLength is defined)) %}{% set durationCanChange = true %}{% endif %}
 
 {% set startHour = data.newSession.startTime.hour or '09' %}
 {% set startMinute = data.newSession.startTime.minute or '00' %}
@@ -37,7 +38,7 @@
             classes: "nhsuk-label--m"
           },
           hint: {
-            text: "Up to a maximum of 60 minutes"
+            text: "Up to a maximum of 60 minutes" if durationCanChange else "You cannot change the appointment length"
           },
           id: "duration",
           inputmode: "numeric",

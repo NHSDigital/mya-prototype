@@ -4,7 +4,8 @@
 {% if not pageName %}{% set pageName = "Capacity calculator" %}{% endif %}
 {% if not backUrl %}{% set backUrl = '/site/' + site_id + '/clinics/clinic-times' %}{% endif %}
 {% if not formAction %}{% set formAction = '/site/' + site_id + '/clinics/services' %}{% endif %}
-{% set durationCanChange = canChangeDuration if canChangeDuration is defined else true %}
+{% set durationCanChange = canChangeAppointmentLength if canChangeAppointmentLength is defined else (features and (features.canChangeAppointmentLength is defined) and features.canChangeAppointmentLength) %}
+{% if not (canChangeAppointmentLength is defined) and not (features and (features.canChangeAppointmentLength is defined)) %}{% set durationCanChange = true %}{% endif %}
 
 {% set startHour = data.newSession.startTime.hour or '09' %}
 {% set startMinute = data.newSession.startTime.minute or '00' %}
@@ -30,7 +31,7 @@
             classes: "nhsuk-label--m"
           },
           hint: {
-            text: "Up to a maximum of 60 minutes"
+            text: "Up to a maximum of 60 minutes" if durationCanChange else "You cannot change the appointment length"
           },
           id: "duration",
           inputmode: "numeric",

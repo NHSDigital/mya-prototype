@@ -5,7 +5,8 @@
 {% if not formAction %}{% set formAction = '/site/' + site_id + '/clinics/appointments-calculator' %}{% endif %}
 {% if not includeCapacityFields %}{% set includeCapacityFields = false %}{% endif %}
 {% if not showSimplifiedCapacityCalculator %}{% set showSimplifiedCapacityCalculator = false %}{% endif %}
-{% set durationCanChange = canChangeDuration if canChangeDuration is defined else true %}
+{% set durationCanChange = canChangeAppointmentLength if canChangeAppointmentLength is defined else (features and (features.canChangeAppointmentLength is defined) and features.canChangeAppointmentLength) %}
+{% if not (canChangeAppointmentLength is defined) and not (features and (features.canChangeAppointmentLength is defined)) %}{% set durationCanChange = true %}{% endif %}
 
 {% block beforeContent %}
 {{ backLink({
@@ -94,11 +95,7 @@
               classes: "nhsuk-label--m"
             },
             hint: {
-              text: "Appointment length must be a maximum of 60 minutes" if durationCanChange else (
-                'You cannot change the appointment length once there are bookings for this clinic. This clinic has ' ~ durationBookingCount ~ ' booking' ~ ('' if durationBookingCount == 1 else 's') ~ '.'
-                if durationBookingCount is defined
-                else 'You cannot change the appointment length once there are bookings for this clinic'
-              )
+              text: "Appointment length must be a maximum of 60 minutes" if durationCanChange else "You cannot change the appointment length after a clinic series is created. If you need a different appointment length, you must create a new series."
             },
             id: "duration",
             inputmode: "numeric",
