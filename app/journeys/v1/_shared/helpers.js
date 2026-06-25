@@ -14,10 +14,10 @@
 const { DateTime } = require('luxon');
 const { randomUUID } = require('crypto');
 
-const enhanceData = require('../../helpers/enhanceData');
-const { buildCancelledBookingsSummary } = require('../../helpers/cancelledBookingsSummary');
-const mergeDailyAvailability = require('../../helpers/recurringToDailyAvailability');
-const sessionDataDefaults = require('../../data/session-data-defaults');
+const enhanceData = require('../../../helpers/enhanceData');
+const { buildCancelledBookingsSummary } = require('../../../helpers/cancelledBookingsSummary');
+const mergeDailyAvailability = require('../../../helpers/recurringToDailyAvailability');
+const sessionDataDefaults = require('../../../data/session-data-defaults');
 
 const override_today = process.env.OVERRIDE_TODAY || null;
 

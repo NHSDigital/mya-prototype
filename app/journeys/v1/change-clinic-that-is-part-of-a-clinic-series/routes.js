@@ -9,8 +9,8 @@ const express = require('express');
 const { DateTime } = require('luxon');
 
 const router = express.Router();
-const { buildCancelledBookingsSummary } = require('../../helpers/cancelledBookingsSummary');
-const mergeDailyAvailability = require('../../helpers/recurringToDailyAvailability');
+const { buildCancelledBookingsSummary } = require('../../../helpers/cancelledBookingsSummary');
+const mergeDailyAvailability = require('../../../helpers/recurringToDailyAvailability');
 
 function asArray(value) {
   if (Array.isArray(value)) return value;
