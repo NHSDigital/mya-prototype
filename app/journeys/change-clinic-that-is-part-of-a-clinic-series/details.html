@@ -1,0 +1,29 @@
+{% extends 'layout.html' %}
+
+{# Changing a single occurrence of a clinic series writes an exception into
+   recurring_sessions, NOT a first-class daily_availability object. The date of
+   the occurrence therefore CANNOT be changed here, so this view deliberately has
+   no date fields (unlike the create/change-clinic series "dates" page). #}
+
+{% if not pageName %}{% set pageName = "Clinic name" %}{% endif %}
+
+{% block beforeContent %}
+{{ backLink({
+  href: backUrl
+}) }}
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row">
+    <div class="nhsuk-grid-column-two-thirds">
+      <h1 class="nhsuk-heading-l">{{ pageName }}</h1>
+
+      <form action="{{ formAction }}" method="post">
+        {{ button({
+          text: buttonText or "Continue"
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

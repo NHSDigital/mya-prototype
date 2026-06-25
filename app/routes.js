@@ -7,10 +7,8 @@ const { siteLevelMiddleware } = require('./middleware/site-level');
 router.use(flagsMiddleware());
 router.use(siteLevelMiddleware());
 
-// base router AFTER
-router.use('/', require('./routes/base'));
-router.use('/', require('./routes/change-session'));
-router.use('/', require('./routes/cancel-a-date-range'));
+// All journeys (and, during migration, the legacy route files) are composed here.
+router.use('/', require('./journeys'));
 
 
 
