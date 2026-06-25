@@ -11,7 +11,6 @@ router.use(siteLevelMiddleware());
 router.use('/', require('./routes/base'));
 router.use('/', require('./routes/change-session'));
 router.use('/', require('./routes/cancel-a-date-range'));
-router.use('/', require('./routes/design-system-addons'));
 
 
 

@@ -1,0 +1,55 @@
+{
+  "name": "Change clinic series success variants",
+  "entries": [
+    {
+      "id": "keep-bookings",
+      "label": "Updated with no cancelled bookings",
+      "docVariant": "updated-default",
+      "urlPath": "/site/1/clinics/edit/1/success?features=docVariantPreview:on&docVariant=updated-default",
+      "screenshot": "docs/doc-variants/screenshots/change-clinic-series-success/success-v2-keep.png",
+      "mapVariantId": "keep-bookings",
+      "notes": "Matches the existing keep bookings variant."
+    },
+    {
+      "id": "cancel-bookings",
+      "label": "Updated and bookings cancelled",
+      "docVariant": "updated-cancelled",
+      "urlPath": "/site/1/clinics/edit/1/success?features=docVariantPreview:on&docVariant=updated-cancelled",
+      "screenshot": "docs/doc-variants/screenshots/change-clinic-series-success/success-v2-cancel.png",
+      "mapVariantId": "cancel-bookings",
+      "notes": "Matches the existing cancel bookings variant."
+    },
+    {
+      "id": "unaffected-time-single",
+      "label": "One child clinic not updated due to times",
+      "docVariant": "updated-unaffected-time-single",
+      "urlPath": "/site/1/clinics/edit/1/success?features=docVariantPreview:on&docVariant=updated-unaffected-time-single",
+      "screenshot": "docs/doc-variants/screenshots/change-clinic-series-success/success-v3-unaffected-time-single.png",
+      "mapVariantId": "unaffected-time-single"
+    },
+    {
+      "id": "unaffected-vaccinators-single",
+      "label": "One child clinic not updated due to vaccinators",
+      "docVariant": "updated-unaffected-vaccinators-single",
+      "urlPath": "/site/1/clinics/edit/1/success?features=docVariantPreview:on&docVariant=updated-unaffected-vaccinators-single",
+      "screenshot": "docs/doc-variants/screenshots/change-clinic-series-success/success-v3-unaffected-vaccinators-single.png",
+      "mapVariantId": "unaffected-vaccinators-single"
+    },
+    {
+      "id": "cancel-unnotified",
+      "label": "Cancelled bookings with unnotified section",
+      "docVariant": "updated-cancelled-unnotified",
+      "urlPath": "/site/1/clinics/edit/1/success?features=docVariantPreview:on&docVariant=updated-cancelled-unnotified",
+      "screenshot": "docs/doc-variants/screenshots/change-clinic-series-success/success-v3-cancel-unnotified.png",
+      "mapVariantId": "cancel-unnotified"
+    },
+    {
+      "id": "cancel-unnotified-unaffected",
+      "label": "Cancelled bookings with unnotified and unaffected sections",
+      "docVariant": "updated-cancelled-unnotified-unaffected",
+      "urlPath": "/site/1/clinics/edit/1/success?features=docVariantPreview:on&docVariant=updated-cancelled-unnotified-unaffected",
+      "screenshot": "docs/doc-variants/screenshots/change-clinic-series-success/success-v3-cancel-unnotified-unaffected.png",
+      "mapVariantId": "cancel-unnotified-unaffected"
+    }
+  ]
+}
