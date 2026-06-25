@@ -73,9 +73,8 @@
         {% set resolvedButtonClasses = 'nhsuk-button--warning' %}
       {% endif %}
 
-      {% set isCombinedTimesAndCapacity = features and features.combinedTimesAndCapacity %}
       {% set rowFieldsToRender = rowFields or [] %}
-      {% if (checkAnswersMode == 'clinic-edit' or checkAnswersMode == 'session-change') and isCombinedTimesAndCapacity and rowFields %}
+      {% if (checkAnswersMode == 'clinic-edit' or checkAnswersMode == 'session-change') and rowFields %}
         {% set hasTimesAndCapacityChange = false %}
         {% set rowFieldsWithoutTimesAndCapacity = [] %}
         {% for field in rowFields %}

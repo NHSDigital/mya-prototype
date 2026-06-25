@@ -71,7 +71,6 @@
           {% endif %}
         {% endset %}
 
-        {% set isCombinedTimesAndCapacity = features and features.combinedTimesAndCapacity %}
         {% set timesAndCapacitySummaryHtml %}
           <ul class="nhsuk-list nhsuk-u-margin-top-0 nhsuk-u-margin-bottom-0">
             <li>Start time: {{ startTime | nhsTime }}</li>
@@ -101,86 +100,25 @@
           }
         ] %}
 
-        {% if isCombinedTimesAndCapacity %}
-          {% set checkAnswersRows = checkAnswersRows.concat([
-            {
-              key: {
-                text: "Times and capacity"
-              },
-              value: {
-                html: timesAndCapacitySummaryHtml
-              },
-              actions: {
-                items: [
-                  {
-                    href: "/site/" + site_id + "/clinics/clinic-times",
-                    text: "Change",
-                    visuallyHiddenText: " times and capacity"
-                  }
-                ]
-              }
+        {% set checkAnswersRows = checkAnswersRows.concat([
+          {
+            key: {
+              text: "Times and capacity"
+            },
+            value: {
+              html: timesAndCapacitySummaryHtml
+            },
+            actions: {
+              items: [
+                {
+                  href: "/site/" + site_id + "/clinics/clinic-times",
+                  text: "Change",
+                  visuallyHiddenText: " times and capacity"
+                }
+              ]
             }
-          ]) %}
-        {% else %}
-          {% set checkAnswersRows = checkAnswersRows.concat([
-            {
-              key: {
-                text: "Time"
-              },
-              value: {
-                text: displayTime
-              },
-              actions: {
-                items: [
-                  {
-                    href: "/site/" + site_id + "/clinics/clinic-times",
-                    text: "Change",
-                    visuallyHiddenText: " time"
-                  }
-                ]
-              }
-            }, {
-              key: {
-                text: "Vaccinators available"
-              },
-              value: {
-                text: data.newSession.capacity
-              },
-              actions: {
-                items: [
-                  {
-                    href: "/site/" + site_id + "/clinics/appointments-calculator",
-                    text: "Change",
-                    visuallyHiddenText: " vaccinators available"
-                  }
-                ]
-              }
-            }, {
-              key: {
-                text: "Total appointments per clinic"
-              },
-              value: {
-                text: totalAppointmentsPerClinic
-              }
-            }, {
-              key: {
-                text: "Appointment length"
-              },
-              value: {
-                text: data.newSession.duration + " minutes"
-              },
-              actions: {
-                items: [
-                  {
-                    href: "/site/" + site_id + "/clinics/appointments-calculator",
-                    text: "Change",
-                    visuallyHiddenText: " appointment length"
-                  }
-                ]
-              }
-            }
-          ]) %}
-        {% endif %}
+          }
+        ]) %}
 
         {% set checkAnswersRows = checkAnswersRows.concat([
           {

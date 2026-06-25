@@ -306,8 +306,8 @@ function bookingCountText(count) {
   return `${count} booking${count === 1 ? '' : 's'}`
 }
 
-function useCombinedTimesAndCapacity(features = {}) {
-  return Boolean(features?.combinedTimesAndCapacity);
+function useClinicTimesAndCapacity() {
+  return true;
 }
 
 function resetEditOutcome(state) {
@@ -315,20 +315,16 @@ function resetEditOutcome(state) {
   state.affectedBookingIds = [];
 }
 
-function editFieldsForStep(step, isSeries, isCombinedTimesAndCapacity) {
+function editFieldsForStep(step, isSeries) {
   switch (step) {
     case 'details':
       return ['date'];
     case 'days':
       return isSeries ? ['days'] : ['date'];
     case 'clinic-times':
-      return isCombinedTimesAndCapacity
-        ? ['time', 'capacity', 'duration']
-        : ['time'];
+      return ['time', 'capacity', 'duration'];
     case 'appointments-calculator':
-      return isCombinedTimesAndCapacity
-        ? []
-        : ['capacity', 'duration'];
+      return [];
     case 'services':
       return ['services'];
     case 'clinic-closures':
@@ -340,14 +336,13 @@ function editFieldsForStep(step, isSeries, isCombinedTimesAndCapacity) {
 
 function currentEditableFields(state) {
   const isSeries = state?.draft?.type === 'Clinic series';
-  const isCombinedTimesAndCapacity = Boolean(state?.useCombinedTimesAndCapacity);
 
   if (state?.currentEditField) {
     return [state.currentEditField];
   }
 
   if (state?.currentEditStep) {
-    const fields = editFieldsForStep(state.currentEditStep, isSeries, isCombinedTimesAndCapacity);
+    const fields = editFieldsForStep(state.currentEditStep, isSeries);
     if (fields.length > 0) return fields;
   }
 
@@ -358,8 +353,7 @@ function setCurrentEditField(state, field) {
   state.currentEditField = field || null;
   state.currentEditStep = editStepForField(
     field,
-    state?.draft?.type === 'Clinic series',
-    Boolean(state?.useCombinedTimesAndCapacity)
+    state?.draft?.type === 'Clinic series'
   );
   resetEditOutcome(state);
 }
@@ -383,7 +377,7 @@ function editStepPath(siteId, sessionId, step) {
 }
 
 
-function editStepForField(field, isSeries, isCombinedTimesAndCapacity) {
+function editStepForField(field, isSeries) {
   switch (field) {
     case 'date':
       return 'details';
@@ -393,9 +387,7 @@ function editStepForField(field, isSeries, isCombinedTimesAndCapacity) {
       return 'clinic-times';
     case 'capacity':
     case 'duration':
-      return isCombinedTimesAndCapacity
-        ? 'clinic-times'
-        : 'appointments-calculator';
+      return 'clinic-times';
     case 'services':
       return 'services';
     case 'closures':
@@ -588,18 +580,18 @@ function normalizedBookingImpact(model = {}) {
 }
 
 function ensureEditStateForSession(data, siteId, sessionId, options = {}) {
-  const { useCombinedTimesAndCapacity: useCombinedTimesAndCapacityFlag = false } = options;
+  const { useClinicTimesAndCapacity: useClinicTimesAndCapacityFlag = true } = options;
 
   const existing = getEditState(data);
   if (existing && existing.siteId === siteId && existing.sessionId === sessionId) {
-    existing.useCombinedTimesAndCapacity = Boolean(useCombinedTimesAndCapacityFlag);
+    existing.useClinicTimesAndCapacity = Boolean(useClinicTimesAndCapacityFlag);
     ensureClosureTrackingState(existing);
     setEditState(data, existing);
     return existing;
   }
 
   return initializeEditStateForSession(data, siteId, sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacityFlag
+    useClinicTimesAndCapacity: useClinicTimesAndCapacityFlag
   });
 }
 
@@ -630,7 +622,7 @@ function initializeEditStateForSession(data, siteId, sessionId, options = {}) {
       }
     })),
     nextClosureEditId: draftClosures.length + 1,
-    useCombinedTimesAndCapacity: Boolean(options.useCombinedTimesAndCapacity),
+    useClinicTimesAndCapacity: Boolean(options.useClinicTimesAndCapacity),
     cancelMode: false,
     bookingAction: null,
     affectedBookingIds: []
@@ -1122,8 +1114,7 @@ function reviewBackPath(siteId, sessionId, state) {
   const step = state?.currentEditStep
     || editStepForField(
       state?.currentEditField,
-      state?.draft?.type === 'Clinic series',
-      Boolean(state?.useCombinedTimesAndCapacity)
+      state?.draft?.type === 'Clinic series'
     );
   if (step) {
     return editStepPath(siteId, sessionId, step);
@@ -1859,7 +1850,7 @@ router.get('/site/:id/clinics', (req, res) => {
 router.get('/site/:id/clinics/edit/:sessionId', (req, res) => {
   const data = req.session.data;
   const state = initializeEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state) {
     return res.redirect(`/site/${req.site_id}/clinics`);
@@ -1894,7 +1885,7 @@ router.get('/site/:id/clinics/cancel/:sessionId', (req, res) => {
 router.all('/site/:id/clinics/cancel/:sessionId/affected-bookings', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state) {
     return res.redirect(`/site/${req.site_id}/clinics`);
@@ -1933,7 +1924,7 @@ router.all('/site/:id/clinics/cancel/:sessionId/affected-bookings', (req, res) =
 router.all('/site/:id/clinics/cancel/:sessionId/check-answers', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state) {
     return res.redirect(`/site/${req.site_id}/clinics`);
@@ -2059,7 +2050,7 @@ router.get('/site/:id/clinics/cancel/:sessionId/success', (req, res) => {
 router.all('/site/:id/clinics/edit/:sessionId/details', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state) {
     return res.redirect(`/site/${req.site_id}/clinics`);
@@ -2085,7 +2076,7 @@ router.all('/site/:id/clinics/edit/:sessionId/details', (req, res) => {
 router.all('/site/:id/clinics/edit/:sessionId/days', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state || state.draft.type !== 'Clinic series') {
     return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
@@ -2111,55 +2102,19 @@ router.all('/site/:id/clinics/edit/:sessionId/days', (req, res) => {
 router.all('/site/:id/clinics/edit/:sessionId/clinic-times', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state) {
     return res.redirect(`/site/${req.site_id}/clinics`);
   }
 
-  if (state.currentEditStep !== 'clinic-times' || (state.useCombinedTimesAndCapacity && state.currentEditField)) {
+  if (state.currentEditStep !== 'clinic-times' || state.currentEditField) {
     setCurrentEditStep(state, 'clinic-times');
     setEditState(data, state);
   }
 
   if (req.method === 'POST') {
     updateDraftFromTimes(state, req.body?.newSession || {});
-    if (state.useCombinedTimesAndCapacity) {
-      updateDraftFromAppointments(state, req.body?.newSession || {}, {
-        canUpdateDuration: false
-      });
-    }
-    return res.redirect(prepareReviewAfterEdit(data, req.site_id, state));
-  }
-
-  setEditTemplateData(res, data, state);
-  return res.render(`site/clinics/${state.draft.type === 'Clinic series' ? 'series' : 'single'}/clinic-times`, {
-    backUrl: editSummaryPath(req.site_id, req.params.sessionId),
-    formAction: editStepPath(req.site_id, req.params.sessionId, 'clinic-times'),
-    includeCapacityFields: state.useCombinedTimesAndCapacity,
-    showSimplifiedCapacityCalculator: state.useCombinedTimesAndCapacity
-  });
-});
-
-router.all('/site/:id/clinics/edit/:sessionId/appointments-calculator', (req, res) => {
-  const data = req.session.data;
-  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
-  });
-  if (!state) {
-    return res.redirect(`/site/${req.site_id}/clinics`);
-  }
-
-  if (state.useCombinedTimesAndCapacity) {
-    return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-times'));
-  }
-
-  if (state.currentEditStep !== 'appointments-calculator') {
-    setCurrentEditStep(state, 'appointments-calculator');
-    setEditState(data, state);
-  }
-
-  if (req.method === 'POST') {
     updateDraftFromAppointments(state, req.body?.newSession || {}, {
       canUpdateDuration: false
     });
@@ -2167,18 +2122,29 @@ router.all('/site/:id/clinics/edit/:sessionId/appointments-calculator', (req, re
   }
 
   setEditTemplateData(res, data, state);
-  return res.render(`site/clinics/${state.draft.type === 'Clinic series' ? 'series' : 'single'}/appointments-calculator`, {
+  return res.render(`site/clinics/${state.draft.type === 'Clinic series' ? 'series' : 'single'}/clinic-times`, {
     backUrl: editSummaryPath(req.site_id, req.params.sessionId),
-    formAction: editStepPath(req.site_id, req.params.sessionId, 'appointments-calculator'),
-    hideDuration: state.currentEditField === 'capacity',
-    fixedDuration: state.draft.duration
+    formAction: editStepPath(req.site_id, req.params.sessionId, 'clinic-times'),
+    durationCanChange: false
   });
+});
+
+router.all('/site/:id/clinics/edit/:sessionId/appointments-calculator', (req, res) => {
+  const data = req.session.data;
+  const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
+  });
+  if (!state) {
+    return res.redirect(`/site/${req.site_id}/clinics`);
+  }
+
+  return res.redirect(editStepPath(req.site_id, req.params.sessionId, 'clinic-times'));
 });
 
 router.all('/site/:id/clinics/edit/:sessionId/services', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state) {
     return res.redirect(`/site/${req.site_id}/clinics`);
@@ -2204,7 +2170,7 @@ router.all('/site/:id/clinics/edit/:sessionId/services', (req, res) => {
 router.all('/site/:id/clinics/edit/:sessionId/clinic-closures', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state || state.draft.type !== 'Clinic series') {
     return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
@@ -2252,7 +2218,7 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures', (req, res) => {
 router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/add', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state || state.draft.type !== 'Clinic series') {
     return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
@@ -2299,7 +2265,7 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/add', (req, res) =
 router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/change', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state || state.draft.type !== 'Clinic series') {
     return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
@@ -2348,7 +2314,7 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/change', (r
 router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/remove', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state || state.draft.type !== 'Clinic series') {
     return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
@@ -2397,7 +2363,7 @@ router.all('/site/:id/clinics/edit/:sessionId/clinic-closures/:index/remove', (r
 router.all('/site/:id/clinics/edit/:sessionId/change/:field', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state) {
     return res.redirect(`/site/${req.site_id}/clinics`);
@@ -2405,8 +2371,7 @@ router.all('/site/:id/clinics/edit/:sessionId/change/:field', (req, res) => {
 
   const step = editStepForField(
     req.params.field,
-    state.draft.type === 'Clinic series',
-    state.useCombinedTimesAndCapacity
+    state.draft.type === 'Clinic series'
   );
   if (!step) {
     return res.redirect(editSummaryPath(req.site_id, req.params.sessionId));
@@ -2420,7 +2385,7 @@ router.all('/site/:id/clinics/edit/:sessionId/change/:field', (req, res) => {
 router.all('/site/:id/clinics/edit/:sessionId/any-other-changes', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state) {
     return res.redirect(`/site/${req.site_id}/clinics`);
@@ -2432,7 +2397,7 @@ router.all('/site/:id/clinics/edit/:sessionId/any-other-changes', (req, res) => 
 router.all('/site/:id/clinics/edit/:sessionId/affected-bookings', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state) {
     return res.redirect(`/site/${req.site_id}/clinics`);
@@ -2467,7 +2432,7 @@ router.all('/site/:id/clinics/edit/:sessionId/affected-bookings', (req, res) => 
 router.all('/site/:id/clinics/edit/:sessionId/check-answers', (req, res) => {
   const data = req.session.data;
   const state = ensureEditStateForSession(data, req.site_id, req.params.sessionId, {
-    useCombinedTimesAndCapacity: useCombinedTimesAndCapacity(req.features)
+    useClinicTimesAndCapacity: useClinicTimesAndCapacity(req.features)
   });
   if (!state) {
     return res.redirect(`/site/${req.site_id}/clinics`);
@@ -2637,15 +2602,9 @@ router.all('/site/:id/clinics/clinic-times', (req, res) => {
     return res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`);
   }
 
-  const isCombinedTimesAndCapacity = useCombinedTimesAndCapacity(req.features);
-  const nextPath = isCombinedTimesAndCapacity
-    ? `/site/${req.site_id}/clinics/services`
-    : `/site/${req.site_id}/clinics/appointments-calculator`;
-
   return res.render(`site/clinics/${flowType}/clinic-times`, {
-    formAction: nextPath,
-    includeCapacityFields: isCombinedTimesAndCapacity,
-    showSimplifiedCapacityCalculator: isCombinedTimesAndCapacity
+    formAction: `/site/${req.site_id}/clinics/services`,
+    durationCanChange: true
   });
 });
 
@@ -2657,11 +2616,7 @@ router.all('/site/:id/clinics/appointments-calculator', (req, res) => {
     return res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`);
   }
 
-  if (useCombinedTimesAndCapacity(req.features)) {
-    return res.redirect(`/site/${req.site_id}/clinics/clinic-times`);
-  }
-
-  return res.render(`site/clinics/${flowType}/appointments-calculator`);
+  return res.redirect(`/site/${req.site_id}/clinics/clinic-times`);
 });
 
 router.all('/site/:id/clinics/services', (req, res) => {
@@ -2672,13 +2627,8 @@ router.all('/site/:id/clinics/services', (req, res) => {
     return res.redirect(`/site/${req.site_id}/clinics/type-of-clinc`);
   }
 
-  const isCombinedTimesAndCapacity = useCombinedTimesAndCapacity(req.features);
-  const backUrl = isCombinedTimesAndCapacity
-    ? `/site/${req.site_id}/clinics/clinic-times`
-    : `/site/${req.site_id}/clinics/appointments-calculator`;
-
   res.render(`site/clinics/${flowType}/services`, {
-    backUrl,
+    backUrl: `/site/${req.site_id}/clinics/clinic-times`,
     ...req.query
   });
 });

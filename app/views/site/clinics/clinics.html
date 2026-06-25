@@ -135,7 +135,7 @@
           <td class="nhsuk-table__cell" role="cell">{{ services(session.services) }}</td>
           {% if includeActions %}
             <td class="nhsuk-table__cell" role="cell">
-              {# <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
+              <ul class="nhsuk-list nhsuk-u-margin-bottom-0">
                 <li>
                   <a href="/site/{{ site_id }}/clinics/edit/{{ session.id }}">
                     View and change
@@ -148,25 +148,7 @@
                     <span class="nhsuk-u-visually-hidden"> clinic on {{ dateLabel(session) }} at {{ timeLabel(session) }}</span>
                   </a>
                 </li>
-              </ul> #}
-              
-              {% set isSeries = false %}
-              {% if session.type == 'Clinic series' %}
-                {% set isSeries = true %}
-              {% elif session.date and session.endDate and session.endDate != session.date %}
-                {% set isSeries = true %}
-              {% endif %}
-
-              {% if isSeries %}
-              <a href="/site/{{ site_id }}/clinics/cancel/{{ session.id }}">
-                Cancel
-                <span class="nhsuk-u-visually-hidden"> clinic on {{ dateLabel(session) }} at {{ timeLabel(session) }}</span>
-              </a>
-              {% else %}
-              <a href="" onclick="alert('Existing change journey for single clinics'); return false;">
-                Change
-              </a>
-              {% endif %}
+              </ul>
             </td>
           {% endif %}
         </tr>

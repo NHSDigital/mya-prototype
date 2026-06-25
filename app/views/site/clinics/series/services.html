@@ -1,7 +1,7 @@
 {% extends '../../../layouts/layout.html' %}
 
 {% if not pageName %}{% set pageName = "Which services will you offer?" %}{% endif %}
-{% if not backUrl %}{% set backUrl = '/site/' + site_id + '/clinics/appointments-calculator' %}{% endif %}
+{% if not backUrl %}{% set backUrl = '/site/' + site_id + '/clinics/clinic-times' %}{% endif %}
 {% if not formAction %}{% set formAction = '/site/' + site_id + '/clinics/clinic-closures' %}{% endif %}
 
 {% block beforeContent %}

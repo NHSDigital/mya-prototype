@@ -11,7 +11,6 @@
   <div class="nhsuk-grid-row">
     <div class="nhsuk-grid-column-two-thirds">
       {% set changeBasePath = '/site/' ~ site_id ~ '/change/session/' ~ itemId %}
-      {% set isCombinedTimesAndCapacity = features and features.combinedTimesAndCapacity %}
       {% set bookingLengthText = (draft.duration or 'Not provided') ~ ' minutes' %}
       {% set vaccinatorText = draft.capacity ~ ' vaccinator' %}
       {% if draft.capacity != 1 %}
@@ -31,7 +30,6 @@
       
       <h1 class="nhsuk-heading-l">{{ pageName }} on {{ displayDate }}</h1>
 
-      {% if isCombinedTimesAndCapacity %}
       {{ appCard({
         title: 'Times and capacity',
         action: {
@@ -58,40 +56,6 @@
           }
         ]
       }) }}
-      {% else %}
-      {{ appCard({
-        title: 'Capacity',
-        action: {
-          href: changeBasePath ~ '/appointments-calculator',
-          text: 'Change',
-          visuallyHiddenText: ' vaccinators'
-        },
-        items: [
-          {
-            key: 'Booking length',
-            value: bookingLengthText
-          }, {
-            key: 'Number of vaccinators',
-            value: vaccinatorText
-          }
-        ]
-      }) }}
-
-      {{ appCard({
-        title: 'Clinic times',
-        action: {
-          href: changeBasePath ~ '/clinic-times',
-          text: 'Change',
-          visuallyHiddenText: ' clinic times'
-        },
-        items: [
-          {
-            key: 'Time period',
-            value: draft.from ~ ' to ' ~ draft.until
-          }
-        ]
-      }) }}
-      {% endif %}
 
       {{ appCard({
         title: 'Services',

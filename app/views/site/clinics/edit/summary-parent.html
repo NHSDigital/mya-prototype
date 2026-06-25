@@ -3,7 +3,6 @@
 
 {% set editBasePath = '/site/' ~ site_id ~ '/clinics/edit/' ~ sessionId %}
 {% set isSeries = draft.type == 'Clinic series' %}
-{% set isCombinedTimesAndCapacity = features and features.combinedTimesAndCapacity %}
 {% set pageName = 'Change clinic series' if isSeries else 'Change single clinic' %}
 {% set datesTitle = 'Dates' if isSeries else 'Date' %}
 {% set vaccinatorText = draft.capacity ~ ' vaccinator' %}
@@ -190,80 +189,36 @@
         }) }}
       {% endif %}
 
-      {% if isCombinedTimesAndCapacity %}
-        {{ appCard({
-          title: 'Times and capacity',
-          action: {
-            href: editBasePath ~ '/clinic-times',
-            text: 'Change',
-            visuallyHiddenText: ' times and capacity'
+      {{ appCard({
+        title: 'Times and capacity',
+        action: {
+          href: editBasePath ~ '/clinic-times',
+          text: 'Change',
+          visuallyHiddenText: ' times and capacity'
+        },
+        items: [
+          {
+            key: 'Start time',
+            value: draft.from | nhsTime
           },
-          items: [
-            {
-              key: 'Start time',
-              value: draft.from | nhsTime
-            },
-            {
-              key: 'End time',
-              value: draft.until | nhsTime
-            },
-            {
-              key: 'Vaccinators',
-              value: vaccinatorText
-            },
-            {
-              key: 'Appointment length',
-              value: draft.duration ~ ' minutes'
-            },
-            {
-              key: 'Total appointments per clinic',
-              value: totalAppointments
-            }
-          ]
-        }) }}
-      {% else %}
-        {{ appCard({
-          title: 'Start and end times',
-          action: {
-            href: editBasePath ~ '/clinic-times',
-            text: 'Change',
-            visuallyHiddenText: ' start and end times'
+          {
+            key: 'End time',
+            value: draft.until | nhsTime
           },
-          items: [
-            {
-              key: 'Start time',
-              value: draft.from | nhsTime
-            },
-            {
-              key: 'End time',
-              value: draft.until | nhsTime
-            }
-          ]
-        }) }}
-
-        {{ appCard({
-          title: 'Capacity',
-          action: {
-            href: editBasePath ~ '/appointments-calculator',
-            text: 'Change',
-            visuallyHiddenText: ' booking length'
+          {
+            key: 'Vaccinators',
+            value: vaccinatorText
           },
-          items: [
-            {
-              key: 'Booking length',
-              value: draft.duration ~ ' minutes'
-            },
-            {
-              key: 'Vaccinators',
-              value: vaccinatorText
-            },
-            {
-              key: 'Total appointments per clinic',
-              value: totalAppointments
-            }
-          ]
-        }) }}
-      {% endif %}
+          {
+            key: 'Appointment length',
+            value: draft.duration ~ ' minutes'
+          },
+          {
+            key: 'Total appointments per clinic',
+            value: totalAppointments
+          }
+        ]
+      }) }}
 
       {{ appCard({
         title: 'Services',
