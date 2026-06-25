@@ -7,8 +7,7 @@
 {% if not capacityLabel %}{% set capacityLabel = "How many vaccinators are in this clinic?" %}{% endif %}
 {% if not capacitySuffixText %}{% set capacitySuffixText = "vaccinators" %}{% endif %}
 {% if hideDuration and not fixedDuration %}{% set fixedDuration = data.newSession.duration %}{% endif %}
-{% set durationCanChange = canChangeAppointmentLength if canChangeAppointmentLength is defined else (features and (features.canChangeAppointmentLength is defined) and features.canChangeAppointmentLength) %}
-{% if not (canChangeAppointmentLength is defined) and not (features and (features.canChangeAppointmentLength is defined)) %}{% set durationCanChange = true %}{% endif %}
+{% set durationCanChange = false %}
 
 {% set startHour = data.newSession.startTime.hour or '09' %}
 {% set startMinute = data.newSession.startTime.minute or '00' %}
