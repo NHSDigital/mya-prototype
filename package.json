@@ -4,11 +4,6 @@
   "description": "Rapidly create HTML prototypes of NHS websites and services.",
   "main": "app.js",
   "scripts": {
-    "map:build": "node map/build.js",
-    "map:watch": "node --watch-preserve-output --watch-path=map/journeys --watch-path=map/templates --watch-path=map/assets --watch-path=map/build.js --watch-path=map/router.js map/build.js",
-    "docs:variants:capture": "node scripts/capture-doc-variants.js",
-    "docs:variants:validate": "node scripts/validate-doc-variants.js",
-    "prestart": "npm run map:build",
     "start": "node scripts/start-dev.js",
     "start:app": "node app.js",
     "watch": "node --watch app.js"

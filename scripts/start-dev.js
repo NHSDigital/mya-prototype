@@ -1,6 +1,5 @@
 const { spawn } = require('node:child_process');
 
-const isProduction = (process.env.NODE_ENV || '').toLowerCase() === 'production';
 const childProcesses = [];
 let shuttingDown = false;
 
@@ -63,17 +62,4 @@ function shutdown() {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-if (isProduction) {
-  spawnNodeProcess(['app.js']);
-} else {
-  spawnNodeProcess(['app.js']);
-  spawnNodeProcess([
-    '--watch-preserve-output',
-    '--watch-path=map/journeys',
-    '--watch-path=map/templates',
-    '--watch-path=map/assets',
-    '--watch-path=map/build.js',
-    '--watch-path=map/router.js',
-    'map/build.js'
-  ]);
-}
+spawnNodeProcess(['app.js']);

@@ -4,7 +4,6 @@
 /dist
 /tmp
 /public
-/map/dist
 
 # Runtime data
 pids
@@ -69,7 +68,3 @@ coverage
 
 # ESlint cache
 .cache
-
-# Prototype map
-/map/tmp-inbox
-/app/assets/map-reload-trigger.txt
