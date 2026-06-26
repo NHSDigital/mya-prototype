@@ -17,6 +17,9 @@ const port = parseInt(process.env.PORT, 10) || 2000
 const viewsPath = [
   join(__dirname, 'app/views/'),
   join(__dirname, 'app/views/layouts/'),
+  // Journey folders co-locate their views beside their routes. Rendered with
+  // journey-qualified names, e.g. res.render('cancel-a-date-range/dates').
+  join(__dirname, 'app/journeys/'),
 ]
 
 const prototype = NHSPrototypeKit.init({

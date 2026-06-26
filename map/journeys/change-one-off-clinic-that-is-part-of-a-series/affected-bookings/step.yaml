@@ -1,8 +1,0 @@
-title: Affected bookings
-versions:
-  v3:
-    summary: The decision step showing what happens to bookings affected by the change.
-    variants:
-      - id: default
-        label: Keep bookings
-        screenshot: screenshots/affected-bookings-v3.png

@@ -1,8 +1,0 @@
-title: Manage clinics
-versions:
-  v1:
-    summary: The clinic management area reached directly from the top navigation.
-    variants:
-      - id: default
-        label: Default
-        screenshot: screenshots/manage-clinics-v1.png

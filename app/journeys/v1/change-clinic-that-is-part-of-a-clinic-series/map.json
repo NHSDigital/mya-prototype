@@ -1,0 +1,45 @@
+{
+  "$schema": "../../../map/map.schema.json",
+  "title": "Change a clinic in a series",
+  "summary": "Change one occurrence of a clinic series (the date cannot be changed).",
+  "section": "Manage clinics",
+  "status": "ready for dev",
+  "steps": [
+    {
+      "id": "summary",
+      "title": "Occurrence summary",
+      "summary": "Review this one occurrence and choose what to change.",
+      "defaultVariant": "default",
+      "variants": [
+        { "id": "default", "label": "Default", "screenshots": [{ "label": "Summary", "path": "/v1/site/1/change/session/080f4e5e322ce5bf", "data": {} }] }
+      ]
+    },
+    {
+      "id": "clinic-times",
+      "title": "Change times and capacity",
+      "summary": "Change this occurrence's hours and capacity only.",
+      "defaultVariant": "default",
+      "variants": [
+        { "id": "default", "label": "Default", "screenshots": [{ "label": "Times", "path": "/v1/site/1/change/session/080f4e5e322ce5bf/clinic-times", "data": {} }] }
+      ]
+    },
+    {
+      "id": "services",
+      "title": "Change services",
+      "summary": "Change the services for this occurrence only.",
+      "defaultVariant": "default",
+      "variants": [
+        { "id": "default", "label": "Default", "screenshots": [{ "label": "Services", "path": "/v1/site/1/change/session/080f4e5e322ce5bf/services", "data": {} }] }
+      ]
+    },
+    {
+      "id": "check-answers",
+      "title": "Check answers",
+      "summary": "Review the one-off change before saving.",
+      "defaultVariant": "default",
+      "variants": [
+        { "id": "default", "label": "Default", "screenshots": [{ "label": "Review", "path": "/v1/site/1/change/session/080f4e5e322ce5bf/check-answers", "data": {} }] }
+      ]
+    }
+  ]
+}
