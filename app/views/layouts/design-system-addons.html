@@ -1,0 +1,71 @@
+{% extends './layout.html' %}
+
+{% set docsNavItems = [
+  {
+    href: '/design-system-addons',
+    text: 'Overview',
+    id: 'home'
+  },
+  {
+    href: '/design-system-addons/app-card',
+    text: 'App card',
+    id: 'app-card'
+  }
+] %}
+
+{% block head %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
+  {{ super() }}
+{% endblock %}
+
+{% block beforeContent %}
+  <div class="nhsuk-width-container">
+    <a class="nhsuk-back-link" href="/">Back to prototype</a>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="nhsuk-grid-row app-docs">
+    <aside class="nhsuk-grid-column-one-quarter app-docs__sidebar" aria-label="Design system addons navigation">
+      <h2 class="nhsuk-heading-s app-docs__sidebar-title">Design system addons</h2>
+      <nav class="app-docs__nav" aria-label="Component pages">
+        <ul class="app-docs__nav-list">
+          {% for item in docsNavItems %}
+            <li class="app-docs__nav-item">
+              <a
+                class="app-docs__nav-link"
+                href="{{ item.href }}"
+                {% if docsPage == item.id %}aria-current="page"{% endif %}
+              >
+                {{ item.text }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="nhsuk-grid-column-three-quarters app-docs__content" id="main-content">
+      {% if pageToc and pageToc.length %}
+        <nav class="app-docs__toc" aria-label="On this page">
+          <h2 class="nhsuk-heading-xs app-docs__toc-title">On this page</h2>
+          <ul class="app-docs__toc-list">
+            {% for item in pageToc %}
+              <li class="app-docs__toc-item"><a href="#{{ item.id }}">{{ item.text }}</a></li>
+            {% endfor %}
+          </ul>
+        </nav>
+      {% endif %}
+      {% block docsContent %}{% endblock %}
+    </main>
+  </div>
+{% endblock %}
+
+{% block pageScripts %}
+  {{ super() }}
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-django.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+{% endblock %}

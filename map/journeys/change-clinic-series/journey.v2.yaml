@@ -1,0 +1,28 @@
+id: v2
+title: Change clinic series
+
+step_order:
+  - clinic-overview-page
+  - change-properties
+  - affected-booking
+  - check-answers
+  - success
+
+journey_findings:
+  next_steps:
+    - Test out replacing "clinic series" with "repeating clinics" or similar throughout journey
+
+findings:
+  - scope: step
+    step: clinic-overview-page
+    insights:
+      - Users didn't notice the "remove clinic series" button
+      - When trying to set days the clinics wouldn't run, participants went to the "series details" and didn't notice the "clinic closures" section
+    next_steps:
+      - Move clinic closures section on clinic series overview to directly below clinic series date range
+      - Update label for clinic series date range from "Series details" to "Dates"
+      - Add a "Cancel" action link in "Manage clinics" and remove "close session" CTA from clinic series overview screen
+  - scope: step
+    step: affected-booking
+    insights:
+      - one participant mentioned they they would not cancel from here, as they would want to send a personal message alongside the cancellation. They also wanted to see the content of the automated cancellation message.

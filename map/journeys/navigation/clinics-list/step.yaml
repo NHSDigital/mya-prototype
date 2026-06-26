@@ -1,0 +1,38 @@
+title: Clinics list
+versions:
+  v2:
+    summary: The clinics list reached from Clinics.
+    default_variant: active
+    variants:
+      - id: active
+        label: Active clinics
+        screenshot: screenshots/clinics-list-v2-active.png
+      - id: completed
+        label: Completed clinics
+        screenshot: screenshots/clinics-list-v2-completed.png
+  v3:
+    summary: The create and manage clinics view reached from Clinics in round 3 navigation testing.
+    notes_file: notes/clinics-list-v3.md
+    implementation:
+      prototype_link:
+        href: /site/1/clinics
+        label: Create and manage clinics
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/clinics-list-v3.png
+  v4:
+    summary: The Create and manage clinics for MVP+1
+    status: ready for dev
+    notes_file: notes/clinics-list-v3.md
+    implementation:
+      ticket:
+        label: APPT-XXXX
+        href: '#'
+      prototype_link:
+        href: /site/1/clinics
+        label: Create and manage clinics
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/clinics-list-v4.png

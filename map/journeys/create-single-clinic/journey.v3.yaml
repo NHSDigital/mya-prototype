@@ -1,0 +1,18 @@
+id: v3
+tag: Latest
+title: Create single clinic
+summary: End-to-end flow for creating a single clinic with combined time and capacity step.
+
+step_order:
+  - type-of-clinc
+  - details
+  - clinic-times
+  - services
+  - check-answers
+  - success
+
+journey_findings:
+  insights: []
+  next_steps: []
+
+findings: []

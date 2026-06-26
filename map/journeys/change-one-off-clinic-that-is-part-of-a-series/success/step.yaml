@@ -1,0 +1,15 @@
+title: Success
+versions:
+  v3:
+    summary: The confirmation step after the clinic has been updated.
+    default_variant: keep-or-no-bookings
+    variants:
+      - id: keep-or-no-bookings
+        label: Keep or no bookings
+        screenshot: screenshots/success-keep-or-no-bookings.png
+      - id: cancel-without-people-who-could-not-be-contacted
+        label: Cancel without people who could not be contacted
+        screenshot: screenshots/success-cancel-without-people-who-could-not-be-contacted.png
+      - id: cancel-with-people-who-could-not-be-contacted
+        label: Cancel with people who could not be contacted
+        screenshot: screenshots/success-cancel-with-people-who-could-not-be-contacted.png

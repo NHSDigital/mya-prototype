@@ -1,0 +1,32 @@
+id: v1
+title: Navigation
+
+step_order:
+  - home
+  - day-view
+  - week-view
+  - manage-clinics
+
+journey_findings:
+  insights:
+    - Separating view and manage in the top navigation felt clear, but it did not accurately reflect what users could actually do in each section.
+  next_steps:
+    - Combine "View appointments" and "Manage clinics" into a single "Clinics" section in the top navigation
+    - Add a new "Clinics list" to the Clinics sub navigation (after "Month view") that show the old "Manage clinics" view.
+findings:
+  - scope: step
+    step: day-view
+    insights:
+      - After prompting or giving up on Manage clinics, users moved to View appointments and looked for a way to change the clinic within the day view.
+    next_steps:
+      - Add a "Clinics running today" view so users can edit clinics directly from the day view.
+
+  - scope: step
+    step: week-view
+    insights:
+      - Once participants reached the week view, they were easily able to locate the action link and complete the change.
+
+  - scope: step
+    step: manage-clinics
+    insights:
+      - All participants navigated to Manage clinics to make the change, and some even tried to change the single clinic by editing the series.

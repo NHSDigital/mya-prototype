@@ -1,0 +1,17 @@
+id: v2
+title: Change single clinic
+
+step_order:
+  - change-clinic
+  - clinic-times
+  - affected-bookings
+  - check-answers
+  - success
+
+findings:
+  - scope: step
+    step: change-clinic
+    insights:
+      - Participants didn't notice the "Close this clinic" link. One person mentioned they were looking for "cancel".
+    next_steps:
+      - Add a "Cancel" action link on the week view and remove "close session" CTA from single clinic overview screen

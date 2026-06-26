@@ -1,0 +1,21 @@
+title: Clinic overview page
+versions:
+  v1:
+    summary: The starting point for the edit flow, where people confirm they are about to update the correct clinic series.
+    variants:
+      - id: default
+        label: Default view
+        screenshot: screenshots/clinics-overview-v1.png
+  v2:
+    summary: Updated to replace "clinic series" with "repeating clinics"
+    variants:
+      - id: default
+        label: Default view
+        screenshot: screenshots/clinics-overview-v2.png
+  v3:
+    summary: Updated clinic overview used in round 3 testing.
+    status: ready for dev
+    variants:
+      - id: default
+        label: Default view
+        screenshot: screenshots/clinics-overview-v3.png

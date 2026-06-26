@@ -1,0 +1,47 @@
+title: Day view
+versions:
+  v1:
+    summary: The day view reached directly from View appointments in the top navigation.
+    variants:
+      - id: default
+        label: Default
+        screenshot: screenshots/day-view-v1.png
+  v2:
+    summary: The day view reached from Clinics.
+    default_variant: scheduled
+    variants:
+      - id: scheduled
+        label: Scheduled
+        screenshot: screenshots/day-view-v2-scheduled.png
+      - id: cancelled
+        label: Cancelled
+        screenshot: screenshots/day-view-v2-cancelled.png
+      - id: running-today
+        label: Clinics running today
+        screenshot: screenshots/day-view-v2-running-today.png
+  v3:
+    summary: The day view reached from Clinics in round 3 navigation testing.
+    status: ready for dev
+    default_variant: scheduled
+    implementation:
+      prototype_link:
+        href: /site/1/availability/day
+        label: Day view
+    notes_file: notes/day-view-v3.md
+    variants:
+      - id: scheduled
+        label: Scheduled
+        screenshot: screenshots/day-view-v3-scheduled.png
+        notes_file: notes/day-view-v3-scheduled.md
+        implementation:
+          prototype_link:
+            href: /site/1/availability/day#scheduled
+            label: Day view
+      - id: cancelled
+        label: Cancelled
+        screenshot: screenshots/day-view-v3-cancelled.png
+        notes_file: notes/day-view-v3-cancelled.md
+        implementation:
+          prototype_link:
+            href: /site/1/availability/day#cancelled
+            label: Day view (cancelled)

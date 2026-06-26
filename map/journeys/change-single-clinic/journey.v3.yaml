@@ -1,0 +1,17 @@
+id: v3
+tag: Latest
+title: Change single clinic
+summary: Change a single clinic with the latest check and review flow.
+
+step_order:
+  - change-clinic
+  - clinic-times
+  - affected-bookings
+  - check-answers
+  - success
+
+journey_findings:
+  insights: []
+  next_steps: []
+
+findings: []

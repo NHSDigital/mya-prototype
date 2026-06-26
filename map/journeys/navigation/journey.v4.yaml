@@ -1,0 +1,19 @@
+id: v4
+tag: Latest
+status: ready for dev
+title: Navigation
+
+step_order:
+  - home
+  - day-view
+  - week-view
+  - month-view
+  - clinics-list
+
+findings:
+
+  - scope: step
+    step: clinics-list
+    insights:
+      - For MVP+1, we de-scoped the “View and change” journey for clinic series, we will allow users to cancel
+      - For MVP+1, we de-scoped the “View and change” AND “Cancel” journeys for single clinics, in favour of using the existing change journey (Not shown in this prototype)

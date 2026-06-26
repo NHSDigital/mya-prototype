@@ -4,13 +4,14 @@
   "description": "Rapidly create HTML prototypes of NHS websites and services.",
   "main": "app.js",
   "scripts": {
+    "map:build": "node map/build.js",
+    "map:watch": "node --watch-preserve-output --watch-path=map/journeys --watch-path=map/templates --watch-path=map/assets --watch-path=map/build.js --watch-path=map/router.js map/build.js",
+    "docs:variants:capture": "node scripts/capture-doc-variants.js",
+    "docs:variants:validate": "node scripts/validate-doc-variants.js",
+    "prestart": "npm run map:build",
     "start": "node scripts/start-dev.js",
     "start:app": "node app.js",
-    "watch": "node --watch app.js",
-    "journey:new": "node scripts/journey-new.js",
-    "map:validate": "node scripts/map-validate.js",
-    "map:screenshots": "node scripts/map-screenshots.js",
-    "map:screenshots:plan": "node scripts/map-screenshots.js --dry-run"
+    "watch": "node --watch app.js"
   },
   "author": "https://github.com/nhsuk/",
   "license": "MIT",
@@ -36,7 +37,6 @@
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-promise": "^6.6.0",
     "jest": "^30.1.3",
-    "playwright": "^1.61.0",
     "prettier": "^3.6.2"
   },
   "engines": {

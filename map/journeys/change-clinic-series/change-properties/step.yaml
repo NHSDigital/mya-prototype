@@ -1,0 +1,98 @@
+title: Change properties
+versions:
+  v1:
+    summary: Users enter the new properties for the clinic series.
+    implementation:
+      prototype_link:
+        href: /site/clinics/edit/check-answers
+        label: Change properties
+    default_variant: start-and-end-times
+    variants:
+      - id: start-and-end-times
+        label: Start and end times
+        screenshot: screenshots/times.png
+      - id: clinic-capacity
+        label: Capacity
+        screenshot: screenshots/capacity.png
+      - id: dates
+        label: Dates
+        screenshot: screenshots/dates.png
+      - id: day-pattern
+        label: Day pattern
+        screenshot: screenshots/day-pattern.png
+      - id: closures
+        label: Closures
+        screenshot: screenshots/closures.png
+      - id: closures-remove
+        label: Remove Closure
+        screenshot: screenshots/closures-remove.png
+  v2:
+    summary: Users enter the new properties for the clinic series.
+    default_variant: start-and-end-times
+    implementation:
+      ticket:
+        label: APPT-2873
+      user_story:
+        - As a site administrator
+        - I need to edit a clinic series
+        - So that I can manage future availability
+      prototype_link:
+        label: Start and end times
+        href: /site/clinics/edit/clinic-times
+      notable_components:
+        - label: Time input (custom component)
+      acceptance_criteria:
+        - id: AC7
+          given: a user chooses to edit the clinic times
+          when: the page loads
+          then:
+            - the current clinic times are shown in the start and end time inputs in 24 hour time format
+        - id: AC8
+          given: a user chooses to edit the clinic times
+          when: the page loads
+          then:
+            - I can tab between input boxes, starting with start time hour
+      notes: |
+        Some notes here for implementation purposes.
+    variants:
+      - id: start-and-end-times
+        label: Start and end times
+        screenshot: screenshots/times.png
+      - id: clinic-capacity
+        label: Capacity
+        screenshot: screenshots/capacity.png
+      - id: dates
+        label: Dates
+        screenshot: screenshots/dates.png
+      - id: day-pattern
+        label: Day pattern
+        screenshot: screenshots/day-pattern.png
+      - id: closures
+        label: Closures
+        screenshot: screenshots/closures.png
+      - id: closures-remove
+        label: Remove Closure
+        screenshot: screenshots/closures-remove.png
+  v3:
+    summary: Users enter the new properties for the clinic series.
+    status: ready for dev
+    default_variant: times-and-capacity-changeable
+    variants:
+      - id: times-and-capacity-changeable
+        label: "Times and capacity: changeable"
+        screenshot: screenshots/times-and-capacity-changeable-v3.png
+      - id: times-and-capacity-unchangeable
+        label: "Times and capacity: unchangeable"
+        screenshot: screenshots/times-and-capacity-unchangeable-v3.png
+      - id: dates
+        label: Dates
+        screenshot: screenshots/dates-v3.png
+      - id: day-pattern
+        label: Day pattern
+        screenshot: screenshots/day-pattern-v3.png
+      - id: services
+        label: Services
+        screenshot: screenshots/services-v3.png
+      - id: closures
+        label: Closures
+        screenshot: screenshots/closures-v3.png

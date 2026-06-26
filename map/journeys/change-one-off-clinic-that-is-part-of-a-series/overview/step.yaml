@@ -1,0 +1,8 @@
+title: Overview
+versions:
+  v3:
+    summary: The starting point for changing one clinic in a series.
+    variants:
+      - id: default
+        label: Default view
+        screenshot: screenshots/overview-v3.png

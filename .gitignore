@@ -4,6 +4,7 @@
 /dist
 /tmp
 /public
+/map/dist
 
 # Runtime data
 pids
@@ -68,5 +69,7 @@ coverage
 
 # ESlint cache
 .cache
-# /map screenshot capture report (transient; PNGs are committed)
-app/map/screenshots/report.json
+
+# Prototype map
+/map/tmp-inbox
+/app/assets/map-reload-trigger.txt

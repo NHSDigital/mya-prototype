@@ -1,0 +1,18 @@
+id: v3
+tag: Latest
+status: ready for dev
+title: Change clinic series
+summary: Change a clinic series with the latest check and review flow.
+
+step_order:
+  - clinic-overview-page
+  - change-properties
+  - affected-booking
+  - check-answers
+  - success
+
+journey_findings:
+  insights: []
+  next_steps: []
+
+findings: []

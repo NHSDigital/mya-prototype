@@ -1,0 +1,78 @@
+title: Success
+versions:
+  v1:
+    summary: The confirmation step after the change is complete, used to confirm outcomes and direct people to their next task.
+    variants:
+      - id: default
+        label: Default confirmation
+        screenshot: screenshots/success.png
+  v2:
+    summary: The confirmation step after the change is complete, used to confirm outcomes and direct people to their next task.
+    default_variant: keep-bookings
+    notes: |
+      The screenshots show the 2 main outcome states:
+
+      - keep bookings
+      - cancel bookings
+
+      The cancellation path can still vary based on what changed in the series, for example:
+
+      - times
+      - services added or removed
+      - vaccinators
+
+      Those content differences are treated as notes rather than separate screenshot variants unless the layout changes materially.
+
+      Additional conditional content on this page:
+
+      - A "not been notified" section appears when cancelled bookings include people without contact details.
+      - A "clinics have not been updated" section appears when child clinics already have overrides for changed fields.
+      - The reason text in that section changes based on the edited field (times, vaccinators, or services).
+
+      Automation scaffold for this step:
+
+      - Variant manifest: docs/doc-variants/change-clinic-series-success.json
+      - Capture command: npm run docs:variants:capture
+      - Validation command: npm run docs:variants:validate
+    variants:
+      - id: keep-bookings
+        label: Keep bookings
+        screenshot: screenshots/success-v2-keep.png
+      - id: cancel-bookings
+        label: Cancel bookings
+        screenshot: screenshots/success-v2-cancel.png
+  v3:
+    summary: The confirmation step after the change is complete, including all conditional sections that can appear after editing a clinic series.
+    status: ready for dev
+    default_variant: keep-bookings
+    notes: |
+      This version documents all currently supported conditional blocks on the success page.
+
+      Variant source of truth:
+
+      - Variant manifest: docs/doc-variants/change-clinic-series-success.json
+      - Fixture source: app/data/doc-variants/clinic-edit-success.js
+
+      Capture and validation commands:
+
+      - npm run docs:variants:capture
+      - npm run docs:variants:validate
+    variants:
+      - id: keep-bookings
+        label: Keep bookings
+        screenshot: screenshots/success-v2-keep.png
+      - id: cancel-bookings
+        label: Cancel bookings
+        screenshot: screenshots/success-v2-cancel.png
+      - id: unaffected-time-single
+        label: One child clinic not updated due to times
+        screenshot: screenshots/success-v3-unaffected-time-single.png
+      - id: unaffected-vaccinators-single
+        label: One child clinic not updated due to vaccinators
+        screenshot: screenshots/success-v3-unaffected-vaccinators-single.png
+      - id: cancel-unnotified
+        label: Cancelled bookings with unnotified section
+        screenshot: screenshots/success-v3-cancel-unnotified.png
+      - id: cancel-unnotified-unaffected
+        label: Cancelled bookings with unnotified and unaffected sections
+        screenshot: screenshots/success-v3-cancel-unnotified-unaffected.png

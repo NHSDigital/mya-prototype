@@ -1,0 +1,12 @@
+title: Dates
+versions:
+  v2:
+    summary: Set the date for the clinic.
+    implementation:
+      prototype_link:
+        href: /site/1/clinics/details
+        label: Dates
+    variants:
+      - id: default
+        label: default
+        screenshot: screenshots/default.png

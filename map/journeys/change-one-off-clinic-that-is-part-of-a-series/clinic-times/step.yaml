@@ -1,0 +1,15 @@
+title: Change pages
+versions:
+  v3:
+    summary: The change pages for times and capacity or services.
+    default_variant: times-and-capacity-changeable
+    variants:
+      - id: times-and-capacity-changeable
+        label: "Times and capacity: changeable"
+        screenshot: screenshots/times-and-capacity-changeable-v3.png
+      - id: times-and-capacity-unchangeable
+        label: "Times and capacity: unchangeable"
+        screenshot: screenshots/times-and-capacity-unchangeable-v3.png
+      - id: services
+        label: Services
+        screenshot: screenshots/services-v3.png
