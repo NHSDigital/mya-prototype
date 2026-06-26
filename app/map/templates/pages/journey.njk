@@ -1,0 +1,154 @@
+{% extends "layouts/base.njk" %}
+{% from "components/macros.njk" import boardNotes %}
+{% from "nhsuk/components/breadcrumb/macro.njk" import breadcrumb %}
+
+{% block headAssets %}
+  <link rel="stylesheet" href="{{ assetRoot }}/site.css">
+{% endblock %}
+
+{% block bodyScripts %}
+  <script type="module" src="{{ assetRoot }}/site.js"></script>
+{% endblock %}
+
+{% block chrome %}
+  {% set isReadyForDev = journey.version and ((journey.version.status or '') | lower == 'ready for dev') %}
+  <section class="map-sticky-header">
+    {% if breadcrumbParams %}
+      {{ breadcrumb(breadcrumbParams) }}
+    {% endif %}
+    <section class="map-page-head">
+      <div>
+        <h1 class="map-page-title">{{ journey.title }}</h1>
+        {% if isReadyForDev %}
+          <strong class="nhsuk-tag nhsuk-tag--green nhsuk-u-margin-top-2">Ready for dev</strong>
+        {% endif %}
+      </div>
+      {% if journey.version %}
+        <div>
+          <label class="map-field-label" for="journey-version">Version</label>
+          <div class="map-version-field nhsuk-form-group">
+            <select class="nhsuk-select map-select js-map-version-select" id="journey-version" aria-label="Choose a journey version">
+              {% for version in journey.versions %}
+                <option value="{{ version.path }}" {% if version.id == journey.version.id %}selected{% endif %}>
+                  {{ version.label }}{% if version.tag %} ({{ version.tag }}){% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      {% endif %}
+    </section>
+  </section>
+{% endblock %}
+
+{% block content %}
+  <script type="application/json" id="map-generated-page-config">{{ pageConfigJson | safe }}</script>
+
+  <nav class="map-site-view-nav" aria-label="Journey map views">
+    <ul class="map-site-view-nav__list">
+      <li class="map-site-view-nav__item">
+        <a class="map-site-view-nav__link" data-site-view-link data-site-view="board" href="#board">Board</a>
+      </li>
+      <li class="map-site-view-nav__item">
+        <a class="map-site-view-nav__link" data-site-view-link data-site-view="mermaid" href="#mermaid">Mermaid</a>
+      </li>
+    </ul>
+  </nav>
+
+  <section data-site-view-panel="board" id="map-view-board">
+  <section class="map-journey-board" style="--step-count: {{ journey.steps.length }}">
+    <table class="map-journey-table">
+      <caption class="nhsuk-u-visually-hidden">Journey map for {{ journey.title }}</caption>
+      <thead>
+        <tr class="map-journey-table__row map-journey-table__row--head">
+          {% for step in journey.steps %}
+            <th scope="col" class="map-journey-table__head">
+              <a class="map-step-link" href="{{ step.detailPath }}">
+                <div>
+                  <span class="map-step-number">Step {{ step.position }}</span>
+                  <span class="map-step-title">{{ step.title }}</span>
+                  <span class="map-step-version-note">
+                    Screen {{ step.screenVersionId }}{% if step.isReusedFromEarlierVersion %} reused in {{ journey.version.id }}{% endif %}
+                  </span>
+                </div>
+                <span class="map-step-chevron" aria-hidden="true">›</span>
+              </a>
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="map-journey-table__row">
+          {% for step in journey.steps %}
+            {% if step.variants.length > 1 %}
+              <td class="map-journey-table__cell">
+                <div class="map-board-field nhsuk-form-group">
+                  <label class="nhsuk-label map-board-label" for="variant-{{ step.slug }}">Variant</label>
+                  <div class="map-board-variant-switcher">
+                    <label class="nhsuk-u-visually-hidden" for="variant-{{ step.slug }}">Choose a variant for {{ step.title }}</label>
+                    <select class="nhsuk-select map-select js-map-variant-select" id="variant-{{ step.slug }}" data-step-slug="{{ step.slug }}" data-default-variant-id="{{ step.defaultVariantId }}">
+                      {% for variant in step.variants %}
+                        <option value="{{ variant.id }}" {% if variant.isDefaultVariant %}selected{% endif %}>{{ variant.label }}</option>
+                      {% endfor %}
+                    </select>
+                    <script type="application/json" class="js-map-variant-data">{{ step.variantIndexJson | safe }}</script>
+                  </div>
+                </div>
+              </td>
+            {% else %}
+              <td class="map-journey-table__cell map-journey-table__cell--empty" aria-hidden="true"></td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+
+        <tr class="map-journey-table__row">
+          {% for step in journey.steps %}
+            <td class="map-journey-table__cell map-journey-table__cell--screen">
+              <figure class="map-screen-frame" data-map-screenshot="{{ step.slug }}">
+                <a href="{{ step.detailPath }}">
+                  <img src="{{ step.defaultVariant.screenshotPath }}" alt="{{ step.defaultVariant.alt }}" loading="lazy">
+                </a>
+              </figure>
+            </td>
+          {% endfor %}
+        </tr>
+
+        <tr class="map-journey-table__row">
+          {% for step in journey.steps %}
+            <td class="map-journey-table__cell">
+              <h3 class="map-board-label">User insights</h3>
+              <div data-map-insights="{{ step.slug }}" data-empty-message="None for this version">
+                {{ boardNotes(step.defaultVariant.insights, 'None for this version') }}
+              </div>
+            </td>
+          {% endfor %}
+        </tr>
+
+        <tr class="map-journey-table__row">
+          {% for step in journey.steps %}
+            <td class="map-journey-table__cell">
+              <h3 class="map-board-label">What to try next</h3>
+              <div data-map-next="{{ step.slug }}" data-empty-message="None for this version">
+                {{ boardNotes(step.defaultVariant.nextSteps, 'None for this version') }}
+              </div>
+            </td>
+          {% endfor %}
+        </tr>
+
+        {% if journey.journeyFindings.nextSteps.length %}
+          <tr class="map-journey-table__row map-journey-table__row--journey-next">
+            <td class="map-journey-table__cell map-journey-table__cell--journey-next" colspan="{{ journey.steps.length }}">
+              <h3 class="map-board-label">Journey-wide what to try next</h3>
+              {{ boardNotes(journey.journeyFindings.nextSteps) }}
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </section>
+  </section>
+
+  <section class="map-generated-panel" data-site-view-panel="mermaid" id="map-view-mermaid" hidden>
+    <pre class="map-generated-mermaid" data-map-generated-mermaid></pre>
+  </section>
+{% endblock %}

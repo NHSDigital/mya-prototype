@@ -68,3 +68,5 @@ coverage
 
 # ESlint cache
 .cache
+# /map screenshot capture report (transient; PNGs are committed)
+app/map/screenshots/report.json

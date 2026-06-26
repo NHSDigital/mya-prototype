@@ -1,0 +1,88 @@
+{
+  "$schema": "../../../map/map.schema.json",
+  "title": "Cancel a date range",
+  "summary": "Cancel every clinic in a chosen date range, optionally cancelling the bookings in it.",
+  "section": "Manage availability",
+  "status": "ready for dev",
+  "steps": [
+    {
+      "id": "dates",
+      "title": "Choose dates",
+      "summary": "Enter the start and end date of the range to cancel.",
+      "defaultVariant": "default",
+      "variants": [
+        {
+          "id": "default",
+          "label": "Default",
+          "screenshots": [
+            { "label": "Empty form", "path": "/v1/site/1/cancel-availability/dates", "data": {} }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sessions-and-bookings",
+      "title": "Review affected clinics",
+      "summary": "Shows the clinics and bookings that fall inside the chosen range.",
+      "defaultVariant": "default",
+      "variants": [
+        {
+          "id": "default",
+          "label": "Default range",
+          "screenshots": [
+            { "label": "Next fortnight", "path": "/v1/site/1/cancel-availability/sessions-and-bookings", "data": {} }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "check-answers",
+      "title": "Check answers",
+      "summary": "Confirm the range and choose whether to keep or cancel the bookings.",
+      "defaultVariant": "keep-bookings",
+      "variants": [
+        {
+          "id": "keep-bookings",
+          "label": "Keep bookings",
+          "screenshots": [
+            {
+              "label": "Keep bookings",
+              "path": "/v1/site/1/cancel-availability/check-answers",
+              "data": { "cancelAvailability": { "keepOrCancelBookings": "keep" } }
+            }
+          ]
+        },
+        {
+          "id": "cancel-bookings",
+          "label": "Cancel bookings",
+          "screenshots": [
+            {
+              "label": "Cancel bookings",
+              "path": "/v1/site/1/cancel-availability/check-answers",
+              "data": { "cancelAvailability": { "keepOrCancelBookings": "cancel" } }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "success",
+      "title": "Confirmation",
+      "summary": "The range has been cancelled.",
+      "defaultVariant": "default",
+      "variants": [
+        {
+          "id": "default",
+          "label": "Default",
+          "screenshots": [
+            {
+              "label": "Cancelled",
+              "path": "/v1/site/1/cancel-availability/success",
+              "data": { "cancelAvailability": { "affectedSessions": "4", "affectedBookings": "12" } }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
