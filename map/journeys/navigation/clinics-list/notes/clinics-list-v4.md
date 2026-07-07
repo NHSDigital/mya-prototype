@@ -70,7 +70,7 @@ Here's an example table row:
 - Clinic series should always been shown at the top of the list
 - Clinics should then be ordered by
   - date for single clinics
-  - or, endDate for clinic series
+  - or, startDate for clinic series
 - Pagination should show 10 items per page
 
 ## Error, empty, and edge states
